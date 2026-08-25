@@ -41,27 +41,32 @@ faucet AAPL from the dashboard, deposit it, pick a mode, and watch the counter m
 
 Import one of anvil's printed private keys into the wallet for instant gas.
 
-## Arbitrum Sepolia
+## Robinhood Chain testnet
+
+The real target: chain id 46630, an Arbitrum Orbit L2, public since February 2026.
+Fund a deployer at the faucet (https://faucet.testnet.chain.robinhood.com), then:
 
 ```bash
 cd contracts
-PRIVATE_KEY=0x... forge script script/Deploy.s.sol --rpc-url arbitrum_sepolia --broadcast
-PRIVATE_KEY=0x... forge script script/Seed.s.sol --rpc-url arbitrum_sepolia --broadcast
+PRIVATE_KEY=0x... forge script script/Deploy.s.sol --rpc-url robinhood_testnet --broadcast
+PRIVATE_KEY=0x... forge script script/Seed.s.sol --rpc-url robinhood_testnet --broadcast
 cd .. && pnpm abis
 ```
 
 Set `apps/web/.env.local`:
 
 ```
-NEXT_PUBLIC_CHAIN_ID=421614
-NEXT_PUBLIC_CHAIN_NAME=Arbitrum Sepolia
-NEXT_PUBLIC_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
-NEXT_PUBLIC_EXPLORER_NAME=Arbiscan
-NEXT_PUBLIC_EXPLORER_URL=https://sepolia.arbiscan.io
+NEXT_PUBLIC_CHAIN_ID=46630
+NEXT_PUBLIC_CHAIN_NAME=Robinhood Chain Testnet
+NEXT_PUBLIC_RPC_URL=https://rpc.testnet.chain.robinhood.com
+NEXT_PUBLIC_EXPLORER_NAME=Robinhood Chain Explorer
+NEXT_PUBLIC_EXPLORER_URL=https://explorer.testnet.chain.robinhood.com
 ```
 
-Arbitrum Sepolia stands in for Robinhood Chain (both are Arbitrum stack). When
-Robinhood Chain testnet access lands, change these five env vars and nothing else.
+The public RPC is rate limited; use an Alchemy Robinhood testnet endpoint for real
+work. Arbitrum Sepolia (chain 421614, `--rpc-url arbitrum_sepolia`) remains a drop
+in stand in with the same Orbit stack semantics: change the five env vars and
+nothing else.
 
 ## Tests
 
@@ -122,22 +127,36 @@ import with no backend:
 1. Go to [vercel.com/new](https://vercel.com/new) and import this repository.
 2. Set **Root Directory** to `apps/web`. Vercel detects Next.js and the pnpm
    workspace on its own; leave install and build commands at their defaults.
-3. Add the environment variables that point the build at a public chain:
+3. Add the environment variables that point the build at Robinhood Chain testnet
+   (chain id 46630, public since February 2026):
 
    | Variable | Value |
    | --- | --- |
-   | `NEXT_PUBLIC_CHAIN_ID` | `421614` |
-   | `NEXT_PUBLIC_CHAIN_NAME` | `Arbitrum Sepolia` |
-   | `NEXT_PUBLIC_RPC_URL` | `https://sepolia-rollup.arbitrum.io/rpc` |
-   | `NEXT_PUBLIC_EXPLORER_NAME` | `Arbiscan` |
-   | `NEXT_PUBLIC_EXPLORER_URL` | `https://sepolia.arbiscan.io` |
+   | `NEXT_PUBLIC_CHAIN_ID` | `46630` |
+   | `NEXT_PUBLIC_CHAIN_NAME` | `Robinhood Chain Testnet` |
+   | `NEXT_PUBLIC_RPC_URL` | `https://rpc.testnet.chain.robinhood.com` |
+   | `NEXT_PUBLIC_EXPLORER_NAME` | `Robinhood Chain Explorer` |
+   | `NEXT_PUBLIC_EXPLORER_URL` | `https://explorer.testnet.chain.robinhood.com` |
+
+   The public RPC is rate limited; for a site with real traffic use an Alchemy
+   Robinhood testnet endpoint instead. Arbitrum Sepolia (chain 421614) remains a
+   drop in alternative with the same Orbit stack semantics.
 
 4. Deploy.
 
-Until the contracts are deployed to Arbitrum Sepolia (deploy with
-`forge script script/Deploy.s.sol --rpc-url arbitrum_sepolia --broadcast`, run the
-seed script, then commit the `contracts/deployments/421614.json` address book and
-`pnpm abis`), the landing page, design system and copy are fully live and the app
-pages show their no-deployment state. Once the address book for chain 421614 is
-committed, the next Vercel deploy is fully interactive with no code changes.
+Until the contracts are deployed to Robinhood Chain testnet, the landing page,
+design system and copy are fully live and the app pages show their no-deployment
+state. To go fully interactive: fund a deployer wallet at the faucet
+(https://faucet.testnet.chain.robinhood.com), then
+
+```bash
+cd contracts
+PRIVATE_KEY=0x... forge script script/Deploy.s.sol --rpc-url robinhood_testnet --broadcast
+PRIVATE_KEY=0x... forge script script/Seed.s.sol --rpc-url robinhood_testnet --broadcast
+node ../scripts/sync-abis.mjs
+```
+
+commit `contracts/deployments/46630.json` plus the regenerated
+`packages/sdk/src/generated/deployments.ts`, and the next Vercel deploy is fully
+interactive with no code changes.
 
