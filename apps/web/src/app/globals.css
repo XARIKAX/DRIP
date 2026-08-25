@@ -1,0 +1,146 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Fonts are linked at runtime rather than bundled at build time so the app builds in
+ * a sandbox with no outbound network. The fallback stack in tailwind.config.ts carries
+ * the layout if Google Fonts never answers.
+ */
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-paper text-ink font-sans;
+    font-weight: 500;
+  }
+
+  /* Numbers are data. Data is mono. No exceptions. */
+  .num {
+    @apply font-mono tabular-nums;
+    font-feature-settings: "tnum" 1, "zero" 1;
+  }
+
+  ::selection {
+    background: #35c2db;
+    color: #0a0a0a;
+  }
+}
+
+@layer components {
+  /* The outlined card. 1px black, square, no shadow, ever. */
+  .card {
+    @apply border border-ink bg-paper;
+  }
+
+  .card-pad {
+    @apply p-6 md:p-8;
+  }
+
+  /* Section eyebrow. Tiny, tracked out, upper. */
+  .eyebrow {
+    @apply text-micro font-bold uppercase;
+  }
+
+  .rule-t {
+    @apply border-t border-ink;
+  }
+
+  .rule-b {
+    @apply border-b border-ink;
+  }
+
+  /* Primary action. Black block, cyan on hover. */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 border border-ink px-5 py-3
+           text-[13px] font-bold uppercase tracking-widest transition-colors
+           disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .btn-primary {
+    @apply btn bg-ink text-paper hover:bg-cyan-dark hover:border-cyan-dark;
+  }
+
+  .btn-accent {
+    @apply btn bg-cyan text-ink hover:bg-cyan-dark hover:text-paper border-ink;
+  }
+
+  .btn-ghost {
+    @apply btn bg-paper text-ink hover:bg-ink hover:text-paper;
+  }
+
+  .btn-sm {
+    @apply px-3 py-2 text-[11px];
+  }
+
+  /* Text input. Square, ruled, mono for anything numeric. */
+  .field {
+    @apply w-full border border-ink bg-paper px-4 py-3 text-ink outline-none
+           placeholder:text-muted focus:border-cyan-dark focus:ring-0;
+  }
+
+  /* The boxed ticker cell with its cyan left edge. */
+  .ticker-cell {
+    @apply flex shrink-0 items-baseline gap-3 border-l-2 border-cyan px-5 py-2;
+  }
+
+  /* Data table. Ruled, mono, no zebra. */
+  .data-table {
+    @apply w-full border-collapse text-left;
+  }
+
+  .data-table th {
+    @apply border-b border-ink px-4 py-3 text-micro font-bold uppercase;
+  }
+
+  .data-table td {
+    @apply border-b border-faint px-4 py-4 align-middle;
+  }
+
+  .tag {
+    @apply inline-block border border-ink px-2 py-1 text-micro font-bold uppercase;
+  }
+
+  .tag-accent {
+    @apply tag border-cyan-dark bg-cyan text-ink;
+  }
+}
+
+@layer utilities {
+  .shell {
+    @apply mx-auto w-full max-w-shell px-5 md:px-8;
+  }
+
+  /* Ticker marquee. Pauses on hover so a reader can actually read it. */
+  .marquee {
+    animation: marquee 48s linear infinite;
+  }
+
+  .marquee-host:hover .marquee {
+    animation-play-state: paused;
+  }
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee {
+      animation: none;
+    }
+  }
+}
