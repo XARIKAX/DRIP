@@ -1,57 +1,31 @@
 "use client";
 
-import "@rainbow-me/rainbowkit/styles.css";
-import { RainbowKitProvider, getDefaultConfig, lightTheme } from "@rainbow-me/rainbowkit";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WagmiProvider } from "wagmi";
-import { useState, type ReactNode } from "react";
-import { activeChain, transport, walletConnectProjectId } from "@/lib/chain.config";
+import dynamic from "next/dynamic";
+import type { ReactNode } from "react";
+import { Wordmark } from "@/components/Wordmark";
 
 /**
- * Wallet, cache and chain config.
+ * Client only boundary for the whole app.
  *
- * RainbowKit is themed down to the same rules as the rest of the product: square
- * corners, black outlines, one cyan accent.
+ * The wallet provider stack is loaded with ssr:false, so nothing from wagmi,
+ * RainbowKit or react-query renders during the build's static export. Pages
+ * prerender as this shell and boot fully in the browser. A dapp's real content is
+ * wallet and RPC state anyway; there is nothing meaningful to prerender behind it.
  */
-const wagmiConfig = getDefaultConfig({
-  appName: "Drip Markets",
-  // RainbowKit requires a string here. Without a real id WalletConnect is unavailable
-  // and injected wallets still work, which is all the testnet demo needs.
-  projectId: walletConnectProjectId || "drip-testnet-local",
-  chains: [activeChain],
-  transports: { [activeChain.id]: transport },
-  ssr: true,
+const WalletProviders = dynamic(() => import("@/components/WalletProviders"), {
+  ssr: false,
+  loading: () => <BootShell />,
 });
 
-const rainbowTheme = lightTheme({
-  accentColor: "#35C2DB",
-  accentColorForeground: "#0A0A0A",
-  borderRadius: "none",
-  fontStack: "system",
-});
+/** What the static HTML contains: the lockup, centered, until the app hydrates. */
+function BootShell() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-paper">
+      <Wordmark size="lg" />
+    </div>
+  );
+}
 
 export function Providers({ children }: { children: ReactNode }) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            // The dashboard polls; the counters interpolate between polls.
-            refetchInterval: 8_000,
-            staleTime: 4_000,
-            retry: 1,
-          },
-        },
-      })
-  );
-
-  return (
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider theme={rainbowTheme} modalSize="compact">
-          {children}
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
-  );
+  return <WalletProviders>{children}</WalletProviders>;
 }
