@@ -58,7 +58,7 @@ Set `apps/web/.env.local`:
 ```
 NEXT_PUBLIC_CHAIN_ID=46630
 NEXT_PUBLIC_CHAIN_NAME=Robinhood Chain Testnet
-NEXT_PUBLIC_RPC_URL=https://rpc.testnet.chain.robinhood.com
+NEXT_PUBLIC_RPC_URL=https://rpc.testnet.chain.robinhood.com/rpc
 NEXT_PUBLIC_EXPLORER_NAME=Robinhood Chain Explorer
 NEXT_PUBLIC_EXPLORER_URL=https://explorer.testnet.chain.robinhood.com
 ```
@@ -134,7 +134,7 @@ import with no backend:
    | --- | --- |
    | `NEXT_PUBLIC_CHAIN_ID` | `46630` |
    | `NEXT_PUBLIC_CHAIN_NAME` | `Robinhood Chain Testnet` |
-   | `NEXT_PUBLIC_RPC_URL` | `https://rpc.testnet.chain.robinhood.com` |
+   | `NEXT_PUBLIC_RPC_URL` | `https://rpc.testnet.chain.robinhood.com/rpc` |
    | `NEXT_PUBLIC_EXPLORER_NAME` | `Robinhood Chain Explorer` |
    | `NEXT_PUBLIC_EXPLORER_URL` | `https://explorer.testnet.chain.robinhood.com` |
 

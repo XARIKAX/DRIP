@@ -31,7 +31,7 @@ fail_on_revert = false
 [rpc_endpoints]
 arbitrum_sepolia = "${ARBITRUM_SEPOLIA_RPC_URL}"
 # Public endpoint, rate limited. Override with ROBINHOOD_TESTNET_RPC_URL for real work.
-robinhood_testnet = "https://rpc.testnet.chain.robinhood.com"
+robinhood_testnet = "https://rpc.testnet.chain.robinhood.com/rpc"
 local = "http://127.0.0.1:8545"
 
 [etherscan]
