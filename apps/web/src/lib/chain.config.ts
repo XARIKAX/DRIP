@@ -10,11 +10,48 @@ import { getDeployment, knownChainIds } from "@drip-markets/sdk";
  * same address book, same ABIs.
  */
 
-const envChainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 31337);
-const envRpc = process.env.NEXT_PUBLIC_RPC_URL ?? "http://127.0.0.1:8545";
-const envName = process.env.NEXT_PUBLIC_CHAIN_NAME ?? "Anvil";
-const explorerName = process.env.NEXT_PUBLIC_EXPLORER_NAME ?? "Explorer";
-const explorerUrl = process.env.NEXT_PUBLIC_EXPLORER_URL ?? "";
+/**
+ * Env values arrive from dashboards where humans paste them, so every one is
+ * sanitised before use. Wrapping quotes and stray whitespace in
+ * NEXT_PUBLIC_CHAIN_ID once turned the chain id into NaN, which made wagmi's
+ * chain lookup return undefined and took the whole app down with
+ * "Cannot read properties of undefined (reading 'uid')". Never trust a pasted
+ * value to be clean.
+ */
+function clean(value: string | undefined): string {
+  if (!value) return "";
+  return value.trim().replace(/^['"]+|['"]+$/g, "").trim();
+}
+
+/** Canonical public RPC per known chain, used when the env RPC is missing or invalid. */
+const CANONICAL_RPC: Record<number, string> = {
+  31337: "http://127.0.0.1:8545",
+  46630: "https://rpc.testnet.chain.robinhood.com/rpc",
+  421614: "https://sepolia-rollup.arbitrum.io/rpc",
+};
+
+function parseChainId(raw: string): number {
+  const parsed = Number(raw);
+  if (Number.isSafeInteger(parsed) && parsed > 0) return parsed;
+  // A set-but-broken value means a hosted deployment was intended. Robinhood
+  // Chain testnet is the product's home, so that is the sane recovery.
+  return raw ? 46630 : 31337;
+}
+
+function parseRpcUrl(raw: string, chainId: number): string {
+  try {
+    if (raw) return new URL(raw).toString();
+  } catch {
+    // fall through to the canonical endpoint
+  }
+  return CANONICAL_RPC[chainId] ?? "http://127.0.0.1:8545";
+}
+
+const envChainId = parseChainId(clean(process.env.NEXT_PUBLIC_CHAIN_ID));
+const envRpc = parseRpcUrl(clean(process.env.NEXT_PUBLIC_RPC_URL), envChainId);
+const envName = clean(process.env.NEXT_PUBLIC_CHAIN_NAME) || (envChainId === 46630 ? "Robinhood Chain Testnet" : "Anvil");
+const explorerName = clean(process.env.NEXT_PUBLIC_EXPLORER_NAME) || "Explorer";
+const explorerUrl = clean(process.env.NEXT_PUBLIC_EXPLORER_URL);
 
 /** Known viem chains, so a standard testnet keeps its proper metadata. */
 const BUILT_IN: Record<number, Chain> = {
@@ -38,7 +75,7 @@ export const chainId = activeChain.id;
 export const transport = http(envRpc);
 
 /** WalletConnect is optional. Injected wallets work without a project id. */
-export const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "";
+export const walletConnectProjectId = clean(process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID);
 
 /** True when the deploy script has written an address book for this chain. */
 export const isDeployed = knownChainIds().includes(chainId);
