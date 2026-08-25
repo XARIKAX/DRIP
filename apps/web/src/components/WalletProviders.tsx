@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
 import { useState, type ReactNode } from "react";
 import { activeChain, transport, walletConnectProjectId } from "@/lib/chain.config";
+import { DataProvider } from "@/lib/data/provider";
 
 /**
  * The wallet, cache and chain providers.
@@ -51,7 +52,7 @@ export default function WalletProviders({ children }: { children: ReactNode }) {
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider theme={rainbowTheme} modalSize="compact">
-          {children}
+          <DataProvider>{children}</DataProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

@@ -41,6 +41,15 @@ faucet AAPL from the dashboard, deposit it, pick a mode, and watch the counter m
 
 Import one of anvil's printed private keys into the wallet for instant gas.
 
+## Demo mode
+
+The app boots into demo mode: a seeded portfolio with live streams accruing per
+second, three weeks of history, a funded vault, and a working agent console. Every
+page renders and every interaction works with no wallet, ever. Connecting a wallet
+swaps the data source from the in-memory demo store to chain reads; it never gates
+the UI. The seam is `apps/web/src/lib/data/` — one `DataProvider`, two
+implementations, and components never know which one they are on.
+
 ## Robinhood Chain testnet
 
 The real target: chain id 46630, an Arbitrum Orbit L2, public since February 2026.

@@ -1,4 +1,4 @@
-import { Mode } from "@drip-markets/sdk";
+import type { ModeName } from "@/lib/data/types";
 
 /**
  * A very small intent parser.
@@ -13,7 +13,7 @@ import { Mode } from "@drip-markets/sdk";
  */
 
 export type Intent =
-  | { kind: "set_mode"; symbol: string | "ALL"; mode: Mode }
+  | { kind: "set_mode"; symbol: string | "ALL"; mode: ModeName }
   | { kind: "claim"; symbol: string | "ALL" }
   | { kind: "activate"; symbol: string | "ALL" }
   | { kind: "deposit"; symbol: string; amount: string }
@@ -23,10 +23,10 @@ export type Intent =
   | { kind: "unsupported"; reason: string; suggestion: string }
   | { kind: "unknown"; input: string };
 
-const MODE_WORDS: { pattern: RegExp; mode: Mode }[] = [
-  { pattern: /\b(reinvest|compound|drip|buy more)\b/i, mode: Mode.REINVEST },
-  { pattern: /\b(stream|drip out|per second|trickle)\b/i, mode: Mode.STREAM },
-  { pattern: /\b(cash|early|lump|pay me now|take it now|upfront)\b/i, mode: Mode.CASH_EARLY },
+const MODE_WORDS: { pattern: RegExp; mode: ModeName }[] = [
+  { pattern: /\b(reinvest|compound|drip|buy more)\b/i, mode: "REINVEST" },
+  { pattern: /\b(stream|drip out|per second|trickle)\b/i, mode: "STREAM" },
+  { pattern: /\b(cash|early|lump|pay me now|take it now|upfront)\b/i, mode: "CASH_EARLY" },
 ];
 
 /** Pull the first known ticker out of a sentence, or ALL when the user said everything. */
@@ -35,7 +35,7 @@ function findSymbol(text: string, symbols: string[]): string | "ALL" | null {
   for (const symbol of symbols) {
     if (new RegExp(`\\b${symbol}\\b`).test(upper)) return symbol;
   }
-  if (/\b(all|everything|every|each)\b/i.test(text)) return "ALL";
+  if (/\b(all|everything|every|each|portfolio)\b/i.test(text)) return "ALL";
   return null;
 }
 
@@ -48,14 +48,14 @@ function findAmount(text: string): string | null {
 /**
  * Parse one line into one intent.
  * @param input   Raw user text.
- * @param symbols Tickers the protocol actually knows about on this chain.
+ * @param symbols Tickers the protocol actually knows about.
  */
 export function parseIntent(input: string, symbols: string[]): Intent {
   const text = input.trim();
   if (!text) return { kind: "unknown", input };
 
-  // Cross token reinvestment. The protocol buys back the token that paid the dividend,
-  // on purpose, so say so rather than silently doing something else.
+  // Cross token reinvestment. The protocol buys back the token that paid the
+  // dividend, on purpose, so say so rather than silently doing something else.
   const crossToken = text.match(/\b(?:reinvest|compound|drip)\b[^]*?\binto\b\s+([A-Za-z]{1,6})\b/i);
   if (crossToken) {
     const target = crossToken[1]!.toUpperCase();
@@ -63,20 +63,28 @@ export function parseIntent(input: string, symbols: string[]): Intent {
     if (symbols.includes(target) && source && source !== target) {
       return {
         kind: "unsupported",
-        reason: `Reinvestment buys back the token that paid the dividend. ${source} dividends buy ${source}, never ${target}.`,
-        suggestion: `Set ${source} to Cash early, then buy ${target} yourself. Two steps, no hidden routing.`,
+        reason: `Reinvestment buys back the token that paid the dividend. ${source} dividends buy ${source}, never ${target}. No hidden routing.`,
+        suggestion: `Set ${source} to Cash early, then buy ${target} yourself. Two steps you can see.`,
       };
     }
   }
 
-  // Splitting one position across two modes. Mode is per token, so this cannot be done
-  // on a single token without splitting the position itself.
+  // Splitting one position across two modes. Mode is per token.
   if (/\bhalf\b[^]*\bhalf\b/i.test(text) || /\bsplit\b/i.test(text)) {
     return {
       kind: "unsupported",
       reason: "Mode is a per token setting. One position cannot stream half and compound half at the same time.",
-      suggestion:
-        "Withdraw half into a second wallet and set a different mode there, or set one token to Stream and another to Reinvest.",
+      suggestion: "Set one token to Stream and another to Reinvest, or split the position across two wallets.",
+    };
+  }
+
+  // "Protect my portfolio" style asks. Streams do not need protecting: they accrue
+  // whether or not markets are open, and nothing here is leveraged.
+  if (/\b(protect|hedge|safe|de-?risk)\b/i.test(text)) {
+    return {
+      kind: "unsupported",
+      reason: "There is nothing to protect against here. Streams accrue every second regardless of market hours, positions are unleveraged, and the vault never touches your stock.",
+      suggestion: 'If you want cash instead of exposure, try "cash out everything early" or withdraw from the dashboard.',
     };
   }
 
@@ -89,8 +97,7 @@ export function parseIntent(input: string, symbols: string[]): Intent {
 
   const slippage = text.match(/slippage[^\d]*(\d+(?:\.\d+)?)\s*%?/i);
   if (slippage) {
-    const percent = Number(slippage[1]);
-    return { kind: "set_slippage", bps: Math.round(percent * 100) };
+    return { kind: "set_slippage", bps: Math.round(Number(slippage[1]) * 100) };
   }
 
   if (/\bdeposit\b/i.test(text)) {
@@ -138,14 +145,14 @@ export function parseIntent(input: string, symbols: string[]): Intent {
   return { kind: "unknown", input: text };
 }
 
-/** Example prompts shown in the console. Every one of these parses. */
+/** Suggested commands. The honest ones and the executable ones, mixed. */
 export const EXAMPLE_PROMPTS = [
-  "reinvest all my KO dividends",
-  "stream everything",
-  "cash out AAPL early",
-  "claim all my streams",
-  "start my dividends",
-  "deposit 25 AAPL",
-  "set slippage to 2%",
-  "show my streams",
+  "Reinvest all my KO dividends",
+  "Claim everything",
+  "Cash out AAPL early",
+  "Compound all my KO dividends into NVDA",
+  "Stream half, reinvest half",
+  "Protect my portfolio this weekend",
+  "Show my streams",
+  "Deposit 25 AAPL",
 ];

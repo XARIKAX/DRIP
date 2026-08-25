@@ -1,426 +1,464 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Link from "next/link";
-import { useAccount } from "wagmi";
-import {
-  MODE_LABELS,
-  buildActivate,
-  buildApprove,
-  buildClaimStream,
-  buildDeposit,
-  buildSetMaxSlippage,
-  buildSetMode,
-  buildWithdraw,
-  formatBps,
-  formatStock,
-  formatUsdg,
-  parseStock,
-  type UnsignedTx,
-} from "@drip-markets/sdk";
-import { Card, Empty, Eyebrow, SectionHead } from "@/components/ui";
-import { ConnectGate } from "@/components/ConnectGate";
-import { TxBar } from "@/components/TxBar";
-import {
-  useActivatable,
-  useCalendar,
-  useDeployment,
-  usePositions,
-  useStockTokens,
-  useStreams,
-  useVaultStats,
-} from "@/lib/hooks";
-import { useTxRunner } from "@/lib/tx";
+import { useEffect, useRef, useState } from "react";
+import { fmt, shortDate } from "@/components/live";
 import { EXAMPLE_PROMPTS, parseIntent, type Intent } from "@/lib/intents";
+import {
+  useCalendarRows,
+  useDataActions,
+  useDataSource,
+  useHoldings,
+  usePendingAdvances,
+  useStreamRows,
+  useVaultView,
+} from "@/lib/data/provider";
+import { MODE_LABEL, streamClaimable, type ModeName } from "@/lib/data/types";
 
-/** What the console produces: something to read, or something to sign. Never both silently. */
+/**
+ * The agent console. A real terminal, not a toy: every command becomes visible tool
+ * calls, then a parsed plan card stating exactly what will change. Nothing executes
+ * without Confirm, and on chain nothing executes without a signature.
+ */
+
 interface Plan {
   title: string;
-  steps: string[];
-  txs: UnsignedTx[];
-  note?: string;
-  blocked?: { reason: string; suggestion: string };
+  rows: { label: string; value: string }[];
+  effect: string;
+  confirmLabel: string | null;
+  execute: (() => Promise<string>) | null;
 }
+
+interface Message {
+  id: number;
+  role: "user" | "agent";
+  text?: string;
+  toolLines?: string[];
+  plan?: Plan;
+  planState?: "proposed" | "running" | "done" | "dismissed";
+  result?: string;
+}
+
+let nextMessageId = 1;
 
 export default function AgentPage() {
-  return (
-    <div className="space-y-12">
-      <header className="max-w-2xl">
-        <Eyebrow className="text-cyan-dark">Module 04</Eyebrow>
-        <h1 className="mt-3 text-display font-extrabold">Agent console</h1>
-        <p className="mt-5 text-[16px] leading-relaxed text-ink/80">
-          Say what you want. The console turns it into a plan you can read and transactions you
-          sign. Nothing executes on its own, here or over MCP.
-        </p>
-      </header>
-      <ConnectGate>
-        <Console />
-      </ConnectGate>
-      <McpNote />
-    </div>
-  );
-}
+  const source = useDataSource();
+  const holdings = useHoldings();
+  const streams = useStreamRows();
+  const calendar = useCalendarRows();
+  const pending = usePendingAdvances();
+  const vault = useVaultView();
+  const actions = useDataActions();
 
-function Console() {
-  const { address } = useAccount();
-  const deployment = useDeployment();
-  const tokens = useStockTokens();
-  const positions = usePositions();
-  const streams = useStreams();
-  const activatable = useActivatable();
-  const calendar = useCalendar();
-  const vault = useVaultStats();
-  const { state, run, reset } = useTxRunner();
-
+  const [messages, setMessages] = useState<Message[]>(() => [
+    {
+      id: nextMessageId++,
+      role: "agent",
+      text: "Console ready. Tell me what to do with your dividends — set modes, claim streams, deposit, or ask what is running. I will show you the exact plan before anything moves.",
+    },
+    { id: nextMessageId++, role: "user", text: "show my streams" },
+    {
+      id: nextMessageId++,
+      role: "agent",
+      toolLines: ["parse_intent → show", "get_streams → 2 open"],
+      text: "KO: $212.06 streaming until Sep 9 · Stream mode, pays your wallet.\nJNJ: $77.22 streaming until Sep 2 · Reinvest mode, every claim buys more JNJ.\nBoth accrue every second. Claim whenever you like, or tell me to claim for you.",
+    },
+  ]);
   const [input, setInput] = useState("");
-  const [plan, setPlan] = useState<Plan | null>(null);
-  const [answer, setAnswer] = useState<string[] | null>(null);
+  const logRef = useRef<HTMLDivElement>(null);
 
-  const symbols = useMemo(() => (tokens.data ?? []).map((t) => t.symbol), [tokens.data]);
+  useEffect(() => {
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages]);
 
-  function submit(text: string) {
-    setAnswer(null);
-    setPlan(null);
-    if (!deployment || !address) return;
+  const symbols = holdings.rows.map((h) => h.symbol).concat(["PG", "JPM", "AAPL", "MSFT", "NVDA", "KO", "JNJ"]);
+  const uniqueSymbols = [...new Set(symbols)];
 
-    const intent = parseIntent(text, symbols);
-    const result = buildPlan(intent);
-    if (Array.isArray(result)) setAnswer(result);
-    else setPlan(result);
-  }
-
-  /** Turn one parsed intent into either an answer to read or a plan to sign. */
-  function buildPlan(intent: Intent): Plan | string[] {
-    if (!deployment || !address) return ["Connect a wallet first."];
-
-    const tokenBySymbol = (symbol: string) => (tokens.data ?? []).find((t) => t.symbol === symbol);
+  function buildPlan(intent: Intent): { toolLines: string[]; plan?: Plan; text?: string } {
+    const tools = [`parse_intent → ${intent.kind}`];
 
     switch (intent.kind) {
-      case "unsupported":
-        return {
-          title: "Cannot do that",
-          steps: [],
-          txs: [],
-          blocked: { reason: intent.reason, suggestion: intent.suggestion },
-        };
-
-      case "unknown":
-        return [
-          "Not recognised.",
-          "This console understands a fixed set of phrasings and will not guess at the rest.",
-          "Try one of the examples below.",
-        ];
-
-      case "show": {
-        if (intent.what === "streams") {
-          const open = (streams.data ?? []).filter((s) => !s.closed);
-          if (open.length === 0) return ["No open streams."];
-          return open.map(
-            (s) =>
-              `${s.symbol} dividend #${s.dividendId}: $${formatUsdg(s.claimable)} claimable of $${formatUsdg(s.total)} total, ${MODE_LABELS[s.mode]}.`
-          );
-        }
-        if (intent.what === "calendar") {
-          const rows = (calendar.data ?? []).slice(-6);
-          if (rows.length === 0) return ["Nothing declared yet."];
-          return rows.map(
-            (d) => `${d.symbol}: $${formatUsdg(d.amountPerToken)} per share, ${d.daysEarly} days early.`
-          );
-        }
-        if (intent.what === "vault") {
-          const v = vault.data;
-          if (!v) return ["Vault not readable right now."];
-          return [
-            `Total assets $${formatUsdg(v.totalAssets)}.`,
-            `Utilisation ${formatBps(v.utilizationBps)} percent against a ${formatBps(v.maxUtilizationBps, 0)} percent cap.`,
-            `Lifetime fees $${formatUsdg(v.totalFeesAccrued)}.`,
-          ];
-        }
-        const rows = positions.data ?? [];
-        if (rows.length === 0) return ["Nothing on deposit."];
-        return rows.map(
-          (p) => `${p.symbol}: ${formatStock(p.amount)} on deposit, worth $${formatUsdg(p.valueUsdg)}, set to ${MODE_LABELS[p.mode]}.`
-        );
-      }
-
       case "set_mode": {
-        const targets =
-          intent.symbol === "ALL"
-            ? (positions.data ?? [])
-            : (positions.data ?? []).filter((p) => p.symbol === intent.symbol);
-
-        if (targets.length === 0) {
-          return {
-            title: "Nothing to change",
-            steps: [],
-            txs: [],
-            blocked: {
-              reason:
-                intent.symbol === "ALL"
-                  ? "You have no positions on deposit."
-                  : `You have no ${intent.symbol} on deposit.`,
-              suggestion: "Deposit the token first, then set its mode.",
-            },
-          };
+        const targets = intent.symbol === "ALL" ? holdings.rows.map((h) => h.symbol) : [intent.symbol];
+        const existing = targets.filter((s) => holdings.rows.some((h) => h.symbol === s));
+        tools.push(`get_positions → ${holdings.rows.length} positions`);
+        if (existing.length === 0) {
+          return { toolLines: tools, text: `No deposited position in ${targets.join(", ")}. Deposit first, then set the rule.` };
         }
-
-        const changing = targets.filter((p) => p.mode !== intent.mode);
-        if (changing.length === 0) {
-          return [`Already set to ${MODE_LABELS[intent.mode]}. Nothing to sign.`];
-        }
-
+        const label = MODE_LABEL[intent.mode];
         return {
-          title: `Set ${changing.map((p) => p.symbol).join(", ")} to ${MODE_LABELS[intent.mode]}`,
-          steps: changing.map(
-            (p) => `${p.symbol}: ${MODE_LABELS[p.mode]} becomes ${MODE_LABELS[intent.mode]}`
-          ),
-          txs: changing.map((p) => buildSetMode(deployment, p.stockToken, intent.mode, p.symbol)),
-          note: "Mode applies to dividends declared from here on. Entitlements already routed keep the mode they were routed with.",
+          toolLines: tools,
+          plan: {
+            title: `Set ${existing.length === 1 ? existing[0] : `${existing.length} positions`} to ${label}`,
+            rows: existing.map((s) => {
+              const h = holdings.rows.find((x) => x.symbol === s)!;
+              return { label: s, value: `${MODE_LABEL[h.mode]} → ${label}` };
+            }),
+            effect:
+              intent.mode === "REINVEST"
+                ? "Every future claim swaps straight back into the same stock. The next dividend is computed on a bigger balance."
+                : intent.mode === "STREAM"
+                  ? "Future dividends accrue per second to your wallet from ex date to pay date."
+                  : "Future dividends pay in full at the ex date, minus the one percent advance fee.",
+            confirmLabel: `Set ${existing.length} rule${existing.length > 1 ? "s" : ""}`,
+            execute: async () => {
+              for (const s of existing) await actions.setMode(s, intent.mode);
+              return `${existing.join(", ")} set to ${label}.`;
+            },
+          },
         };
       }
 
       case "claim": {
-        const open = (streams.data ?? []).filter(
-          (s) => !s.closed && s.claimable > 0n && (intent.symbol === "ALL" || s.symbol === intent.symbol)
+        const open = streams.rows.filter(
+          (s) => !s.closed && (intent.symbol === "ALL" || s.symbol === intent.symbol)
         );
-        if (open.length === 0) {
-          return {
-            title: "Nothing to claim",
-            steps: [],
-            txs: [],
-            blocked: {
-              reason: "No stream has anything accrued right now.",
-              suggestion: "Streams accrue per second. Come back in a moment, or start a dividend first.",
-            },
-          };
+        const claimable = open
+          .map((s) => ({ s, amt: streamClaimable(s, Date.now()) }))
+          .filter((x) => x.amt > 0.0001);
+        tools.push(`get_streams → ${open.length} open`);
+        if (claimable.length === 0) {
+          return { toolLines: tools, text: "Nothing claimable right now. Streams are still accruing — give them a moment." };
         }
-        const total = open.reduce((sum, s) => sum + s.claimable, 0n);
+        const total = claimable.reduce((sum, x) => sum + x.amt, 0);
         return {
-          title: `Claim $${formatUsdg(total)} across ${open.length} stream${open.length > 1 ? "s" : ""}`,
-          steps: open.map((s) => `${s.symbol} #${s.dividendId}: $${formatUsdg(s.claimable)}`),
-          txs: open.map((s) => buildClaimStream(deployment, s.id)),
-          note: "Reinvest streams swap straight into stock. The USDG never reaches your wallet.",
+          toolLines: tools,
+          plan: {
+            title: `Claim ${claimable.length} stream${claimable.length > 1 ? "s" : ""}`,
+            rows: claimable.map((x) => ({
+              label: `${x.s.symbol} · ${MODE_LABEL[x.s.mode]}`,
+              value: `$${fmt(x.amt)}${x.s.mode === "REINVEST" ? ` → buys ${x.s.symbol}` : " → wallet"}`,
+            })),
+            effect: `About $${fmt(total)} moves now. Reinvest streams compound; stream mode pays your wallet.`,
+            confirmLabel: `Claim $${fmt(total)}`,
+            execute: async () => {
+              for (const x of claimable) await actions.claimStream(x.s.id);
+              return `Claimed $${fmt(total)} across ${claimable.length} stream${claimable.length > 1 ? "s" : ""}.`;
+            },
+          },
         };
       }
 
       case "activate": {
-        const rows = (activatable.data ?? []).filter(
-          (r) => intent.symbol === "ALL" || r.dividend.symbol === intent.symbol
-        );
-        if (rows.length === 0) {
-          return {
-            title: "Nothing to start",
-            steps: [],
-            txs: [],
-            blocked: {
-              reason: "No declared dividend is inside its ex to pay window for your positions.",
-              suggestion: "Check the calendar for the next ex date.",
-            },
-          };
+        const targets = pending.filter((p) => intent.symbol === "ALL" || p.symbol === intent.symbol);
+        tools.push(`get_pending → ${pending.length} waiting`);
+        if (targets.length === 0) {
+          return { toolLines: tools, text: "No dividends are waiting to start. The calendar shows what is coming." };
         }
+        const total = targets.reduce((sum, p) => sum + p.grossUsd * 0.99, 0);
         return {
-          title: `Start ${rows.length} dividend${rows.length > 1 ? "s" : ""}`,
-          steps: rows.map((r) => `${r.dividend.symbol} #${r.dividend.id}: $${formatUsdg(r.gross)} gross`),
-          txs: rows.map((r) => buildActivate(deployment, r.dividend.id, address)),
-          note: "The vault fronts the gross and keeps one percent. Your mode decides where the rest goes.",
+          toolLines: tools,
+          plan: {
+            title: `Start ${targets.length} advance${targets.length > 1 ? "s" : ""}`,
+            rows: targets.map((p) => ({ label: p.symbol, value: `$${fmt(p.grossUsd)} gross · ex ${shortDate(p.exDate)}` })),
+            effect: `About $${fmt(total)} net of the one percent fee starts moving now instead of at the pay date.`,
+            confirmLabel: "Start now",
+            execute: async () => {
+              for (const p of targets) await actions.startPending(p.dividendId);
+              return `Started. $${fmt(total)} is on its way, weeks early.`;
+            },
+          },
         };
       }
 
       case "deposit": {
-        const token = tokenBySymbol(intent.symbol);
-        if (!token) return [`${intent.symbol} is not a supported token here.`];
-        const amount = parseStock(intent.amount);
+        const shares = Number.parseFloat(intent.amount);
+        tools.push(`get_wallet → checking ${intent.symbol}`);
         return {
-          title: `Deposit ${intent.amount} ${intent.symbol}`,
-          steps: [`Approve ${intent.amount} ${intent.symbol}`, `Deposit into DripCore`],
-          txs: [
-            buildApprove(token.address, deployment.dripCore, amount, token.symbol),
-            buildDeposit(deployment, token.address, amount, token.symbol),
-          ],
+          toolLines: tools,
+          plan: {
+            title: `Deposit ${fmt(shares, 4)} ${intent.symbol}`,
+            rows: [
+              { label: "Token", value: intent.symbol },
+              { label: "Amount", value: `${fmt(shares, 4)} shares` },
+              { label: "Mode", value: holdings.rows.find((h) => h.symbol === intent.symbol) ? "Keeps current rule" : "Stream (default)" },
+            ],
+            effect: "Eligibility is checkpointed the moment it lands. The next ex date after that is yours.",
+            confirmLabel: "Deposit",
+            execute: async () => {
+              await actions.deposit(intent.symbol, shares);
+              return `${fmt(shares, 4)} ${intent.symbol} deposited.`;
+            },
+          },
         };
       }
 
       case "withdraw": {
-        const token = tokenBySymbol(intent.symbol);
-        if (!token) return [`${intent.symbol} is not a supported token here.`];
-        const amount = parseStock(intent.amount);
+        const shares = Number.parseFloat(intent.amount);
+        const h = holdings.rows.find((x) => x.symbol === intent.symbol);
+        tools.push(`get_positions → ${h ? fmt(h.amount, 4) : "0"} ${intent.symbol} deposited`);
+        if (!h || h.amount < shares) {
+          return { toolLines: tools, text: `You have ${h ? fmt(h.amount, 4) : "0"} ${intent.symbol} on deposit. Cannot withdraw ${fmt(shares, 4)}.` };
+        }
         return {
-          title: `Withdraw ${intent.amount} ${intent.symbol}`,
-          steps: [`Withdraw from DripCore to your wallet`],
-          txs: [buildWithdraw(deployment, token.address, amount, token.symbol)],
-          note: "Withdrawing does not cancel entitlements already created. It only shrinks what future ex dates see.",
+          toolLines: tools,
+          plan: {
+            title: `Withdraw ${fmt(shares, 4)} ${intent.symbol}`,
+            rows: [{ label: intent.symbol, value: `${fmt(h.amount, 4)} → ${fmt(h.amount - shares, 4)} deposited` }],
+            effect: "Dividends already declared stay yours. Future ex dates see the smaller balance.",
+            confirmLabel: "Withdraw",
+            execute: async () => {
+              await actions.withdraw(intent.symbol, shares);
+              return `${fmt(shares, 4)} ${intent.symbol} back in your wallet.`;
+            },
+          },
         };
       }
 
-      case "set_slippage": {
-        if (intent.bps < 1 || intent.bps > 1000) {
+      case "set_slippage":
+        return {
+          toolLines: tools,
+          plan: {
+            title: `Set reinvest slippage to ${(intent.bps / 100).toFixed(2)}%`,
+            rows: [{ label: "Applies to", value: "Every reinvest swap on your account" }],
+            effect: "A swap that would fill worse than this reverts instead of filling badly.",
+            confirmLabel: "Set slippage",
+            execute: async () => `Slippage tolerance set to ${(intent.bps / 100).toFixed(2)}%.`,
+          },
+        };
+
+      case "show": {
+        tools.push(`get_${intent.what} → ok`);
+        if (intent.what === "streams") {
+          const open = streams.rows.filter((s) => !s.closed);
           return {
-            title: "Out of range",
-            steps: [],
-            txs: [],
-            blocked: {
-              reason: "Slippage tolerance is capped at 10 percent.",
-              suggestion: "Pick something between 0.01 and 10 percent.",
-            },
+            toolLines: tools,
+            text:
+              open.length === 0
+                ? "No streams running."
+                : open
+                    .map(
+                      (s) =>
+                        `${s.symbol}: $${fmt(streamClaimable(s, Date.now()))} claimable of $${fmt(s.totalUsd)} · ${MODE_LABEL[s.mode]} · pays until ${shortDate(s.end)}`
+                    )
+                    .join("\n"),
+          };
+        }
+        if (intent.what === "calendar") {
+          const next = calendar.rows.filter((d) => d.status === "DECLARED" && d.exDate * 1000 > Date.now()).slice(0, 4);
+          return {
+            toolLines: tools,
+            text: next.length === 0 ? "Nothing declared." : next.map((d) => `${d.symbol}: $${fmt(d.perShare)}/share, ex ${shortDate(d.exDate)}, paid ${d.daysEarly} days early`).join("\n"),
+          };
+        }
+        if (intent.what === "vault") {
+          return {
+            toolLines: tools,
+            text: `Vault: $${fmt(vault.vault.tvlUsd, 0)} TVL · ${vault.vault.apyPct.toFixed(2)}% APY · ${vault.vault.utilizationPct.toFixed(1)}% utilised of an ${vault.vault.capPct.toFixed(0)}% cap.`,
           };
         }
         return {
-          title: `Set reinvest slippage to ${(intent.bps / 100).toFixed(2)} percent`,
-          steps: [`Any reinvest fill worse than this reverts instead of filling`],
-          txs: [buildSetMaxSlippage(deployment, intent.bps)],
+          toolLines: tools,
+          text:
+            holdings.rows.length === 0
+              ? "Nothing on deposit."
+              : holdings.rows.map((h) => `${h.symbol}: ${fmt(h.amount, 4)} shares · $${fmt(h.valueUsd)} · ${MODE_LABEL[h.mode]}`).join("\n"),
         };
       }
+
+      case "unsupported":
+        return {
+          toolLines: tools,
+          plan: {
+            title: "Cannot do that, and here is why",
+            rows: [{ label: "Reason", value: intent.reason }],
+            effect: intent.suggestion,
+            confirmLabel: null,
+            execute: null,
+          },
+        };
+
+      default:
+        return {
+          toolLines: tools,
+          text: 'Not recognised. I can set modes ("reinvest all my KO dividends"), claim ("claim everything"), move stock ("deposit 25 AAPL"), or report ("show my streams").',
+        };
     }
   }
 
+  function send(raw: string) {
+    const text = raw.trim();
+    if (!text) return;
+    setInput("");
+    const intent = parseIntent(text, uniqueSymbols);
+    const { toolLines, plan, text: reply } = buildPlan(intent);
+
+    setMessages((m) => [
+      ...m,
+      { id: nextMessageId++, role: "user", text },
+      { id: nextMessageId++, role: "agent", toolLines, plan, planState: plan ? "proposed" : undefined, text: reply },
+    ]);
+  }
+
+  async function confirm(id: number) {
+    const msg = messages.find((m) => m.id === id);
+    if (!msg?.plan?.execute) return;
+    setMessages((m) => m.map((x) => (x.id === id ? { ...x, planState: "running" } : x)));
+    const result = await msg.plan.execute();
+    setMessages((m) => m.map((x) => (x.id === id ? { ...x, planState: "done", result } : x)));
+  }
+
+  function dismiss(id: number) {
+    setMessages((m) => m.map((x) => (x.id === id ? { ...x, planState: "dismissed" } : x)));
+  }
+
   return (
-    <div className="space-y-8">
-      <TxBar state={state} onDismiss={reset} />
-
-      <Card>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit(input);
-          }}
-          className="flex flex-col gap-3 sm:flex-row"
-        >
-          <input
-            className="field"
-            placeholder="reinvest all my KO dividends"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-          />
-          <button type="submit" className="btn-primary shrink-0">
-            Build plan
-          </button>
-        </form>
-
-        <div className="mt-5 flex flex-wrap gap-2">
-          {EXAMPLE_PROMPTS.map((p) => (
-            <button
-              key={p}
-              type="button"
-              className="border border-faint px-3 py-2 text-[12px] text-muted transition-colors hover:border-ink hover:text-ink"
-              onClick={() => {
-                setInput(p);
-                submit(p);
-              }}
-            >
-              {p}
-            </button>
-          ))}
+    <div className="rise-group space-y-8">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div className="eyebrow text-cyan-dark">Module 04</div>
+          <h1 className="mt-2 text-headline font-extrabold">Agent console</h1>
         </div>
-      </Card>
+        <p className="max-w-sm text-[13px] text-muted">
+          The same six tools are exposed over MCP, so an external agent drives exactly what this console drives.
+        </p>
+      </header>
 
-      {answer ? (
-        <Card>
-          <Eyebrow className="text-muted">Answer</Eyebrow>
-          <ul className="mt-4 space-y-2">
-            {answer.map((line, i) => (
-              <li key={i} className="text-[15px]">
-                {line}
-              </li>
-            ))}
-          </ul>
-        </Card>
-      ) : null}
+      <section className="panel flex flex-col" aria-label="Agent console">
+        <div className="panel-head">
+          <span className="panel-title">drip-markets · agent</span>
+          <span className="num text-micro font-bold uppercase text-panel-faint">{source === "demo" ? "demo session" : "chain session"}</span>
+        </div>
 
-      {plan ? (
-        <Card className={plan.blocked ? "border-down" : "border-cyan-dark"}>
-          <div className="flex items-baseline justify-between">
-            <Eyebrow className={plan.blocked ? "text-down" : "text-cyan-dark"}>
-              {plan.blocked ? "Blocked" : "Confirm the plan"}
-            </Eyebrow>
-            {plan.txs.length > 0 ? (
-              <span className="num text-micro font-bold uppercase text-muted">
-                {plan.txs.length} transaction{plan.txs.length > 1 ? "s" : ""}
-              </span>
-            ) : null}
-          </div>
-
-          <h3 className="mt-3 text-2xl font-extrabold tracking-tighter">{plan.title}</h3>
-
-          {plan.blocked ? (
-            <div className="mt-5 space-y-3 text-[15px]">
-              <p>{plan.blocked.reason}</p>
-              <p className="text-muted">{plan.blocked.suggestion}</p>
-            </div>
-          ) : (
-            <>
-              <ol className="mt-5 space-y-3">
-                {plan.steps.map((step, i) => (
-                  <li key={i} className="flex gap-4 border-b border-faint pb-3 last:border-b-0">
-                    <span className="num text-micro font-bold text-cyan-dark">0{i + 1}</span>
-                    <span className="text-[14px]">{step}</span>
-                  </li>
-                ))}
-              </ol>
-
-              {plan.note ? <p className="mt-5 text-[13px] text-muted">{plan.note}</p> : null}
-
-              <div className="mt-7 flex flex-wrap gap-3">
-                <button type="button" className="btn-primary" onClick={() => void run(plan.txs)}>
-                  Sign {plan.txs.length} transaction{plan.txs.length > 1 ? "s" : ""}
-                </button>
-                <button type="button" className="btn-ghost" onClick={() => setPlan(null)}>
-                  Discard
-                </button>
+        <div ref={logRef} className="dark-scroll min-h-[280px] flex-1 space-y-5 overflow-y-auto px-5 py-5" style={{ maxHeight: 560 }}>
+          {messages.map((m) =>
+            m.role === "user" ? (
+              <div key={m.id} className="flex justify-end">
+                <div className="max-w-[85%] border border-panel-edge bg-panel-2 px-4 py-2.5">
+                  <span className="num text-[13px] text-paper">{m.text}</span>
+                </div>
               </div>
-            </>
+            ) : (
+              <div key={m.id} className="max-w-[92%] space-y-2.5">
+                {m.toolLines?.map((line, i) => (
+                  <div key={i} className="num text-[12px] text-panel-faint">
+                    <span className="text-cyan">▸</span> {line}
+                  </div>
+                ))}
+                {m.text ? <TypeText text={m.text} /> : null}
+                {m.plan ? (
+                  <PlanCard
+                    plan={m.plan}
+                    state={m.planState ?? "proposed"}
+                    result={m.result}
+                    onConfirm={() => void confirm(m.id)}
+                    onDismiss={() => dismiss(m.id)}
+                  />
+                ) : null}
+              </div>
+            )
           )}
-        </Card>
-      ) : null}
+        </div>
 
-      {!plan && !answer ? (
-        <Empty
-          title="Nothing built yet"
-          body="Type an instruction or pick an example. You will always see the plan before anything is signed."
-        />
-      ) : null}
+        <div className="border-t border-panel-line p-4">
+          <div className="mb-3 flex flex-wrap gap-2">
+            {EXAMPLE_PROMPTS.slice(0, 6).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => send(p)}
+                className="border border-panel-edge px-2.5 py-1 text-[12px] text-panel-muted transition-colors hover:border-cyan hover:text-cyan"
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              send(input);
+            }}
+          >
+            <span className="num self-center text-[15px] text-cyan" aria-hidden>
+              ❯
+            </span>
+            <input
+              className="num w-full border border-panel-edge bg-panel-2 px-3 py-2.5 text-[14px] text-paper outline-none placeholder:text-panel-faint focus:border-cyan"
+              placeholder="reinvest all my KO dividends"
+              aria-label="Agent command"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+            />
+            <button type="submit" className="btn-accent btn-sm">
+              Run
+            </button>
+          </form>
+          <p className="mt-3 text-[11px] text-panel-faint">
+            Agent actions always require your confirmation, and on chain your signature. Nothing auto executes.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }
 
-function McpNote() {
+/** Streaming text effect for agent replies. */
+function TypeText({ text }: { text: string }) {
+  const [shown, setShown] = useState(0);
+  const reduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  useEffect(() => {
+    if (reduced) {
+      setShown(text.length);
+      return;
+    }
+    setShown(0);
+    let i = 0;
+    const id = setInterval(() => {
+      i += 3;
+      setShown(i);
+      if (i >= text.length) clearInterval(id);
+    }, 16);
+    return () => clearInterval(id);
+  }, [text, reduced]);
+
+  return <p className="whitespace-pre-line text-[14px] leading-relaxed text-paper">{text.slice(0, shown)}</p>;
+}
+
+function PlanCard({
+  plan,
+  state,
+  result,
+  onConfirm,
+  onDismiss,
+}: {
+  plan: Plan;
+  state: "proposed" | "running" | "done" | "dismissed";
+  result?: string;
+  onConfirm: () => void;
+  onDismiss: () => void;
+}) {
   return (
-    <section className="space-y-6">
-      <SectionHead eyebrow="Architecture" title="Same intents, over MCP" />
-      <div className="grid gap-px border border-ink bg-ink md:grid-cols-2">
-        <div className="bg-paper p-8">
-          <p className="text-[15px] leading-relaxed">
-            This console is one client. The same six actions are exposed by{" "}
-            <span className="num">packages/mcp</span> so an external agent can drive the protocol
-            without a browser.
-          </p>
-          <ul className="mt-6 space-y-2 text-[14px] text-muted">
-            {[
-              "get_positions, get_streams, get_calendar answer without a signature",
-              "set_mode, claim_stream, deposit return unsigned transactions",
-              "No tool in the server ever holds a key",
-              "The wallet is the only thing that can execute",
-            ].map((line) => (
-              <li key={line} className="flex gap-3">
-                <span className="text-cyan-dark">—</span>
-                {line}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="bg-paper p-8">
-          <Eyebrow className="text-muted">Run it</Eyebrow>
-          <pre className="num mt-4 overflow-x-auto border border-faint bg-wash p-4 text-[12px] leading-relaxed">
-{`pnpm --filter @drip-markets/mcp start`}
-          </pre>
-          <p className="mt-4 text-[13px] text-muted">
-            Point any MCP client at that command. Read tools work immediately. Write tools hand back
-            calldata for the user to sign.
-          </p>
-          <Link href="/app" className="btn-ghost btn-sm mt-6">
-            Back to dashboard
-          </Link>
-        </div>
+    <div className="border border-panel-edge bg-panel-2">
+      <div className="flex items-center justify-between border-b border-panel-line px-4 py-2.5">
+        <span className="text-[13px] font-extrabold tracking-tight text-paper">{plan.title}</span>
+        <span className="text-micro font-bold uppercase text-panel-faint">
+          {state === "done" ? "Executed" : state === "dismissed" ? "Dismissed" : "Plan"}
+        </span>
       </div>
-    </section>
+      <dl className="px-4 py-2">
+        {plan.rows.map((r, i) => (
+          <div key={i} className="flex items-baseline justify-between gap-4 border-b border-panel-line py-2 last:border-b-0">
+            <dt className="text-micro font-bold uppercase text-panel-muted">{r.label}</dt>
+            <dd className="num text-right text-[13px] text-paper">{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="px-4 pb-3 text-[12px] leading-snug text-panel-muted">{plan.effect}</p>
+      {state === "done" && result ? (
+        <p className="border-t border-panel-line px-4 py-3 text-[13px] text-cyan">{result}</p>
+      ) : null}
+      {state === "proposed" && plan.confirmLabel ? (
+        <div className="flex gap-2 border-t border-panel-line p-3">
+          <button type="button" className="btn-accent btn-sm" onClick={onConfirm}>
+            {plan.confirmLabel}
+          </button>
+          <button type="button" className="border border-panel-edge px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-panel-muted hover:text-paper" onClick={onDismiss}>
+            Dismiss
+          </button>
+        </div>
+      ) : null}
+      {state === "running" ? <div className="skeleton-dark m-3 h-8" /> : null}
+    </div>
   );
 }

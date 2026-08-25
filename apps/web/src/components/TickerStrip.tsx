@@ -1,44 +1,34 @@
 "use client";
 
-import { useCalendar, useStockTokens } from "@/lib/hooks";
-import { DividendStatus, formatDate, formatUsdg } from "@drip-markets/sdk";
+import { useCalendarRows, useTokensView } from "@/lib/data/provider";
+import { fmt, shortDate } from "@/components/live";
 
 /**
  * The boxed ticker strip. Cyan left edge on every cell, mono numbers, marquee that
- * pauses when you hover it.
- *
- * Live declarations when the chain has them, a static reference row when it does not,
- * so the page is never a row of empty boxes.
+ * pauses when you hover it. Reads the same data source as every other surface, so
+ * the numbers here agree with the calendar and the dashboard.
  */
-
-const FALLBACK = [
-  { symbol: "AAPL", amount: "0.26", note: "Ex Aug 11" },
-  { symbol: "MSFT", amount: "0.83", note: "Ex Aug 21" },
-  { symbol: "KO", amount: "0.51", note: "Ex Sep 15" },
-  { symbol: "JNJ", amount: "1.30", note: "Ex Aug 26" },
-  { symbol: "NVDA", amount: "0.01", note: "Ex Sep 08" },
-  { symbol: "PG", amount: "1.06", note: "Ex Oct 24" },
-];
-
 export function TickerStrip() {
-  const { data: calendar } = useCalendar();
-  const { data: tokens } = useStockTokens();
+  const { rows } = useCalendarRows();
+  const tokens = useTokensView();
 
-  const live =
-    calendar
-      ?.filter((d) => d.status !== DividendStatus.VOIDED)
-      .slice(-8)
-      .map((d) => ({
-        symbol: d.symbol || tokens?.find((t) => t.address === d.stockToken)?.symbol || "TOKEN",
-        amount: formatUsdg(d.amountPerToken, 2),
-        note: `Ex ${formatDate(d.exDate)}`,
-      })) ?? [];
+  const priceOf = new Map(tokens.map((t) => [t.symbol, t.priceUsd]));
+  const cells = rows
+    .filter((d) => d.status === "DECLARED")
+    .sort((a, b) => a.exDate - b.exDate)
+    .slice(0, 8)
+    .map((d) => ({
+      symbol: d.symbol,
+      amount: fmt(d.perShare, 2),
+      note: `Ex ${shortDate(d.exDate)}`,
+      price: priceOf.get(d.symbol),
+    }));
 
-  const cells = live.length > 0 ? live : FALLBACK;
+  if (cells.length === 0) return null;
   const doubled = [...cells, ...cells];
 
   return (
-    <div className="marquee-host rule-b overflow-hidden bg-paper">
+    <div className="marquee-host rule-b overflow-hidden bg-paper" aria-hidden>
       <div className="flex w-max marquee">
         {doubled.map((cell, i) => (
           <div key={`${cell.symbol}-${i}`} className="ticker-cell">

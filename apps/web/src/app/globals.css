@@ -34,10 +34,24 @@
     background: #35c2db;
     color: #0a0a0a;
   }
+
+  /* Custom focus: 2px cyan, offset, everywhere. Never the browser default. */
+  :focus-visible {
+    outline: 2px solid #35c2db;
+    outline-offset: 2px;
+  }
+
+  button:focus:not(:focus-visible),
+  a:focus:not(:focus-visible) {
+    outline: none;
+  }
 }
 
 @layer components {
-  /* The outlined card. 1px black, square, no shadow, ever. */
+  /* ------------------------------------------------------------------ */
+  /* Light chrome                                                        */
+  /* ------------------------------------------------------------------ */
+
   .card {
     @apply border border-ink bg-paper;
   }
@@ -46,7 +60,6 @@
     @apply p-6 md:p-8;
   }
 
-  /* Section eyebrow. Tiny, tracked out, upper. */
   .eyebrow {
     @apply text-micro font-bold uppercase;
   }
@@ -59,41 +72,86 @@
     @apply border-b border-ink;
   }
 
-  /* Primary action. Black block, cyan on hover. */
+  .hairline-t {
+    @apply border-t border-hairline;
+  }
+
+  .hairline-b {
+    @apply border-b border-hairline;
+  }
+
+  /* Buttons: background sweeps in from the left, never snaps. */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 border border-ink px-5 py-3
-           text-[13px] font-bold uppercase tracking-widest transition-colors
+    @apply relative inline-flex items-center justify-center gap-2 overflow-hidden border border-ink
+           px-5 py-3 text-[13px] font-bold uppercase tracking-widest
+           transition-colors duration-200
            disabled:cursor-not-allowed disabled:opacity-40;
+    isolation: isolate;
+  }
+
+  .btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .btn:hover:not(:disabled)::before {
+    transform: scaleX(1);
   }
 
   .btn-primary {
-    @apply btn bg-ink text-paper hover:bg-cyan-dark hover:border-cyan-dark;
+    @apply btn bg-ink text-paper;
+  }
+
+  .btn-primary::before {
+    background: #1899b1;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    @apply border-cyan-dark;
   }
 
   .btn-accent {
-    @apply btn bg-cyan text-ink hover:bg-cyan-dark hover:text-paper border-ink;
+    @apply btn bg-cyan text-ink border-ink;
+  }
+
+  .btn-accent::before {
+    background: #1899b1;
+  }
+
+  .btn-accent:hover:not(:disabled) {
+    @apply text-paper;
   }
 
   .btn-ghost {
-    @apply btn bg-paper text-ink hover:bg-ink hover:text-paper;
+    @apply btn bg-paper text-ink;
+  }
+
+  .btn-ghost::before {
+    background: #0a0a0a;
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    @apply text-paper;
   }
 
   .btn-sm {
     @apply px-3 py-2 text-[11px];
   }
 
-  /* Text input. Square, ruled, mono for anything numeric. */
   .field {
     @apply w-full border border-ink bg-paper px-4 py-3 text-ink outline-none
            placeholder:text-muted focus:border-cyan-dark focus:ring-0;
   }
 
-  /* The boxed ticker cell with its cyan left edge. */
   .ticker-cell {
     @apply flex shrink-0 items-baseline gap-3 border-l-2 border-cyan px-5 py-2;
   }
 
-  /* Data table. Ruled, mono, no zebra. */
   .data-table {
     @apply w-full border-collapse text-left;
   }
@@ -113,12 +171,153 @@
   .tag-accent {
     @apply tag border-cyan-dark bg-cyan text-ink;
   }
+
+  /* Cards that lift on hover: border darkens, 2px rise. */
+  .lift {
+    @apply transition-all duration-150 ease-drip;
+  }
+
+  .lift:hover {
+    transform: translateY(-2px);
+    border-color: #0a0a0a;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Dark data surfaces. Light chrome, dark data.                        */
+  /* ------------------------------------------------------------------ */
+
+  .panel {
+    @apply border border-ink bg-panel text-paper;
+  }
+
+  .panel-head {
+    @apply flex flex-wrap items-center justify-between gap-3 border-b border-panel-line px-5 py-4;
+  }
+
+  .panel-title {
+    @apply text-micro font-bold uppercase text-panel-muted;
+  }
+
+  .panel-table {
+    @apply w-full border-collapse text-left;
+  }
+
+  .panel-table th {
+    @apply border-b border-panel-line px-5 py-3 text-micro font-bold uppercase text-panel-muted;
+  }
+
+  .panel-table td {
+    @apply border-b border-panel-line px-5 py-4 align-middle;
+  }
+
+  .panel-table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  .panel-table tbody tr {
+    @apply transition-colors duration-150;
+  }
+
+  .panel-table tbody tr:hover {
+    background: #101317;
+  }
+
+  /* Segmented control inside dark panels. */
+  .seg-dark {
+    @apply inline-flex border border-panel-edge;
+  }
+
+  .seg-dark button {
+    @apply px-2.5 py-1.5 text-micro font-bold uppercase text-panel-muted transition-colors duration-150;
+  }
+
+  .seg-dark button + button {
+    @apply border-l border-panel-edge;
+  }
+
+  .seg-dark button[aria-pressed="true"] {
+    @apply bg-cyan text-ink;
+  }
+
+  .seg-dark button:not([aria-pressed="true"]):hover {
+    @apply text-paper;
+  }
+
+  /* Value update flash. */
+  .flash-light {
+    animation: pulse-cell 0.7s ease-out;
+  }
+
+  .flash-dark {
+    animation: pulse-cell-dark 0.7s ease-out;
+  }
+
+  /* Skeletons hold the exact layout while data settles. Never a spinner. */
+  .skeleton {
+    @apply bg-faint;
+    background-image: linear-gradient(90deg, #e5e5e5 25%, #f2f2f2 50%, #e5e5e5 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+
+  .skeleton-dark {
+    background-color: #15181b;
+    background-image: linear-gradient(90deg, #15181b 25%, #1d2126 50%, #15181b 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
 }
 
 @layer utilities {
+  /* Keyframes live here, not in tailwind.config: custom classes reference them
+     directly, and Tailwind only emits config keyframes for its own animate-*
+     utilities. Missing keyframes once left every chart fill at opacity 0. */
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse-cell {
+    0% { background-color: rgba(53, 194, 219, 0.35); }
+    100% { background-color: transparent; }
+  }
+
+  @keyframes pulse-cell-dark {
+    0% { background-color: rgba(53, 194, 219, 0.22); }
+    100% { background-color: transparent; }
+  }
+
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+
+  @keyframes draw-line {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
   .shell {
     @apply mx-auto w-full max-w-shell px-5 md:px-8;
   }
+
+  /* Staggered rise on load: parent gets .rise-group, children rise in order. */
+  .rise-group > * {
+    animation: rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .rise-group > *:nth-child(1) { animation-delay: 0ms; }
+  .rise-group > *:nth-child(2) { animation-delay: 60ms; }
+  .rise-group > *:nth-child(3) { animation-delay: 120ms; }
+  .rise-group > *:nth-child(4) { animation-delay: 180ms; }
+  .rise-group > *:nth-child(5) { animation-delay: 240ms; }
+  .rise-group > *:nth-child(6) { animation-delay: 300ms; }
+  .rise-group > *:nth-child(n + 7) { animation-delay: 360ms; }
 
   /* Ticker marquee. Pauses on hover so a reader can actually read it. */
   .marquee {
@@ -138,9 +337,73 @@
     }
   }
 
+  /* Chart draw in: pathLength normalised to 1 in the SVG. */
+  .draw-line {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: draw-line 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards;
+  }
+
+  .chart-fill {
+    opacity: 0;
+    animation: fade-in 0.5s ease-out 0.45s forwards;
+  }
+
+  /* Dark panel scrollbars. */
+  .dark-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #1d2126 #0c0e10;
+  }
+
+  .dark-scroll::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+
+  .dark-scroll::-webkit-scrollbar-track {
+    background: #0c0e10;
+  }
+
+  .dark-scroll::-webkit-scrollbar-thumb {
+    background: #1d2126;
+  }
+
+  .dark-scroll::-webkit-scrollbar-thumb:hover {
+    background: #35c2db;
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .marquee {
-      animation: none;
+    .marquee,
+    .rise-group > *,
+    .draw-line,
+    .chart-fill,
+    .skeleton,
+    .skeleton-dark,
+    .flash-light,
+    .flash-dark {
+      animation: none !important;
+    }
+
+    .draw-line {
+      stroke-dashoffset: 0;
+    }
+
+    .chart-fill {
+      opacity: 1;
+    }
+
+    .btn::before {
+      transition: none;
+    }
+
+    .lift,
+    .lift:hover {
+      transform: none;
+      transition: none;
+    }
+
+    * {
+      scroll-behavior: auto !important;
     }
   }
 }

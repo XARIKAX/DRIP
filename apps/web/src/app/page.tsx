@@ -4,6 +4,7 @@ import { SiteNav } from "@/components/SiteNav";
 import { TickerStrip } from "@/components/TickerStrip";
 import { Footer } from "@/components/Footer";
 import { HeroCounter } from "@/components/HeroCounter";
+import { DashboardPreview } from "@/components/DashboardPreview";
 import { Card, Eyebrow } from "@/components/ui";
 
 const MODULES = [
@@ -69,60 +70,63 @@ export default function HomePage() {
           }}
           aria-hidden
         />
-        <div className="shell relative grid gap-12 py-16 md:grid-cols-12 md:py-24">
-          <div className="md:col-span-7">
-            <Eyebrow className="text-cyan-dark">The dividend layer for Robinhood Chain</Eyebrow>
-            <h1 className="mt-5 text-hero font-extrabold">
-              Get paid before
-              <br />
-              Wall Street does
-            </h1>
-            <p className="mt-7 max-w-xl text-[17px] leading-relaxed text-ink/80">
-              Stock tokens on Robinhood Chain pay dividends the old way. Offchain. Weeks late. In
-              quarterly lumps. Only inside one app. Drip Markets pays you at the ex date, streams the money
-              per second, and turns every drop back into stock the moment it lands.
-            </p>
-            <div className="mt-9 flex flex-wrap gap-3">
-              <Link href="/app" className="btn-primary">
-                Open the app
-              </Link>
-              <Link href="/app/calendar" className="btn-ghost">
-                See the calendar
-              </Link>
-            </div>
-            <div className="mt-10 flex flex-wrap gap-3">
-              <span className="tag">Self custody</span>
-              <span className="tag">No app lock in</span>
-              <span className="tag-accent">Testnet live</span>
-            </div>
-          </div>
+        <div className="shell relative py-20 md:py-28">
+          <Eyebrow className="text-cyan-dark">The dividend layer for Robinhood Chain</Eyebrow>
+          <h1 className="mt-6 text-hero font-extrabold">
+            Get paid before
+            <br />
+            Wall Street does
+          </h1>
 
-          <div className="md:col-span-5">
-            <Card className="h-full">
-              <Eyebrow className="text-muted">Streaming now, protocol wide</Eyebrow>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="num text-2xl font-semibold text-muted">$</span>
-                <span className="text-[clamp(2rem,5vw,3.25rem)] font-extrabold tracking-tightest text-ink">
-                  <HeroCounter />
-                </span>
+          <div className="mt-12 grid gap-12 md:grid-cols-12 md:gap-8">
+            <div className="md:col-span-6 lg:col-span-5">
+              <p className="max-w-xl text-[17px] leading-relaxed text-ink/80">
+                Stock tokens on Robinhood Chain pay dividends the old way. Offchain. Weeks late. In
+                quarterly lumps. Only inside one app. Drip Markets pays you at the ex date, streams
+                the money per second, and turns every drop back into stock the moment it lands.
+              </p>
+              <div className="mt-9 flex flex-wrap gap-3">
+                <Link href="/app" className="btn-primary">
+                  Open the app
+                </Link>
+                <Link href="/app/calendar" className="btn-ghost">
+                  See the calendar
+                </Link>
               </div>
-              <div className="mt-1 text-[13px] text-muted">USDG paid to holders this quarter</div>
+              <div className="mt-10 flex flex-wrap gap-3">
+                <span className="tag">Self custody</span>
+                <span className="tag">No app lock in</span>
+                <span className="tag-accent">Testnet live</span>
+              </div>
+            </div>
 
-              <div className="rule-t mt-7 grid grid-cols-2 gap-y-6 pt-7">
-                {STATS.map((s) => (
-                  <div key={s.label}>
-                    <div className="num text-2xl font-semibold tracking-tighter">{s.value}</div>
-                    <div className="mt-1 text-micro font-bold uppercase text-muted">{s.label}</div>
-                  </div>
-                ))}
-              </div>
-            </Card>
+            <div className="md:col-span-6 lg:col-span-5 lg:col-start-8">
+              <Card className="h-full">
+                <Eyebrow className="text-muted">Streaming now, protocol wide</Eyebrow>
+                <div className="mt-4 flex items-baseline gap-2">
+                  <span className="num text-2xl font-semibold text-muted">$</span>
+                  <span className="text-[clamp(2rem,4vw,3rem)] font-extrabold tracking-tightest text-ink">
+                    <HeroCounter />
+                  </span>
+                </div>
+                <div className="mt-1 text-[13px] text-muted">USDG paid to holders this quarter</div>
+
+                <div className="rule-t mt-7 grid grid-cols-2 gap-y-6 pt-7">
+                  {STATS.map((s) => (
+                    <div key={s.label}>
+                      <div className="num text-2xl font-semibold tracking-tighter">{s.value}</div>
+                      <div className="mt-1 text-micro font-bold uppercase text-muted">{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Modules */}
-      <section className="shell py-16 md:py-24">
+      <section className="shell py-24 md:py-36">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <Eyebrow className="text-cyan-dark">Four modules</Eyebrow>
@@ -146,6 +150,29 @@ export default function HomePage() {
               <p className="mt-4 text-[14px] leading-relaxed text-muted">{m.body}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* The product, running */}
+      <section className="rule-t bg-wash">
+        <div className="shell py-24 md:py-36">
+          <div className="grid items-center gap-12 lg:grid-cols-12">
+            <div className="lg:col-span-4">
+              <Eyebrow className="text-cyan-dark">The product, running</Eyebrow>
+              <h2 className="mt-4 text-display font-extrabold">This is live</h2>
+              <p className="mt-5 text-[15px] leading-relaxed text-muted">
+                Not a screenshot. The panel on the right is the actual dashboard, running on the
+                demo portfolio, accruing per second while you read this. Open the app and pick up
+                exactly where it leaves off.
+              </p>
+              <Link href="/app" className="btn-primary mt-7">
+                Open the dashboard
+              </Link>
+            </div>
+            <div className="lg:col-span-8">
+              <DashboardPreview />
+            </div>
+          </div>
         </div>
       </section>
 
@@ -175,10 +202,10 @@ export default function HomePage() {
       </section>
 
       {/* Article + side cards */}
-      <section className="shell py-16 md:py-24">
+      <section className="shell py-24 md:py-36">
         <Eyebrow className="text-cyan-dark">Today&apos;s dividend market</Eyebrow>
         <div className="mt-6 grid gap-12 lg:grid-cols-12">
-          <article className="lg:col-span-7">
+          <article className="min-w-0 lg:col-span-7">
             <h2 className="text-display font-extrabold">Why dividends are still broken</h2>
             <div className="mt-7 space-y-5 text-[16px] leading-relaxed text-ink/85">
               <p>
@@ -216,11 +243,12 @@ export default function HomePage() {
             </div>
           </article>
 
-          <aside className="space-y-6 lg:col-span-5">
+          <aside className="min-w-0 space-y-6 lg:col-span-5">
             <Card>
               <Eyebrow className="text-muted">Side by side</Eyebrow>
               <h3 className="mt-3 text-xl font-extrabold tracking-tighter">Same name, next generation</h3>
-              <table className="data-table mt-5 text-[13px]">
+              <div className="mt-5 overflow-x-auto">
+                <table className="data-table text-[13px]">
                 <thead>
                   <tr>
                     <th>Term</th>
@@ -237,7 +265,8 @@ export default function HomePage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </Card>
 
             <Card>
@@ -271,7 +300,7 @@ export default function HomePage() {
 
       {/* Closing */}
       <section className="rule-t">
-        <div className="shell flex flex-wrap items-center justify-between gap-6 py-16">
+        <div className="shell flex flex-wrap items-center justify-between gap-6 py-24 md:py-32">
           <h2 className="max-w-2xl text-display font-extrabold">
             Dividends the way they should work
           </h2>

@@ -1,0 +1,151 @@
+/**
+ * The view models every page renders from, and the provider interface that feeds
+ * them. Two implementations exist: the seeded MockProvider (demo mode, default)
+ * and the chain adapter (wallet connected against a deployed chain). Components
+ * never know which one they are on. That single seam is what makes the app fully
+ * browsable with no wallet, ever.
+ *
+ * Values are plain USD / share numbers, not bigints: these are display models.
+ * The chain adapter owns the base-unit conversions.
+ */
+
+export type ModeName = "CASH_EARLY" | "STREAM" | "REINVEST";
+
+export const MODE_LABEL: Record<ModeName, string> = {
+  CASH_EARLY: "Cash early",
+  STREAM: "Stream",
+  REINVEST: "Reinvest",
+};
+
+export const MODE_SENTENCE: Record<ModeName, string> = {
+  CASH_EARLY: "The whole dividend hits your wallet at the ex date, weeks before the issuer pays.",
+  STREAM: "The dividend drips into your wallet per second from the ex date to the pay date.",
+  REINVEST: "The dividend drips in and buys more of the same stock the moment it lands.",
+};
+
+export interface TokenInfo {
+  symbol: string;
+  name: string;
+  priceUsd: number;
+  /** Trailing dividend yield, percent. */
+  yieldPct: number;
+  /** Quarterly dividend per share in USD. */
+  perShare: number;
+  /** Next ex date, unix seconds, or null when nothing is scheduled. */
+  nextExDate: number | null;
+  /** True while a declared dividend is between its ex date and pay date. */
+  payingNow: boolean;
+}
+
+export interface Holding {
+  symbol: string;
+  /** Shares on deposit. */
+  amount: number;
+  valueUsd: number;
+  mode: ModeName;
+  /** Percent move today. */
+  movePct: number;
+  /** 60 point intraday walk for the inline sparkline, oldest first. */
+  spark: number[];
+}
+
+export interface StreamRow {
+  id: number;
+  symbol: string;
+  mode: ModeName;
+  /** Total USD the stream pays over its life. */
+  totalUsd: number;
+  /** USD claimed as of `baseTime`. Live accrual is base + rate * elapsed. */
+  claimedBaseUsd: number;
+  /** Unix ms when claimedBaseUsd was last true. */
+  baseTimeMs: number;
+  /** USD per second. */
+  ratePerSec: number;
+  /** Unix seconds. */
+  start: number;
+  end: number;
+  closed: boolean;
+}
+
+/** Live accrued-but-unclaimed USD for a stream. */
+export function streamClaimable(s: StreamRow, nowMs: number): number {
+  if (s.closed) return 0;
+  const startMs = s.start * 1000;
+  const endMs = s.end * 1000;
+  const at = Math.min(Math.max(nowMs, startMs), endMs);
+  const accrued = Math.min(s.ratePerSec * ((at - startMs) / 1000), s.totalUsd);
+  return Math.max(accrued - s.claimedBaseUsd, 0);
+}
+
+export type ActivityKind =
+  | "deposit"
+  | "withdraw"
+  | "advance"
+  | "claim"
+  | "reinvest"
+  | "mode"
+  | "vault"
+  | "settle";
+
+export interface ActivityRow {
+  id: number;
+  kind: ActivityKind;
+  /** One line, already written for humans. */
+  summary: string;
+  /** Signed USD amount when one applies. */
+  amountUsd: number | null;
+  /** Unix seconds. */
+  ts: number;
+}
+
+export type DividendStatusName = "DECLARED" | "SETTLED" | "VOIDED";
+
+export interface DividendRow {
+  id: number;
+  symbol: string;
+  perShare: number;
+  exDate: number;
+  payDate: number;
+  status: DividendStatusName;
+  /** Days between ex and pay. The days you gain. This column is the product. */
+  daysEarly: number;
+}
+
+export interface VaultView {
+  tvlUsd: number;
+  apyPct: number;
+  utilizationPct: number;
+  capPct: number;
+  advancesOutstandingUsd: number;
+  feesEarnedUsd: number;
+  sharePrice: number;
+  freeLiquidityUsd: number;
+  yourShares: number;
+  yourAssetsUsd: number;
+  maxWithdrawUsd: number;
+  /** 90 daily APY points, oldest first. */
+  apyHistory: number[];
+}
+
+export interface PendingAdvance {
+  dividendId: number;
+  symbol: string;
+  grossUsd: number;
+  exDate: number;
+  payDate: number;
+}
+
+export interface WalletBalances {
+  usdg: number;
+  /** symbol -> shares held in the wallet, outside the protocol. */
+  stocks: Record<string, number>;
+}
+
+export interface PortfolioSummary {
+  valueUsd: number;
+  /** Combined per second accrual across open streams, for live interpolation. */
+  streamRatePerSec: number;
+  earnedThisWeekUsd: number;
+  activeRules: number;
+  nextDividend: { symbol: string; exDate: number } | null;
+}

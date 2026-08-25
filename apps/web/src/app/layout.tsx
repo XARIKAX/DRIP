@@ -17,6 +17,11 @@ export const metadata: Metadata = {
     siteName: "Drip Markets",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Drip Markets — Get paid before Wall Street does",
+    description: "Dividends advanced at the ex date, streamed per second, auto reinvested onchain.",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

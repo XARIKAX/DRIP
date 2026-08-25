@@ -1,276 +1,254 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useAccount } from "wagmi";
-import type { Address } from "viem";
-import {
-  MODE_DESCRIPTIONS,
-  MODE_LABELS,
-  Mode,
-  buildApprove,
-  buildDeposit,
-  buildSetMode,
-  buildStockFaucet,
-  buildWithdraw,
-  formatStock,
-  formatUsdg,
-  parseStock,
-} from "@drip-markets/sdk";
-import { Card, Empty, Eyebrow, Loading, SectionHead } from "@/components/ui";
-import { ConnectGate } from "@/components/ConnectGate";
-import { TxBar } from "@/components/TxBar";
-import { useDeployment, usePositions, useStockTokens, useWalletBalances } from "@/lib/hooks";
-import { useTxRunner } from "@/lib/tx";
+import { AnimatedNumber, fmt, relativeTime, shortDate } from "@/components/live";
+import { TokenMark } from "@/components/TokenMark";
+import { useDataActions, useHoldings, useTokensView, useWalletView } from "@/lib/data/provider";
+import { MODE_LABEL, MODE_SENTENCE, type ModeName } from "@/lib/data/types";
 
+const MODES: ModeName[] = ["CASH_EARLY", "STREAM", "REINVEST"];
+
+/**
+ * Three steps, one screen, no wizard chrome. Pick the token, type the amount,
+ * pick the mode, confirm against the receipt. In demo mode the deposit lands
+ * instantly and shows up on the dashboard.
+ */
 export default function DepositPage() {
-  return (
-    <div className="space-y-12">
-      <header className="max-w-2xl">
-        <Eyebrow className="text-cyan-dark">Custody</Eyebrow>
-        <h1 className="mt-3 text-display font-extrabold">Deposit stock</h1>
-        <p className="mt-5 text-[16px] leading-relaxed text-ink/80">
-          Only tokens held in Drip Markets before an ex date are eligible. Deposit once, pick a mode, and
-          every dividend after that arrives early, per second, or as more stock.
-        </p>
-      </header>
-      <ConnectGate>
-        <DepositBody />
-      </ConnectGate>
-    </div>
-  );
-}
+  const tokens = useTokensView();
+  const wallet = useWalletView();
+  const holdings = useHoldings();
+  const actions = useDataActions();
 
-function DepositBody() {
-  const { address } = useAccount();
-  const deployment = useDeployment();
-  const tokens = useStockTokens();
-  const balances = useWalletBalances();
-  const positions = usePositions();
-  const { state, run, reset } = useTxRunner();
-
-  const [selected, setSelected] = useState<Address | null>(null);
+  const [symbol, setSymbol] = useState("AAPL");
   const [amount, setAmount] = useState("");
-  const [mode, setMode] = useState<Mode>(Mode.STREAM);
+  const [mode, setMode] = useState<ModeName>("STREAM");
+  const [placed, setPlaced] = useState<null | { symbol: string; shares: number; mode: ModeName }>(null);
 
-  const token = useMemo(
-    () => (tokens.data ?? []).find((t) => t.address === selected) ?? (tokens.data ?? [])[0],
-    [tokens.data, selected]
-  );
-
-  const walletBalance = token ? (balances.data?.stocks[token.address] ?? 0n) : 0n;
-  const parsed = parseStock(amount);
-  const tooMuch = parsed > walletBalance;
-  const canSubmit = Boolean(deployment && token && parsed > 0n && !tooMuch);
-
-  const existing = (positions.data ?? []).find((p) => p.stockToken === token?.address);
+  const token = tokens.find((t) => t.symbol === symbol) ?? tokens[0];
+  const walletShares = token ? (wallet.stocks[token.symbol] ?? 0) : 0;
+  const shares = Number.parseFloat(amount) || 0;
+  const tooMuch = shares > walletShares;
+  const valid = Boolean(token) && shares > 0 && !tooMuch;
+  const existing = holdings.rows.find((h) => h.symbol === token?.symbol);
 
   async function submit() {
-    if (!deployment || !token || !canSubmit) return;
-    const txs = [
-      buildApprove(token.address, deployment.dripCore, parsed, token.symbol),
-      buildDeposit(deployment, token.address, parsed, token.symbol),
-    ];
-    // Only write the mode when it is not already what the position says.
-    if (!existing || existing.mode !== mode) {
-      txs.push(buildSetMode(deployment, token.address, mode, token.symbol));
-    }
-    const ok = await run(txs);
-    if (ok) setAmount("");
-  }
-
-  if (tokens.isLoading) return <Loading label="Reading supported tokens" />;
-  if ((tokens.data ?? []).length === 0) {
-    return <Empty title="No tokens yet" body="The registry has no supported stock tokens on this chain." />;
+    if (!token || !valid) return;
+    await actions.deposit(token.symbol, shares, mode);
+    setPlaced({ symbol: token.symbol, shares, mode });
+    setAmount("");
   }
 
   return (
-    <div className="space-y-12">
-      <TxBar state={state} onDismiss={reset} />
+    <div className="rise-group space-y-10">
+      <header className="max-w-2xl">
+        <div className="eyebrow text-cyan-dark">Custody</div>
+        <h1 className="mt-2 text-headline font-extrabold">Deposit stock</h1>
+        <p className="mt-4 text-[15px] leading-relaxed text-ink/80">
+          Only tokens held in Drip Markets before an ex date are eligible. Deposit once, pick a mode,
+          and every dividend after that arrives early, per second, or as more stock.
+        </p>
+      </header>
 
-      <div className="grid gap-10 lg:grid-cols-12">
+      {placed ? (
+        <div className="border border-cyan-dark bg-cyan-soft px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[14px]">
+              <span className="font-extrabold">{fmt(placed.shares, 4)} {placed.symbol}</span> deposited and set to{" "}
+              <span className="font-extrabold">{MODE_LABEL[placed.mode]}</span>. It is already on your dashboard.
+            </p>
+            <Link href="/app" className="btn-primary btn-sm">
+              View dashboard
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="grid gap-8 lg:grid-cols-12">
         <div className="space-y-8 lg:col-span-7">
-          {/* Step 1 */}
-          <Card>
-            <div className="flex items-baseline justify-between">
-              <Eyebrow className="text-cyan-dark">Step 01</Eyebrow>
-              <span className="text-micro font-bold uppercase text-muted">Pick a token</span>
+          {/* Step 1: the token */}
+          <section className="card" aria-label="Pick a token">
+            <div className="flex items-baseline justify-between border-b border-ink px-5 py-4">
+              <span className="eyebrow text-cyan-dark">01 — Token</span>
+              <span className="text-micro font-bold uppercase text-muted">Price · yield · next ex</span>
             </div>
-
-            <div className="mt-5 grid gap-px border border-ink bg-ink sm:grid-cols-2">
-              {(tokens.data ?? []).map((t) => {
-                const active = t.address === token?.address;
+            <div className="grid grid-cols-1 gap-px bg-ink sm:grid-cols-2">
+              {tokens.map((t, i) => {
+                const active = t.symbol === token?.symbol;
+                const spansRow = tokens.length % 2 === 1 && i === tokens.length - 1;
                 return (
                   <button
-                    key={t.address}
+                    key={t.symbol}
                     type="button"
-                    onClick={() => setSelected(t.address)}
-                    className={`flex items-baseline justify-between p-4 text-left transition-colors ${
-                      active ? "bg-ink text-paper" : "bg-paper hover:bg-cyan"
-                    }`}
+                    onClick={() => setSymbol(t.symbol)}
+                    aria-pressed={active}
+                    className={`flex items-center gap-3 p-4 text-left transition-colors duration-150 ${
+                      spansRow ? "sm:col-span-2" : ""
+                    } ${active ? "bg-ink text-paper" : "bg-paper hover:bg-wash"}`}
                   >
-                    <span className="text-lg font-extrabold tracking-tighter">{t.symbol}</span>
-                    <span className="num text-[13px] opacity-70">${formatUsdg(t.priceUsdg)}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </Card>
-
-          {/* Step 2 */}
-          <Card>
-            <div className="flex items-baseline justify-between">
-              <Eyebrow className="text-cyan-dark">Step 02</Eyebrow>
-              <span className="text-micro font-bold uppercase text-muted">
-                Wallet: {formatStock(walletBalance)} {token?.symbol}
-              </span>
-            </div>
-
-            <div className="mt-5 flex gap-3">
-              <input
-                className="field num"
-                inputMode="decimal"
-                placeholder="0.0000"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-              <button
-                type="button"
-                className="btn-ghost"
-                onClick={() => setAmount((Number(walletBalance) / 1e18).toString())}
-              >
-                Max
-              </button>
-            </div>
-
-            {tooMuch ? (
-              <p className="mt-3 text-[13px] text-down">More than this wallet holds.</p>
-            ) : (
-              <p className="mt-3 text-[13px] text-muted">
-                Value: ${formatUsdg((parsed * (token?.priceUsdg ?? 0n)) / 10n ** 18n)}
-              </p>
-            )}
-
-            {walletBalance === 0n && token ? (
-              <button
-                type="button"
-                className="btn-accent btn-sm mt-5"
-                onClick={() => void run([buildStockFaucet(token.address, token.symbol)])}
-              >
-                Get test {token.symbol}
-              </button>
-            ) : null}
-          </Card>
-
-          {/* Step 3 */}
-          <Card>
-            <div className="flex items-baseline justify-between">
-              <Eyebrow className="text-cyan-dark">Step 03</Eyebrow>
-              <span className="text-micro font-bold uppercase text-muted">Pick a mode</span>
-            </div>
-
-            <div className="mt-5 space-y-px border border-ink bg-ink">
-              {[Mode.CASH_EARLY, Mode.STREAM, Mode.REINVEST].map((m) => {
-                const active = m === mode;
-                return (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setMode(m)}
-                    className={`flex w-full items-start gap-4 p-5 text-left transition-colors ${
-                      active ? "bg-ink text-paper" : "bg-paper hover:bg-wash"
-                    }`}
-                  >
-                    <span
-                      className={`mt-1 block h-3 w-3 shrink-0 border ${
-                        active ? "border-cyan bg-cyan" : "border-ink"
-                      }`}
-                      aria-hidden
-                    />
-                    <span>
-                      <span className="block text-[15px] font-extrabold tracking-tight">
-                        {MODE_LABELS[m]}
+                    <TokenMark symbol={t.symbol} dark={active} size={36} />
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-baseline justify-between gap-2">
+                        <span className="text-[15px] font-extrabold tracking-tight">{t.symbol}</span>
+                        <span className="num text-[13px]">${fmt(t.priceUsd)}</span>
                       </span>
-                      <span className={`mt-1 block text-[13px] ${active ? "text-paper/70" : "text-muted"}`}>
-                        {MODE_DESCRIPTIONS[m]}
+                      <span className={`mt-0.5 flex items-baseline justify-between gap-2 text-micro font-bold uppercase ${active ? "text-paper/60" : "text-muted"}`}>
+                        <span>{t.yieldPct.toFixed(2)}% yield</span>
+                        <span>{t.nextExDate ? `Ex ${shortDate(t.nextExDate)}` : t.payingNow ? "Paying now" : "Next TBA"}</span>
                       </span>
                     </span>
                   </button>
                 );
               })}
             </div>
+          </section>
 
-            <button type="button" className="btn-primary mt-7 w-full" disabled={!canSubmit} onClick={() => void submit()}>
-              Approve and deposit
-            </button>
-            <p className="mt-3 text-[12px] text-muted">
-              Two signatures, sometimes three. Approve the token, deposit it, set the mode if it changed.
-            </p>
-          </Card>
+          {/* Step 2: the amount */}
+          <section className="card card-pad" aria-label="Amount">
+            <div className="flex items-baseline justify-between">
+              <span className="eyebrow text-cyan-dark">02 — Amount</span>
+              <span className="num text-micro font-bold uppercase text-muted">
+                Wallet {fmt(walletShares, 4)} {token?.symbol}
+              </span>
+            </div>
+            <div className="mt-4 flex gap-3">
+              <input
+                className="field num text-[18px]"
+                inputMode="decimal"
+                placeholder="0.0000"
+                aria-label={`Amount of ${token?.symbol} to deposit`}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+              <button type="button" className="btn-ghost" onClick={() => setAmount(String(walletShares))}>
+                Max
+              </button>
+            </div>
+            <div className="mt-3 flex items-baseline justify-between text-[13px]">
+              {tooMuch ? (
+                <span className="text-down">More than this wallet holds.</span>
+              ) : (
+                <span className="text-muted">
+                  ≈ <AnimatedNumber value={shares * (token?.priceUsd ?? 0)} prefix="$" flash="light" /> USD
+                </span>
+              )}
+              {walletShares === 0 && token ? (
+                <button type="button" className="text-micro font-bold uppercase underline decoration-cyan decoration-2 underline-offset-4" onClick={() => void actions.faucet(token.symbol)}>
+                  Get test {token.symbol}
+                </button>
+              ) : null}
+            </div>
+          </section>
+
+          {/* Step 3: the mode */}
+          <section className="card" aria-label="Pick a mode">
+            <div className="border-b border-ink px-5 py-4">
+              <span className="eyebrow text-cyan-dark">03 — What happens to the dividends</span>
+            </div>
+            <div className="grid grid-cols-1 gap-px bg-ink md:grid-cols-3">
+              {MODES.map((m) => {
+                const active = mode === m;
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setMode(m)}
+                    className={`p-5 text-left transition-colors duration-150 ${active ? "bg-ink text-paper" : "bg-paper hover:bg-wash"}`}
+                  >
+                    <span className="flex items-center justify-between">
+                      <span className="text-[15px] font-extrabold tracking-tight">{MODE_LABEL[m]}</span>
+                      <span className={`block h-3 w-3 border ${active ? "border-cyan bg-cyan" : "border-ink"}`} aria-hidden />
+                    </span>
+                    <span className={`mt-2 block text-[13px] leading-snug ${active ? "text-paper/70" : "text-muted"}`}>
+                      {MODE_SENTENCE[m]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
         </div>
 
+        {/* The receipt */}
         <div className="space-y-8 lg:col-span-5">
-          <Card>
-            <Eyebrow className="text-muted">What happens next</Eyebrow>
-            <ol className="mt-5 space-y-5 text-[14px]">
+          <section className="panel" aria-label="Summary">
+            <div className="panel-head">
+              <span className="panel-title">Order summary</span>
+              <span className="text-micro font-bold uppercase text-panel-faint">Review before it lands</span>
+            </div>
+            <dl className="px-5 py-4 text-[14px]">
               {[
-                "Your balance is checkpointed the moment it lands. That checkpoint is the eligibility proof.",
-                "When a dividend goes ex, your entitlement is computed from the balance you held at that second.",
-                "The vault fronts the money and your mode decides where it goes.",
-                "Withdraw whenever you like. Entitlements already created are yours to keep.",
-              ].map((line, i) => (
-                <li key={line} className="flex gap-4">
-                  <span className="num text-micro font-bold text-cyan-dark">0{i + 1}</span>
-                  <span className="text-muted">{line}</span>
-                </li>
+                ["Token", token ? `${token.symbol} — ${token.name}` : "—"],
+                ["Deposit", `${fmt(shares, 4)} shares`],
+                ["Value", `$${fmt(shares * (token?.priceUsd ?? 0))}`],
+                ["Mode", MODE_LABEL[mode]],
+                ["Next ex date", token?.nextExDate ? `${shortDate(token.nextExDate)} (${relativeTime(token.nextExDate)})` : "None scheduled"],
+                ["Est. next dividend", token ? `$${fmt(shares * token.perShare)}` : "—"],
+              ].map(([k, v]) => (
+                <div key={k} className="flex items-baseline justify-between border-b border-panel-line py-2.5 last:border-b-0">
+                  <dt className="text-micro font-bold uppercase text-panel-muted">{k}</dt>
+                  <dd className="num text-right font-medium text-paper">{v}</dd>
+                </div>
               ))}
-            </ol>
-          </Card>
+            </dl>
+            <div className="px-5 pb-5">
+              <button type="button" className="btn-accent w-full" disabled={!valid || actions.busy} onClick={() => void submit()}>
+                Confirm deposit
+              </button>
+              <p className="mt-3 text-[12px] text-panel-faint">
+                Eligibility is checkpointed the second the deposit lands. The next ex date after that is yours.
+              </p>
+            </div>
+          </section>
 
-          <Withdraw />
+          <WithdrawPanel />
         </div>
       </div>
     </div>
   );
 }
 
-function Withdraw() {
-  const deployment = useDeployment();
-  const positions = usePositions();
-  const { run } = useTxRunner();
+function WithdrawPanel() {
+  const holdings = useHoldings();
+  const actions = useDataActions();
   const [amounts, setAmounts] = useState<Record<string, string>>({});
 
-  const rows = positions.data ?? [];
-  if (rows.length === 0) return null;
+  if (holdings.rows.length === 0) return null;
 
   return (
-    <Card>
-      <SectionHead eyebrow="Custody" title="Withdraw" />
-      <div className="mt-6 space-y-5">
-        {rows.map((p) => {
-          const value = amounts[p.stockToken] ?? "";
-          const parsed = parseStock(value);
-          const valid = parsed > 0n && parsed <= p.amount;
+    <section className="card" aria-label="Withdraw">
+      <div className="border-b border-ink px-5 py-4">
+        <span className="eyebrow">Withdraw</span>
+      </div>
+      <div className="px-5 py-4">
+        {holdings.rows.map((h) => {
+          const value = amounts[h.symbol] ?? "";
+          const shares = Number.parseFloat(value) || 0;
+          const valid = shares > 0 && shares <= h.amount;
           return (
-            <div key={p.stockToken} className="border-b border-faint pb-5 last:border-b-0 last:pb-0">
+            <div key={h.symbol} className="hairline-b py-3 last:border-b-0">
               <div className="flex items-baseline justify-between">
-                <span className="font-extrabold tracking-tight">{p.symbol}</span>
-                <span className="num text-[13px] text-muted">{formatStock(p.amount)} on deposit</span>
+                <span className="text-[14px] font-extrabold tracking-tight">{h.symbol}</span>
+                <span className="num text-[12px] text-muted">{fmt(h.amount, 4)} on deposit</span>
               </div>
-              <div className="mt-3 flex gap-2">
+              <div className="mt-2 flex gap-2">
                 <input
-                  className="field num py-2 text-[14px]"
+                  className="field num py-2 text-[13px]"
                   inputMode="decimal"
                   placeholder="0.0000"
+                  aria-label={`Amount of ${h.symbol} to withdraw`}
                   value={value}
-                  onChange={(e) => setAmounts((a) => ({ ...a, [p.stockToken]: e.target.value }))}
+                  onChange={(e) => setAmounts((a) => ({ ...a, [h.symbol]: e.target.value }))}
                 />
                 <button
                   type="button"
                   className="btn-ghost btn-sm"
-                  disabled={!valid || !deployment}
-                  onClick={() =>
-                    deployment && void run([buildWithdraw(deployment, p.stockToken, parsed, p.symbol)])
-                  }
+                  disabled={!valid || actions.busy}
+                  onClick={() => {
+                    void actions.withdraw(h.symbol, shares);
+                    setAmounts((a) => ({ ...a, [h.symbol]: "" }));
+                  }}
                 >
                   Withdraw
                 </button>
@@ -279,6 +257,6 @@ function Withdraw() {
           );
         })}
       </div>
-    </Card>
+    </section>
   );
 }
