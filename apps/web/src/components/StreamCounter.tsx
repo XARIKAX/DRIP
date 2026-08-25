@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { formatStreaming } from "@drip/sdk";
+import { formatStreaming } from "@drip-markets/sdk";
 
 /**
  * The signature interaction.

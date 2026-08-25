@@ -14,7 +14,7 @@ import {
   formatDate,
   formatStock,
   formatUsdg,
-} from "@drip/sdk";
+} from "@drip-markets/sdk";
 import { Card, Empty, ErrorNote, Eyebrow, Loading, SectionHead, Stat } from "@/components/ui";
 import { ConnectGate } from "@/components/ConnectGate";
 import { ModeSwitcher } from "@/components/ModeSwitcher";

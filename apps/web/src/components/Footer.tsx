@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Wordmark } from "@/components/Wordmark";
 
 const COLUMNS = [
   {
@@ -26,7 +27,10 @@ export function Footer() {
     <footer className="rule-t mt-24 bg-paper">
       <div className="shell grid gap-10 py-14 md:grid-cols-4">
         <div className="md:col-span-2">
-          <div className="text-3xl font-extrabold tracking-tightest">DRIP</div>
+          <Wordmark size="lg" />
+          <div className="mt-2 text-micro font-bold uppercase text-muted">
+            $DRIP · Dividend Reinvestment Plan
+          </div>
           <p className="mt-3 max-w-sm text-[14px] text-muted">
             The dividend layer for Robinhood Chain. Paid at the ex date, streamed per second,
             reinvested the moment it lands.

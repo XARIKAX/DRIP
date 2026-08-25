@@ -7,7 +7,7 @@ import {
   formatDate,
   formatDuration,
   formatUsdg,
-} from "@drip/sdk";
+} from "@drip-markets/sdk";
 import { Empty, ErrorNote, Eyebrow, Loading, SectionHead, Stat } from "@/components/ui";
 import { useCalendar } from "@/lib/hooks";
 
@@ -17,7 +17,7 @@ type Filter = "upcoming" | "all" | "settled";
  * The ex date calendar.
  *
  * This is the page people screenshot. It is a table and nothing else: ticker, amount
- * per share, ex date, pay date, and the number that matters, how many days early DRIP
+ * per share, ex date, pay date, and the number that matters, how many days early Drip Markets
  * pays you compared with waiting for the issuer.
  */
 export default function CalendarPage() {
@@ -43,7 +43,7 @@ export default function CalendarPage() {
         <h1 className="mt-3 text-display font-extrabold">Ex date calendar</h1>
         <p className="mt-5 text-[16px] leading-relaxed text-ink/80">
           Every dividend the protocol knows about. The ex date is when the money becomes yours.
-          The pay date is when the issuer gets around to it. DRIP pays you on the first one.
+          The pay date is when the issuer gets around to it. Drip Markets pays you on the first one.
         </p>
       </header>
 
@@ -139,7 +139,7 @@ export default function CalendarPage() {
 
         <p className="text-[13px] text-muted">
           Days early is the gap between the ex date and the pay date. Wait for the issuer and you get
-          paid on the right hand date. Use DRIP and you get paid on the left hand one, minus one percent.
+          paid on the right hand date. Use Drip Markets and you get paid on the left hand one, minus one percent.
         </p>
       </section>
     </div>

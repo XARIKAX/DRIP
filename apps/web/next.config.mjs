@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   // The SDK ships TypeScript source, not a build artifact. One less build step and
   // the ABI types stay live across the workspace.
-  transpilePackages: ["@drip/sdk"],
+  transpilePackages: ["@drip-markets/sdk"],
   webpack: (config, { webpack }) => {
     // Wallet connectors reach, through several layers, for peers this app never runs:
     // a paid request signer, a react native storage shim, a pretty logger, a node only

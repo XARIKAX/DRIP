@@ -13,7 +13,7 @@ import {
   MODE_LABELS,
   type ActivityItem,
   type Deployment,
-} from "@drip/sdk";
+} from "@drip-markets/sdk";
 import { chainId, deploymentOrNull } from "@/lib/chain.config";
 
 /**

@@ -1,8 +1,8 @@
 {
-  "name": "@drip/sdk",
+  "name": "@drip-markets/sdk",
   "version": "0.1.0",
   "private": true,
-  "description": "TypeScript SDK for the $DRIP protocol",
+  "description": "TypeScript SDK for Drip Markets ($DRIP)",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

@@ -15,7 +15,7 @@ import {
   formatStock,
   formatUsdg,
   parseStock,
-} from "@drip/sdk";
+} from "@drip-markets/sdk";
 import { Card, Empty, Eyebrow, Loading, SectionHead } from "@/components/ui";
 import { ConnectGate } from "@/components/ConnectGate";
 import { TxBar } from "@/components/TxBar";
@@ -29,7 +29,7 @@ export default function DepositPage() {
         <Eyebrow className="text-cyan-dark">Custody</Eyebrow>
         <h1 className="mt-3 text-display font-extrabold">Deposit stock</h1>
         <p className="mt-5 text-[16px] leading-relaxed text-ink/80">
-          Only tokens held in DRIP before an ex date are eligible. Deposit once, pick a mode, and
+          Only tokens held in Drip Markets before an ex date are eligible. Deposit once, pick a mode, and
           every dividend after that arrives early, per second, or as more stock.
         </p>
       </header>

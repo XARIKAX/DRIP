@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { Wordmark } from "@/components/Wordmark";
 
 const LINKS = [
   { href: "/app", label: "Dashboard" },
@@ -19,11 +20,8 @@ export function SiteNav() {
   return (
     <header className="rule-b sticky top-0 z-40 bg-paper">
       <div className="shell flex h-16 items-center justify-between gap-6">
-        <Link href="/" className="flex items-baseline gap-2">
-          <span className="text-2xl font-extrabold tracking-tightest">DRIP</span>
-          <span className="hidden text-micro font-bold uppercase text-muted sm:block">
-            Dividend layer
-          </span>
+        <Link href="/" aria-label="Drip Markets home">
+          <Wordmark />
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">

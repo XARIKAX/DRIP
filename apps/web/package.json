@@ -1,5 +1,5 @@
 {
-  "name": "@drip/web",
+  "name": "@drip-markets/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,14 +10,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@drip/sdk": "workspace:*",
     "@rainbow-me/rainbowkit": "^2.2.1",
     "@tanstack/react-query": "^5.62.7",
     "next": "^14.2.21",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "viem": "^2.21.55",
-    "wagmi": "^2.14.1"
+    "wagmi": "^2.14.1",
+    "@drip-markets/sdk": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",

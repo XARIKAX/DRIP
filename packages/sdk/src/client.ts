@@ -26,7 +26,7 @@ export function getDeployment(chainId: number): Deployment {
   if (!d) {
     const known = Object.keys(deployments).join(", ") || "none";
     throw new Error(
-      `No DRIP deployment for chain ${chainId}. Known chains: ${known}. ` +
+      `No Drip Markets deployment for chain ${chainId}. Known chains: ${known}. ` +
         `Run scripts/deploy-local.sh, or point NEXT_PUBLIC_CHAIN_ID at a deployed chain.`
     );
   }

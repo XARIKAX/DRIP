@@ -10,8 +10,8 @@ import {
   formatBps,
   formatUsdg,
   parseUsdg,
-} from "@drip/sdk";
-import { estimateApyBps } from "@drip/sdk";
+} from "@drip-markets/sdk";
+import { estimateApyBps } from "@drip-markets/sdk";
 import { Card, Eyebrow, Loading, ErrorNote, SectionHead, Stat } from "@/components/ui";
 import { ConnectGate } from "@/components/ConnectGate";
 import { TxBar } from "@/components/TxBar";

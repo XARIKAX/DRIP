@@ -1,7 +1,10 @@
-# $DRIP — the dividend layer for Robinhood Chain
+# Drip Markets — the dividend layer for Robinhood Chain
+
+Ticker **$DRIP**, backronym **Dividend Reinvestment Plan**: the same name as the thing
+it replaces, with none of the limits.
 
 Stock tokens on Robinhood Chain pay dividends the old way: offchain, weeks late, in
-quarterly lumps, only inside the Robinhood app. DRIP fixes all three onchain.
+quarterly lumps, only inside the Robinhood app. Drip Markets fixes all three onchain.
 
 1. **Early** — dividends advanced at the ex date instead of the pay date, funded by a
    USDG vault that earns the 1% advance fee
@@ -82,9 +85,9 @@ Point an MCP client at it with:
 ```json
 {
   "mcpServers": {
-    "drip": {
+    "drip-markets": {
       "command": "pnpm",
-      "args": ["--filter", "@drip/mcp", "start"],
+      "args": ["--filter", "@drip-markets/mcp", "start"],
       "env": { "DRIP_RPC_URL": "http://127.0.0.1:8545", "DRIP_CHAIN_ID": "31337" }
     }
   }

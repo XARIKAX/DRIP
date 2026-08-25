@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 /// @title DripTypes
-/// @notice Shared enums and structs for the $DRIP protocol.
+/// @notice Shared enums and structs for the Drip Markets protocol.
 /// @dev File level declarations so interfaces and implementations agree on the
 ///      exact ABI encoding. Do not reorder enum members: the frontend, the SDK
 ///      and the MCP server all encode modes by index.

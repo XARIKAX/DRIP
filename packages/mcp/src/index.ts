@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The $DRIP MCP server.
+ * The Drip Markets MCP server.
  *
  * Exposes the protocol to agents over the Model Context Protocol, stdio transport.
  * The tool surface is the same set of intents the web app's agent console builds,
@@ -19,7 +19,7 @@
  *   DRIP_CHAIN_ID   Chain id whose address book to load (default 31337)
  *
  * Run:
- *   pnpm --filter @drip/mcp start
+ *   pnpm --filter @drip-markets/mcp start
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -40,7 +40,7 @@ import {
   getDeployment,
   parseStock,
   type UnsignedTx,
-} from "@drip/sdk";
+} from "@drip-markets/sdk";
 
 const RPC_URL = process.env.DRIP_RPC_URL ?? "http://127.0.0.1:8545";
 const CHAIN_ID = Number(process.env.DRIP_CHAIN_ID ?? 31337);
@@ -50,7 +50,7 @@ const client = createPublicClient({ transport: http(RPC_URL) });
 const reader = new DripReader(client, deployment);
 
 const server = new McpServer({
-  name: "drip",
+  name: "drip-markets",
   version: "0.1.0",
 });
 
@@ -83,7 +83,7 @@ const addressSchema = z
 
 server.tool(
   "get_positions",
-  "Stock token positions a holder has deposited in DRIP: amount, USDG value, and the dividend mode each position is set to.",
+  "Stock token positions a holder has deposited in Drip Markets: amount, USDG value, and the dividend mode each position is set to.",
   { user: addressSchema.describe("Holder address") },
   async ({ user }) => {
     const positions = await reader.getPositions(user as Address);
@@ -124,7 +124,7 @@ server.tool(
 
 server.tool(
   "get_calendar",
-  "The dividend calendar: every declared dividend with amount per share, ex date, pay date, status, and how many days early DRIP pays.",
+  "The dividend calendar: every declared dividend with amount per share, ex date, pay date, status, and how many days early Drip Markets pays.",
   {},
   async () => {
     const calendar = await reader.getCalendar();
@@ -197,7 +197,7 @@ server.tool(
 
 server.tool(
   "deposit",
-  "Build the unsigned approve and deposit transactions that put stock tokens into DRIP. Two transactions, in order. Returns calldata; nothing is executed.",
+  "Build the unsigned approve and deposit transactions that put stock tokens into Drip Markets. Two transactions, in order. Returns calldata; nothing is executed.",
   {
     symbol: z.string().describe("Ticker, e.g. AAPL"),
     amount: z
@@ -216,7 +216,7 @@ server.tool(
         buildApprove(token.address, deployment.dripCore, parsed, token.symbol),
         buildDeposit(deployment, token.address, parsed, token.symbol),
       ],
-      `Deposit ${amount} ${token.symbol} into DRIP`
+      `Deposit ${amount} ${token.symbol} into Drip Markets`
     );
   }
 );
@@ -225,4 +225,4 @@ server.tool(
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
-console.error(`drip-mcp: serving chain ${CHAIN_ID} via ${RPC_URL}`);
+console.error(`drip-markets mcp: serving chain ${CHAIN_ID} via ${RPC_URL}`);

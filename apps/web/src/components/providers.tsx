@@ -14,7 +14,7 @@ import { activeChain, transport, walletConnectProjectId } from "@/lib/chain.conf
  * corners, black outlines, one cyan accent.
  */
 const wagmiConfig = getDefaultConfig({
-  appName: "DRIP",
+  appName: "Drip Markets",
   // RainbowKit requires a string here. Without a real id WalletConnect is unavailable
   // and injected wallets still work, which is all the testnet demo needs.
   projectId: walletConnectProjectId || "drip-testnet-local",

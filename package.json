@@ -1,19 +1,19 @@
 {
-  "name": "drip",
+  "name": "drip-markets",
   "private": true,
   "version": "0.1.0",
-  "description": "$DRIP - the dividend layer for Robinhood Chain",
+  "description": "Drip Markets ($DRIP) \u2014 the dividend layer for Robinhood Chain",
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "dev": "pnpm --filter @drip/web dev",
-    "build": "pnpm --filter @drip/sdk build && pnpm --filter @drip/mcp build && pnpm --filter @drip/web build",
+    "dev": "pnpm --filter @drip-markets/web dev",
+    "build": "pnpm --filter @drip-markets/sdk build && pnpm --filter @drip-markets/mcp build && pnpm --filter @drip-markets/web build",
     "typecheck": "pnpm -r typecheck",
     "chain": "anvil --chain-id 31337 --block-time 2",
     "contracts:build": "forge build --root contracts",
     "contracts:test": "forge test --root contracts -vv",
     "contracts:deploy:local": "bash scripts/deploy-local.sh",
     "abis": "node scripts/sync-abis.mjs",
-    "mcp": "pnpm --filter @drip/mcp start"
+    "mcp": "pnpm --filter @drip-markets/mcp start"
   },
   "devDependencies": {
     "typescript": "^5.7.3"

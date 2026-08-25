@@ -1,7 +1,7 @@
 "use client";
 
 import { useCalendar, useStockTokens } from "@/lib/hooks";
-import { DividendStatus, formatDate, formatUsdg } from "@drip/sdk";
+import { DividendStatus, formatDate, formatUsdg } from "@drip-markets/sdk";
 
 /**
  * The boxed ticker strip. Cyan left edge on every cell, mono numbers, marquee that

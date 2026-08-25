@@ -1,6 +1,6 @@
 import { defineChain, http, type Chain } from "viem";
 import { arbitrumSepolia, foundry } from "viem/chains";
-import { getDeployment, knownChainIds } from "@drip/sdk";
+import { getDeployment, knownChainIds } from "@drip-markets/sdk";
 
 /**
  * The one file that knows about the network.

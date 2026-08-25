@@ -21,7 +21,7 @@ export function ConnectGate({ children }: { children: ReactNode }) {
   if (!isDeployed) {
     return (
       <ErrorNote
-        message={`No DRIP deployment found for ${activeChain.name} (chain ${activeChain.id}). Run scripts/deploy-local.sh, then pnpm abis, then restart the dev server.`}
+        message={`No Drip Markets deployment found for ${activeChain.name} (chain ${activeChain.id}). Run scripts/deploy-local.sh, then pnpm abis, then restart the dev server.`}
       />
     );
   }

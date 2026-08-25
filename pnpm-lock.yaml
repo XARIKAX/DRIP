@@ -14,7 +14,7 @@ importers:
 
   apps/web:
     dependencies:
-      '@drip/sdk':
+      '@drip-markets/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
       '@rainbow-me/rainbowkit':
@@ -63,7 +63,7 @@ importers:
 
   packages/mcp:
     dependencies:
-      '@drip/sdk':
+      '@drip-markets/sdk':
         specifier: workspace:*
         version: link:../sdk
       '@modelcontextprotocol/sdk':

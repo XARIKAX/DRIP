@@ -1,4 +1,8 @@
-# HANDOFF — $DRIP production contracts
+# HANDOFF — Drip Markets production contracts
+
+Product name **Drip Markets**; ticker **$DRIP** (backronym: Dividend Reinvestment
+Plan). Solidity contract names, roles and events keep their existing identifiers —
+the brand lives in the UI and docs, not in the ABI.
 
 For the Solidity developer taking this to mainnet. Everything in `contracts/` compiles,
 passes 74 tests including invariants, and runs the full product loop on a local chain.

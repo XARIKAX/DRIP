@@ -1,4 +1,4 @@
-import { Mode } from "@drip/sdk";
+import { Mode } from "@drip-markets/sdk";
 
 /**
  * A very small intent parser.

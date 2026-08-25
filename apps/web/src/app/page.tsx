@@ -71,7 +71,7 @@ export default function HomePage() {
         />
         <div className="shell relative grid gap-12 py-16 md:grid-cols-12 md:py-24">
           <div className="md:col-span-7">
-            <Eyebrow className="text-cyan-dark">Dividend Reinvestment Plan</Eyebrow>
+            <Eyebrow className="text-cyan-dark">The dividend layer for Robinhood Chain</Eyebrow>
             <h1 className="mt-5 text-hero font-extrabold">
               Get paid before
               <br />
@@ -79,7 +79,7 @@ export default function HomePage() {
             </h1>
             <p className="mt-7 max-w-xl text-[17px] leading-relaxed text-ink/80">
               Stock tokens on Robinhood Chain pay dividends the old way. Offchain. Weeks late. In
-              quarterly lumps. Only inside one app. DRIP pays you at the ex date, streams the money
+              quarterly lumps. Only inside one app. Drip Markets pays you at the ex date, streams the money
               per second, and turns every drop back into stock the moment it lands.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
@@ -225,7 +225,7 @@ export default function HomePage() {
                   <tr>
                     <th>Term</th>
                     <th>Today</th>
-                    <th className="text-cyan-dark">DRIP</th>
+                    <th className="text-cyan-dark">$DRIP</th>
                   </tr>
                 </thead>
                 <tbody>

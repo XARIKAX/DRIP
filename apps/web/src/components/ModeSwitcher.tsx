@@ -1,7 +1,7 @@
 "use client";
 
 import type { Address } from "viem";
-import { Mode, MODE_DESCRIPTIONS, MODE_LABELS, buildSetMode } from "@drip/sdk";
+import { Mode, MODE_DESCRIPTIONS, MODE_LABELS, buildSetMode } from "@drip-markets/sdk";
 import { useDeployment } from "@/lib/hooks";
 import { useTxRunner } from "@/lib/tx";
 

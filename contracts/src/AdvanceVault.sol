@@ -100,7 +100,7 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
     /// @param admin DEFAULT_ADMIN_ROLE holder.
     constructor(IERC20 usdg, address admin)
         ERC4626(usdg)
-        ERC20("DRIP Advance Vault USDG", "advUSDG")
+        ERC20("Drip Markets Advance Vault USDG", "advUSDG")
     {
         if (admin == address(0)) revert ZeroAddress();
         _grantRole(DEFAULT_ADMIN_ROLE, admin);

@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { useAccount, useConfig } from "wagmi";
 import { sendTransaction, waitForTransactionReceipt } from "wagmi/actions";
-import type { UnsignedTx } from "@drip/sdk";
+import type { UnsignedTx } from "@drip-markets/sdk";
 import { useRefreshAll } from "@/lib/hooks";
 
 /**

@@ -17,7 +17,7 @@ import {
   formatUsdg,
   parseStock,
   type UnsignedTx,
-} from "@drip/sdk";
+} from "@drip-markets/sdk";
 import { Card, Empty, Eyebrow, SectionHead } from "@/components/ui";
 import { ConnectGate } from "@/components/ConnectGate";
 import { TxBar } from "@/components/TxBar";
@@ -410,7 +410,7 @@ function McpNote() {
         <div className="bg-paper p-8">
           <Eyebrow className="text-muted">Run it</Eyebrow>
           <pre className="num mt-4 overflow-x-auto border border-faint bg-wash p-4 text-[12px] leading-relaxed">
-{`pnpm --filter @drip/mcp start`}
+{`pnpm --filter @drip-markets/mcp start`}
           </pre>
           <p className="mt-4 text-[13px] text-muted">
             Point any MCP client at that command. Read tools work immediately. Write tools hand back
