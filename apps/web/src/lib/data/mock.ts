@@ -62,13 +62,24 @@ interface TokenSeed {
 }
 
 const TOKENS: TokenSeed[] = [
-  { symbol: "AAPL", name: "Apple Inc", priceUsd: 220.44, yieldPct: 0.47, perShare: 0.26, seed: 11 },
-  { symbol: "MSFT", name: "Microsoft Corp", priceUsd: 421.9, yieldPct: 0.79, perShare: 0.83, seed: 12 },
-  { symbol: "NVDA", name: "NVIDIA Corp", priceUsd: 176.67, yieldPct: 0.02, perShare: 0.01, seed: 13 },
-  { symbol: "KO", name: "Coca-Cola Co", priceUsd: 62.13, yieldPct: 3.29, perShare: 0.51, seed: 14 },
-  { symbol: "JNJ", name: "Johnson & Johnson", priceUsd: 155.22, yieldPct: 3.35, perShare: 1.3, seed: 15 },
-  { symbol: "PG", name: "Procter & Gamble", priceUsd: 168.7, yieldPct: 2.51, perShare: 1.06, seed: 16 },
-  { symbol: "JPM", name: "JPMorgan Chase", priceUsd: 248.55, yieldPct: 2.01, perShare: 1.25, seed: 17 },
+  // The 15 enabled tokens from contracts/listings/4663.json. SPCX exists in the
+  // listing file but is disabled there (never traded, private-company feed), so it
+  // never appears here. Quarterly per share amounts are zero for the non payers.
+  { symbol: "NVDA", name: "NVIDIA Corp", priceUsd: 176.67, yieldPct: 0.02, perShare: 0.01, seed: 11 },
+  { symbol: "TSLA", name: "Tesla Inc", priceUsd: 329.5, yieldPct: 0, perShare: 0, seed: 12 },
+  { symbol: "AAPL", name: "Apple Inc", priceUsd: 230.1, yieldPct: 0.45, perShare: 0.26, seed: 13 },
+  { symbol: "GOOGL", name: "Alphabet Inc", priceUsd: 201.4, yieldPct: 0.42, perShare: 0.21, seed: 14 },
+  { symbol: "MSFT", name: "Microsoft Corp", priceUsd: 508.3, yieldPct: 0.65, perShare: 0.83, seed: 15 },
+  { symbol: "AMZN", name: "Amazon.com Inc", priceUsd: 228.9, yieldPct: 0, perShare: 0, seed: 16 },
+  { symbol: "META", name: "Meta Platforms", priceUsd: 748.6, yieldPct: 0.28, perShare: 0.525, seed: 17 },
+  { symbol: "COIN", name: "Coinbase Global", priceUsd: 302.75, yieldPct: 0, perShare: 0, seed: 18 },
+  { symbol: "ORCL", name: "Oracle Corp", priceUsd: 241.2, yieldPct: 0.83, perShare: 0.5, seed: 19 },
+  { symbol: "PLTR", name: "Palantir Technologies", priceUsd: 154.8, yieldPct: 0, perShare: 0, seed: 20 },
+  { symbol: "CRWV", name: "CoreWeave Inc", priceUsd: 118.4, yieldPct: 0, perShare: 0, seed: 21 },
+  { symbol: "AMD", name: "Advanced Micro Devices", priceUsd: 168.3, yieldPct: 0, perShare: 0, seed: 22 },
+  { symbol: "INTC", name: "Intel Corp", priceUsd: 24.15, yieldPct: 0, perShare: 0, seed: 23 },
+  { symbol: "MU", name: "Micron Technology", priceUsd: 112.6, yieldPct: 0.41, perShare: 0.115, seed: 24 },
+  { symbol: "SNDK", name: "SanDisk Corp", priceUsd: 54.2, yieldPct: 0, perShare: 0, seed: 25 },
 ];
 
 interface MockState {
@@ -105,37 +116,38 @@ class MockStore {
 
   private seed(): MockState {
     const holdings = new Map<string, { amount: number; mode: ModeName }>([
-      ["AAPL", { amount: 42.5, mode: "REINVEST" }],
-      ["NVDA", { amount: 120, mode: "CASH_EARLY" }],
-      ["KO", { amount: 420, mode: "STREAM" }],
-      ["JNJ", { amount: 60, mode: "REINVEST" }],
-      ["MSFT", { amount: 18.2, mode: "STREAM" }],
+      ["MSFT", { amount: 220, mode: "STREAM" }],
+      ["AAPL", { amount: 150, mode: "REINVEST" }],
+      ["NVDA", { amount: 160, mode: "CASH_EARLY" }],
+      ["GOOGL", { amount: 120, mode: "REINVEST" }],
+      ["META", { amount: 30, mode: "STREAM" }],
+      ["ORCL", { amount: 40, mode: "REINVEST" }],
     ]);
 
-    // Two live streams, mid flight. KO went ex six days ago, JNJ thirteen.
-    const koTotal = 420 * 0.51; // 214.20
-    const jnjTotal = 60 * 1.3 * 0.99; // net of the 1 percent advance fee
+    // Two live streams, mid flight. MSFT went ex six days ago, AAPL thirteen.
+    const msftNet = 220 * 0.83 * 0.99; // net of the 1 percent advance fee
+    const aaplNet = 150 * 0.26 * 0.99;
     const streams: StreamRow[] = [
       {
         id: 1,
-        symbol: "KO",
+        symbol: "MSFT",
         mode: "STREAM",
-        totalUsd: koTotal * 0.99,
-        claimedBaseUsd: (koTotal * 0.99) * (4 / 21), // claimed once, day 4
-        baseTimeMs: (BOOT - 6 * DAY) * 1000 + 6 * DAY * 1000 * 0, // recomputed below
-        ratePerSec: (koTotal * 0.99) / (21 * DAY),
+        totalUsd: msftNet,
+        claimedBaseUsd: msftNet * (4 / 21), // claimed once, day 4
+        baseTimeMs: 0, // derived below from the claim ratio
+        ratePerSec: msftNet / (21 * DAY),
         start: BOOT - 6 * DAY,
         end: BOOT + 15 * DAY,
         closed: false,
       },
       {
         id: 2,
-        symbol: "JNJ",
+        symbol: "AAPL",
         mode: "REINVEST",
-        totalUsd: jnjTotal,
-        claimedBaseUsd: jnjTotal * (11 / 21), // last compounded on day 11
+        totalUsd: aaplNet,
+        claimedBaseUsd: aaplNet * (11 / 21), // last compounded on day 11
         baseTimeMs: 0,
-        ratePerSec: jnjTotal / (21 * DAY),
+        ratePerSec: aaplNet / (21 * DAY),
         start: BOOT - 13 * DAY,
         end: BOOT + 8 * DAY,
         closed: false,
@@ -147,23 +159,23 @@ class MockStore {
       s.baseTimeMs = (s.start + claimedSeconds) * 1000;
     }
 
-    // The calendar. Ex dates staggered around today; pay always ~3 weeks later.
+    // The calendar. Real payers only; ex dates staggered around today.
     const dividends: DividendRow[] = [
-      { id: 101, symbol: "KO", perShare: 0.51, exDate: BOOT - 6 * DAY, payDate: BOOT + 15 * DAY, status: "DECLARED", daysEarly: 21 },
-      { id: 102, symbol: "JNJ", perShare: 1.3, exDate: BOOT - 13 * DAY, payDate: BOOT + 8 * DAY, status: "DECLARED", daysEarly: 21 },
-      { id: 103, symbol: "MSFT", perShare: 0.83, exDate: BOOT - 1 * DAY, payDate: BOOT + 20 * DAY, status: "DECLARED", daysEarly: 21 },
-      { id: 104, symbol: "AAPL", perShare: 0.26, exDate: BOOT + 5 * DAY, payDate: BOOT + 26 * DAY, status: "DECLARED", daysEarly: 21 },
+      { id: 101, symbol: "MSFT", perShare: 0.83, exDate: BOOT - 6 * DAY, payDate: BOOT + 15 * DAY, status: "DECLARED", daysEarly: 21 },
+      { id: 102, symbol: "AAPL", perShare: 0.26, exDate: BOOT - 13 * DAY, payDate: BOOT + 8 * DAY, status: "DECLARED", daysEarly: 21 },
+      { id: 103, symbol: "META", perShare: 0.525, exDate: BOOT - 1 * DAY, payDate: BOOT + 20 * DAY, status: "DECLARED", daysEarly: 21 },
+      { id: 104, symbol: "GOOGL", perShare: 0.21, exDate: BOOT + 5 * DAY, payDate: BOOT + 26 * DAY, status: "DECLARED", daysEarly: 21 },
       { id: 105, symbol: "NVDA", perShare: 0.01, exDate: BOOT + 9 * DAY, payDate: BOOT + 30 * DAY, status: "DECLARED", daysEarly: 21 },
-      { id: 106, symbol: "PG", perShare: 1.06, exDate: BOOT + 12 * DAY, payDate: BOOT + 36 * DAY, status: "DECLARED", daysEarly: 24 },
-      { id: 107, symbol: "JPM", perShare: 1.25, exDate: BOOT + 16 * DAY, payDate: BOOT + 37 * DAY, status: "DECLARED", daysEarly: 21 },
+      { id: 106, symbol: "ORCL", perShare: 0.5, exDate: BOOT + 12 * DAY, payDate: BOOT + 36 * DAY, status: "DECLARED", daysEarly: 24 },
+      { id: 107, symbol: "MU", perShare: 0.115, exDate: BOOT + 16 * DAY, payDate: BOOT + 37 * DAY, status: "DECLARED", daysEarly: 21 },
       { id: 108, symbol: "AAPL", perShare: 0.25, exDate: BOOT - 96 * DAY, payDate: BOOT - 75 * DAY, status: "SETTLED", daysEarly: 21 },
-      { id: 109, symbol: "KO", perShare: 0.485, exDate: BOOT - 97 * DAY, payDate: BOOT - 76 * DAY, status: "SETTLED", daysEarly: 21 },
-      { id: 110, symbol: "JNJ", perShare: 1.24, exDate: BOOT - 104 * DAY, payDate: BOOT - 83 * DAY, status: "SETTLED", daysEarly: 21 },
+      { id: 109, symbol: "MSFT", perShare: 0.75, exDate: BOOT - 97 * DAY, payDate: BOOT - 76 * DAY, status: "SETTLED", daysEarly: 21 },
+      { id: 110, symbol: "ORCL", perShare: 0.5, exDate: BOOT - 104 * DAY, payDate: BOOT - 83 * DAY, status: "SETTLED", daysEarly: 21 },
     ];
 
-    // MSFT went ex yesterday and nobody has started it. That is the pending advance.
+    // META went ex yesterday and nobody has started it. That is the pending advance.
     const pending: PendingAdvance[] = [
-      { dividendId: 103, symbol: "MSFT", grossUsd: 18.2 * 0.83, exDate: BOOT - 1 * DAY, payDate: BOOT + 20 * DAY },
+      { dividendId: 103, symbol: "META", grossUsd: 30 * 0.525, exDate: BOOT - 1 * DAY, payDate: BOOT + 20 * DAY },
     ];
 
     // Three weeks of history, newest last. Amounts consistent with the positions.
@@ -171,18 +183,19 @@ class MockStore {
       id, kind, summary, amountUsd, ts: BOOT - Math.floor(daysAgo * DAY),
     });
     const activity: ActivityRow[] = [
-      a(1, "deposit", 21.2, "Deposited 42.5000 AAPL", 42.5 * 220.44),
-      a(2, "deposit", 21.1, "Deposited 420.0000 KO", 420 * 62.13),
-      a(3, "mode", 21.0, "KO set to Stream", null),
-      a(4, "deposit", 20.4, "Deposited 60.0000 JNJ", 60 * 155.22),
-      a(5, "mode", 20.3, "JNJ set to Reinvest", null),
-      a(6, "deposit", 18.7, "Deposited 120.0000 NVDA", 120 * 176.67),
-      a(7, "deposit", 16.2, "Deposited 18.2000 MSFT", 18.2 * 421.9),
-      a(8, "advance", 13.0, "JNJ dividend advanced at the ex date", 60 * 1.3 * 0.99),
-      a(9, "reinvest", 11.0, "Compounded 40.85 USDG into 0.2632 JNJ", 40.85),
-      a(10, "advance", 6.0, "KO dividend advanced at the ex date", koTotal * 0.99),
-      a(11, "claim", 2.0, "Claimed 40.38 USDG from the KO stream", 40.38),
-      a(12, "mode", 1.4, "NVDA set to Cash early", null),
+      a(1, "deposit", 21.2, "Deposited 220.0000 MSFT", 220 * 508.3),
+      a(2, "deposit", 21.1, "Deposited 150.0000 AAPL", 150 * 230.1),
+      a(3, "mode", 21.0, "AAPL set to Reinvest", null),
+      a(4, "deposit", 20.4, "Deposited 120.0000 GOOGL", 120 * 201.4),
+      a(5, "mode", 20.3, "GOOGL set to Reinvest", null),
+      a(6, "deposit", 18.7, "Deposited 160.0000 NVDA", 160 * 176.67),
+      a(7, "deposit", 16.2, "Deposited 30.0000 META", 30 * 748.6),
+      a(8, "deposit", 15.8, "Deposited 40.0000 ORCL", 40 * 241.2),
+      a(9, "advance", 13.0, "AAPL dividend advanced at the ex date", aaplNet),
+      a(10, "reinvest", 11.0, "Compounded 20.22 USDG into 0.0879 AAPL", 20.22),
+      a(11, "advance", 6.0, "MSFT dividend advanced at the ex date", msftNet),
+      a(12, "claim", 2.0, "Claimed 34.43 USDG from the MSFT stream", 34.43),
+      a(13, "mode", 1.4, "NVDA set to Cash early", null),
     ];
 
     return {
@@ -193,7 +206,10 @@ class MockStore {
       pending,
       wallet: {
         usdg: 2_500,
-        stocks: { AAPL: 8, MSFT: 6, NVDA: 15, KO: 120, JNJ: 10, PG: 0, JPM: 0 },
+        stocks: {
+          NVDA: 25, TSLA: 12, AAPL: 20, GOOGL: 15, MSFT: 10, AMZN: 10, META: 4, COIN: 3,
+          ORCL: 8, PLTR: 20, CRWV: 15, AMD: 10, INTC: 100, MU: 18, SNDK: 30,
+        },
       },
       vault: {
         tvlUsd: 2_841_000,

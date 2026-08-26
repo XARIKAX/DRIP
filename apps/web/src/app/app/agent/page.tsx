@@ -10,6 +10,7 @@ import {
   useHoldings,
   usePendingAdvances,
   useStreamRows,
+  useTokensView,
   useVaultView,
 } from "@/lib/data/provider";
 import { MODE_LABEL, streamClaimable, type ModeName } from "@/lib/data/types";
@@ -60,7 +61,7 @@ export default function AgentPage() {
       id: nextMessageId++,
       role: "agent",
       toolLines: ["parse_intent → show", "get_streams → 2 open"],
-      text: "KO: $212.06 streaming until Sep 9 · Stream mode, pays your wallet.\nJNJ: $77.22 streaming until Sep 2 · Reinvest mode, every claim buys more JNJ.\nBoth accrue every second. Claim whenever you like, or tell me to claim for you.",
+      text: "MSFT: $180.77 streaming for 15 more days · Stream mode, pays your wallet.\nAAPL: $38.61 streaming for 8 more days · Reinvest mode, every claim buys more AAPL.\nBoth accrue every second. Claim whenever you like, or tell me to claim for you.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -70,8 +71,8 @@ export default function AgentPage() {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  const symbols = holdings.rows.map((h) => h.symbol).concat(["PG", "JPM", "AAPL", "MSFT", "NVDA", "KO", "JNJ"]);
-  const uniqueSymbols = [...new Set(symbols)];
+  const tokens = useTokensView();
+  const uniqueSymbols = [...new Set(tokens.map((t) => t.symbol).concat(holdings.rows.map((h) => h.symbol)))];
 
   function buildPlan(intent: Intent): { toolLines: string[]; plan?: Plan; text?: string } {
     const tools = [`parse_intent → ${intent.kind}`];
@@ -270,7 +271,7 @@ export default function AgentPage() {
       default:
         return {
           toolLines: tools,
-          text: 'Not recognised. I can set modes ("reinvest all my KO dividends"), claim ("claim everything"), move stock ("deposit 25 AAPL"), or report ("show my streams").',
+          text: 'Not recognised. I can set modes ("reinvest all my MSFT dividends"), claim ("claim everything"), move stock ("deposit 25 AAPL"), or report ("show my streams").',
         };
     }
   }
@@ -374,7 +375,7 @@ export default function AgentPage() {
             </span>
             <input
               className="num w-full border border-panel-edge bg-panel-2 px-3 py-2.5 text-[14px] text-paper outline-none placeholder:text-panel-faint focus:border-cyan"
-              placeholder="reinvest all my KO dividends"
+              placeholder="reinvest all my MSFT dividends"
               aria-label="Agent command"
               value={input}
               onChange={(e) => setInput(e.target.value)}

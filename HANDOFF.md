@@ -182,7 +182,49 @@ Production hardening required:
 - [ ] Re run the deploy script with real addresses passed in (see `_deployProtocol` —
       the mock lines are the only testnet specific code in it).
 
-## 8. Upgradeability — open decision, flagged
+## 8. Mainnet listing universe — Robinhood Chain (4663)
+
+The production universe is maintained in `contracts/listings/4663.json`: 16 stock
+tokens with their Chainlink USD feeds and swap routes, plus the routing infra
+(WETH, USDG, SwapRouter02, QuoterV2, the ETH/USD feed). The SDK exports the same
+table typed as `listings`. SPCX is present but `enabled: false` — never traded,
+private-company feed, review before listing.
+
+Production contracts already written against it:
+
+- `src/adapters/ChainlinkPriceOracle.sol` — one 8-decimal USD feed per token,
+  scaled to the 6-decimal USDG quote, 1 hour heartbeat staleness guard, fails
+  closed on stale, zero, negative, or incomplete rounds. This is the reference
+  price for slippage bounds and clawback sizing.
+- `src/adapters/UniswapV3SwapAdapter.sol` — SwapRouter02 semantics. NOTE: the
+  SwapRouter02 `ExactInputSingleParams` struct has NO deadline field; encoding
+  the original SwapRouter struct against it produces undecodable calldata. The
+  adapter swaps the USDG → token leg only (the protocol already holds the USDG
+  mid-hop asset; the chain has no direct ETH/stock pools).
+- `script/VerifyUniverse.s.sol` — run `forge script script/VerifyUniverse.s.sol
+  --rpc-url robinhood_mainnet` before every wiring change. It hard-fails unless,
+  for every enabled token: symbol and 18 decimals match onchain, the feed is
+  8-decimal and fresh inside the heartbeat, both the full WETH→USDG→token route
+  and the USDG leg quote through QuoterV2, and the quoted output sits within
+  bounds of the Chainlink price.
+
+The listing rules, non-negotiable (they are also embedded in the JSON):
+
+1. No feed, no listing. BE and USAR exist with no feed — never list them.
+2. Verify onchain before wiring: token `symbol()`/`decimals()`, feed
+   `description()`, feed liveness. Hard-fail on any mismatch.
+3. Quote every route through QuoterV2 before enabling it; re-check fee tier
+   3000 per pool.
+4. Path encoding is `abi.encodePacked(WETH, uint24(3000), USDG, uint24(3000),
+   token)`; minOut bounds the FINAL token against the Chainlink price, never
+   the mid leg.
+5. All feeds are 8-decimal USD via `latestRoundData()`; guard staleness with
+   the 1 hour heartbeat and refuse to settle on a stale read. Fail closed to
+   refund.
+6. Stock tokens are Robinhood-issued debt trackers: run a live small
+   receive/hold/transfer test from a contract before real bankroll.
+
+## 8b. Upgradeability — open decision, flagged
 
 v1 as written is **immutable, no proxies**. Migration path if something must change:
 deploy v2, pause v1 user entry points, holders withdraw and redeposit. Positions are

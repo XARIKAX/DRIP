@@ -26,6 +26,7 @@ function clean(value: string | undefined): string {
 /** Canonical public RPC per known chain, used when the env RPC is missing or invalid. */
 const CANONICAL_RPC: Record<number, string> = {
   31337: "http://127.0.0.1:8545",
+  4663: "https://rpc.mainnet.chain.robinhood.com",
   46630: "https://rpc.testnet.chain.robinhood.com/rpc",
   421614: "https://sepolia-rollup.arbitrum.io/rpc",
 };

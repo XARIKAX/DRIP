@@ -7,4 +7,5 @@ export { reinvestorAbi } from "./reinvestorAbi";
 export { mockUSDGAbi } from "./mockUSDGAbi";
 export { mockStockTokenAbi } from "./mockStockTokenAbi";
 export { mockSwapAdapterAbi } from "./mockSwapAdapterAbi";
+export { listings } from "./listings";
 export { deployments } from "./deployments";

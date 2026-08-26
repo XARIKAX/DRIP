@@ -7,16 +7,18 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ISwapAdapter} from "../interfaces/ISwapAdapter.sol";
 import {IPriceOracle} from "../interfaces/IPriceOracle.sol";
 
-/// @notice The two functions of the Uniswap v3 router this adapter needs.
-/// @dev Declared locally so the repo carries no Uniswap dependency. A v4 router
-///      swap is the same shape: replace this interface and the one call in _swap.
-interface IUniswapV3Router {
+/// @notice The one function of SwapRouter02 this adapter calls.
+/// @dev Declared locally so the repo carries no Uniswap dependency. This is the
+///      SwapRouter02 shape: there is NO deadline field in the params struct. The
+///      original SwapRouter's ExactInputSingleParams has one; encoding against the
+///      wrong struct produces calldata the router cannot decode. Robinhood Chain
+///      runs SwapRouter02 at 0xcaf681a66d020601342297493863e78c959e5cb2.
+interface ISwapRouter02 {
     struct ExactInputSingleParams {
         address tokenIn;
         address tokenOut;
         uint24 fee;
         address recipient;
-        uint256 deadline;
         uint256 amountIn;
         uint256 amountOutMinimum;
         uint160 sqrtPriceLimitX96;
@@ -26,39 +28,41 @@ interface IUniswapV3Router {
 }
 
 /// @title UniswapV3SwapAdapter
-/// @notice PRODUCTION adapter. Points the reinvest module at the chain's real Uniswap.
-/// @dev NOT DEPLOYED ON TESTNET. Testnet runs MockSwapAdapter. This file exists so the
-///      Solidity developer has the production seam already written, reviewed against
-///      the same ISwapAdapter the frontend and Reinvestor already use.
+/// @notice PRODUCTION adapter. Points the reinvest module at the chain's Uniswap
+///         deployment through SwapRouter02.
+/// @dev NOT DEPLOYED ON TESTNET. Testnet runs MockSwapAdapter. Read this before
+///      deploying it; every point below is a listing rule that kept real money safe.
 ///
-///      Read this before deploying it:
-///
-///      1. quote() reads IPriceOracle, not the pool. That is the point. Reinvestor
-///         derives minAmountOut from quote(), so if quote() read the pool, a sandwich
-///         could move the pool, get quoted the moved price, and pass its own guard.
-///      2. The pool fee tier per pair is admin configured. Wrong tier means a pool that
-///         does not exist and a reverting swap, not a bad fill.
-///      3. deadline is block.timestamp because this is only ever called inside the same
-///         transaction as the claim that funds it. There is no mempool exposure window
-///         to protect against with a longer deadline, and a longer one only helps a
-///         reorg. If that stops being true, thread a real deadline through.
+///      1. quote() reads the Chainlink oracle, never the pool. Reinvestor derives
+///         minAmountOut from quote(), so if quote() read the pool a sandwich could
+///         move the pool, get quoted the moved price, and pass its own guard. The
+///         minOut always bounds the FINAL token against the Chainlink price.
+///      2. This adapter swaps USDG to the stock token: one hop, fee tier 3000 unless
+///         configured otherwise per token. The chain has no direct ETH/stock pools;
+///         full entry routes are WETH -3000-> USDG -3000-> token, and this protocol
+///         already holds the USDG mid-hop asset, so exactInputSingle on the final
+///         leg is the whole job. Anything longer belongs in a path-encoded
+///         exactInput, bounded the same way.
+///      3. Verify every route through QuoterV2
+///         (0x33e885ed0ec9bf04ecfb19341582aadcb4c8a9e7) before wiring a token, and
+///         re-check the fee tier per pool. See script/VerifyUniverse.s.sol.
 ///      4. Nothing is held here between transactions. Any residual balance is a bug.
 contract UniswapV3SwapAdapter is ISwapAdapter, Ownable {
     using SafeERC20 for IERC20;
 
-    /// @notice The Uniswap v3 router on this chain.
-    IUniswapV3Router public immutable router;
+    /// @notice The SwapRouter02 on this chain.
+    ISwapRouter02 public immutable router;
 
     /// @notice USDG.
     address public immutable usdg;
 
-    /// @notice Reference price source. Must not be the pool.
+    /// @notice Reference price source. Chainlink, never the pool.
     IPriceOracle public priceOracle;
 
     /// @notice Pool fee tier per stock token, in hundredths of a bip. 3000 = 0.30 percent.
     mapping(address => uint24) public feeTier;
 
-    /// @notice Fee tier used when a token has none configured.
+    /// @notice Fee tier used when a token has none configured. Every listed pool is 3000.
     uint24 public defaultFeeTier = 3000;
 
     event PriceOracleSet(address indexed oracle);
@@ -68,7 +72,7 @@ contract UniswapV3SwapAdapter is ISwapAdapter, Ownable {
     error ZeroAddress();
     error UnknownPair(address tokenIn, address tokenOut);
 
-    constructor(IUniswapV3Router router_, address usdg_, IPriceOracle oracle_, address owner_) Ownable(owner_) {
+    constructor(ISwapRouter02 router_, address usdg_, IPriceOracle oracle_, address owner_) Ownable(owner_) {
         if (address(router_) == address(0) || usdg_ == address(0) || address(oracle_) == address(0)) {
             revert ZeroAddress();
         }
@@ -99,7 +103,8 @@ contract UniswapV3SwapAdapter is ISwapAdapter, Ownable {
 
     /// @inheritdoc ISwapAdapter
     /// @dev Oracle math, identical in shape to MockSwapAdapter so behaviour does not
-    ///      change when the venue does.
+    ///      change when the venue does. The oracle itself enforces feed liveness and
+    ///      fails closed on a stale read.
     function quote(address tokenIn, address tokenOut, uint256 amountIn) public view returns (uint256) {
         if (tokenIn == usdg) {
             return (amountIn * 1e18) / priceOracle.priceUsdg(tokenOut);
@@ -111,6 +116,9 @@ contract UniswapV3SwapAdapter is ISwapAdapter, Ownable {
     }
 
     /// @inheritdoc ISwapAdapter
+    /// @dev minAmountOut arrives from Reinvestor, already derived from the Chainlink
+    ///      quote above and the holder's slippage tolerance. SwapRouter02 enforces it
+    ///      onchain; a fill worse than the oracle allows reverts instead of landing.
     function swap(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, address recipient)
         external
         returns (uint256 amountOut)
@@ -123,12 +131,11 @@ contract UniswapV3SwapAdapter is ISwapAdapter, Ownable {
         if (fee == 0) fee = defaultFeeTier;
 
         amountOut = router.exactInputSingle(
-            IUniswapV3Router.ExactInputSingleParams({
+            ISwapRouter02.ExactInputSingleParams({
                 tokenIn: tokenIn,
                 tokenOut: tokenOut,
                 fee: fee,
                 recipient: recipient,
-                deadline: block.timestamp,
                 amountIn: amountIn,
                 amountOutMinimum: minAmountOut,
                 sqrtPriceLimitX96: 0

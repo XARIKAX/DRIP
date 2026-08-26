@@ -279,7 +279,7 @@ function HoldingsPanel() {
       </div>
 
       <div className="dark-scroll max-w-full overflow-x-auto">
-        <table className="panel-table min-w-[720px] text-[14px]">
+        <table className="panel-table min-w-[680px] text-[14px]">
           <thead>
             <tr>
               <th>Token</th>
@@ -330,8 +330,8 @@ function HoldingsPanel() {
                     </td>
                     <td>
                       <div className="flex items-center justify-end gap-3">
-                        <Sparkline points={h.spark} up={h.movePct >= 0} dark />
-                        <span className={`num w-[64px] text-right text-[13px] font-medium ${h.movePct >= 0 ? "text-cyan" : "text-down"}`}>
+                        <Sparkline points={h.spark} width={76} up={h.movePct >= 0} dark />
+                        <span className={`num w-[58px] text-right text-[12px] font-medium ${h.movePct >= 0 ? "text-cyan" : "text-down"}`}>
                           {h.movePct >= 0 ? "+" : ""}
                           {h.movePct.toFixed(2)}%
                         </span>

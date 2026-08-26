@@ -28,7 +28,22 @@ export const robinhoodTestnet = defineChain({
   testnet: true,
 });
 
+/**
+ * Robinhood Chain mainnet: chain id 4663, ETH gas, Blockscout explorer.
+ * The listing universe for it lives in contracts/listings/4663.json and is
+ * exported typed from this package as `listings`.
+ */
+export const robinhoodMainnet = defineChain({
+  id: 4663,
+  name: "Robinhood Chain",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: { default: { http: ["https://rpc.mainnet.chain.robinhood.com"] } },
+  blockExplorers: {
+    default: { name: "Blockscout", url: "https://robinhoodchain.blockscout.com" },
+  },
+});
+
 /** Chains the app knows how to talk to. */
-export const supportedChains = [foundry, arbitrumSepolia, robinhoodTestnet] as const;
+export const supportedChains = [foundry, arbitrumSepolia, robinhoodTestnet, robinhoodMainnet] as const;
 
 export { arbitrumSepolia, foundry };

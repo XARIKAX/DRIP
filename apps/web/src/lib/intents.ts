@@ -118,7 +118,7 @@ export function parseIntent(input: string, symbols: string[]): Intent {
     return {
       kind: "unsupported",
       reason: "A withdrawal needs both a ticker and an amount.",
-      suggestion: 'Try "withdraw 10 KO".',
+      suggestion: 'Try "withdraw 10 MSFT".',
     };
   }
 
@@ -137,7 +137,7 @@ export function parseIntent(input: string, symbols: string[]): Intent {
       return {
         kind: "unsupported",
         reason: "That mode change needs a ticker, or the word all.",
-        suggestion: 'Try "reinvest all my KO dividends" or "stream everything".',
+        suggestion: 'Try "reinvest all my MSFT dividends" or "stream everything".',
       };
     }
   }
@@ -147,10 +147,10 @@ export function parseIntent(input: string, symbols: string[]): Intent {
 
 /** Suggested commands. The honest ones and the executable ones, mixed. */
 export const EXAMPLE_PROMPTS = [
-  "Reinvest all my KO dividends",
+  "Reinvest all my MSFT dividends",
   "Claim everything",
   "Cash out AAPL early",
-  "Compound all my KO dividends into NVDA",
+  "Compound all my MSFT dividends into NVDA",
   "Stream half, reinvest half",
   "Protect my portfolio this weekend",
   "Show my streams",
