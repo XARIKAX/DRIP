@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     title: "How Osinko works — the Aave of stocks",
     description:
       "The whole thing explained: how you get paid, how the pool works, borrowing, splitting, who controls what, the risks, and how to use the app.",
-    url: "https://dripmarkets.net/docs",
+    url: "https://www.osinko.app/docs",
     siteName: "Osinko",
     type: "article",
   },

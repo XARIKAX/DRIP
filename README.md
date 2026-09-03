@@ -65,7 +65,7 @@ implementations, and components never know which one they are on.
 ## Docs
 
 The protocol documentation ships inside the app at `/docs`
-(https://dripmarkets.net/docs): the mechanism module by module, every number a
+(https://www.osinko.app/docs): the mechanism module by module, every number a
 contract enforces, roles and trust assumptions, settlement and clawback, the agent
 tools and SDK, and how to use the app — with diagrams and screenshots, numbered like
 a prospectus, and bound to the same live data as the dashboard. It says what Osinko

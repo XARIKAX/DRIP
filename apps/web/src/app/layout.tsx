@@ -4,7 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://dripmarkets.net"),
+  metadataBase: new URL("https://www.osinko.app"),
   title: "Osinko — Split the stock. Trade the dividend. Borrow on both.",
   description:
     "The Aave of stocks. Deposit your stock and get the dividend the day you earn it, a little every second, or as more stock. Borrow against your stock and let the dividends pay the interest. Split a stock and sell the dividend on its own. On Robinhood Chain.",
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     title: "Osinko — The Aave of stocks",
     description:
       "Get your dividends weeks early. Borrow against your stock and let the dividends pay the interest. Split a stock and sell the dividend on its own. On Robinhood Chain.",
-    url: "https://dripmarkets.net",
+    url: "https://www.osinko.app",
     siteName: "Osinko",
     type: "website",
   },
