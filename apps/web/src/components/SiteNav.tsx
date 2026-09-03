@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/app", label: "Dashboard" },
   { href: "/app/deposit", label: "Deposit" },
   { href: "/app/borrow", label: "Borrow" },
+  { href: "/app/split", label: "Split" },
   { href: "/app/vault", label: "Vault" },
   { href: "/app/calendar", label: "Calendar" },
   { href: "/app/agent", label: "Agent" },

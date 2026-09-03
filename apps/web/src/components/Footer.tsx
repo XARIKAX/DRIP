@@ -9,6 +9,7 @@ const COLUMNS = [
       { href: "/app", label: "Dashboard" },
       { href: "/app/deposit", label: "Deposit" },
       { href: "/app/borrow", label: "Borrow" },
+      { href: "/app/split", label: "Split" },
       { href: "/app/vault", label: "Advance vault" },
       { href: "/app/calendar", label: "Ex date calendar" },
       { href: "/app/agent", label: "Agent console" },
@@ -21,6 +22,7 @@ const COLUMNS = [
       { href: "/app/vault", label: "Vault stats" },
       { href: "/app", label: "Your streams" },
       { href: "/app/borrow", label: "Credit line" },
+      { href: "/app/split", label: "Principal & yield" },
     ],
   },
   {

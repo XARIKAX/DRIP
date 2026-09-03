@@ -6,17 +6,22 @@ $DRIP. Solidity contract names, roles, events and package identifiers keep their
 existing Drip-era names — the brand lives in the UI and docs, not in the ABI, and
 renaming deployed-artifact identifiers buys nothing but churn.
 
-The protocol has two sides sharing one balance sheet:
+The protocol has three sides sharing one balance sheet:
 - **Income** (built, tested): advances at the ex date, per-second streams,
-  auto-reinvestment. Contracts in this repo, 83 tests green.
+  auto-reinvestment. Contracts in this repo, 96 tests green.
 - **Credit** (demo live, contracts to build): USDG borrowing against deposited
   stock collateral with dividend-serviced interest. Specified in section 13 below;
   currently implemented only in the web app's demo data layer.
+- **Trade** (built, tested): split a stock token into a Principal Token and a
+  Yield Token, so the drip itself becomes a liquid position. `SplitVault`,
+  specified in section 14 below — the only module that wraps the share, and it
+  is opt in.
 
 For the Solidity developer taking this to mainnet. Everything in `contracts/` compiles,
-passes 74 tests including invariants, and runs the full product loop on a local chain.
-Your job is not to build it. Your job is to harden it, replace the testnet stand ins,
-and deploy it without changing a single interface the frontend depends on.
+passes 96 tests including invariants, and runs the full product loop on a local chain.
+Your job is not to build the income and trade sides from scratch — they are done. Your
+job is to harden all of it, build the credit side per section 13, replace the testnet
+stand ins, and deploy without changing a single interface the frontend depends on.
 
 The frontend, SDK and MCP server read state exclusively through the interfaces in
 `contracts/src/interfaces/` and the events listed below. Keep those stable and nothing
@@ -96,6 +101,8 @@ Do not "improve" this into wallet snapshotting without redesigning the whole pro
 | `mocks/MockSwapAdapter` | Fixed price venue with simulated slippage | Delete. |
 | `mocks/MockPriceOracle` | Admin set prices | Delete. Real feed behind `IPriceOracle`. |
 | `adapters/UniswapV3SwapAdapter` | Production swap seam, already written | Review and deploy. Not used on testnet. Read its header comment: the quote comes from the oracle, not the pool, on purpose. |
+| `SplitVault` | The one module that wraps the share: PT/YT issuance, harvest, claim | See §14. One active series per stock token by design (§14) — production wanting concurrent maturities needs a per-series sub-account. |
+| `PrincipalToken` / `YieldToken` | Minted per series by `SplitVault`, mint/burn gated to it | None structural. `YieldToken` checkpoints every transfer the same way `DripCore` checkpoints deposits — read that before touching either. |
 
 ### Vault accounting identity
 
@@ -325,10 +332,69 @@ Shape:
   action time; vault cash + receivables + loans ≥ obligations; dividend servicing
   never reduces principal below zero; a stale oracle can never mint debt.
 
+## 14. Trade side — SplitVault (already built, here is what to review)
+
+Unlike LendingPool above, this one is built, tested (13 tests in
+`SplitVault.t.sol`) and wired into `Deploy.s.sol`. It is the one module in the
+protocol that wraps the share — Early, Stream, Reinvest and Borrow never mint a
+second token against a deposit; Split does, and only because a holder opted in.
+
+The mechanism, in one line: `SplitVault` deposits into `DripCore` under its own
+address, in `CASH_EARLY` mode, and becomes an ordinary `DripCore` holder like
+anyone else. A **Principal Token** and a **Yield Token** are minted 1:1 against
+what it deposits. PT redeems 1:1 for the stock at maturity. YT is a claim on
+every dividend the series harvests before then, checkpointed the same way
+`DripCore` checkpoints deposit eligibility (`YieldToken` mirrors `DripCore`'s
+`Checkpoints.Trace208` pattern exactly, so a dividend harvested after a YT
+transfer still pays whoever held it at that dividend's own ex date, not whoever
+holds it now).
+
+**The load-bearing simplification, stated as loudly as `SplitVault.sol` itself
+states it**: one active series per stock token. A new series cannot open until
+the prior one's PT supply is fully redeemed to zero. That is what keeps
+`dripCore.balanceOf(splitVault, stockToken) == activeSeries.PT.totalSupply()`
+true at every moment, and it is the reason nothing below needs a second layer of
+cross-series proration. Production wanting concurrent maturities on the same
+stock (the way Pendle runs several expiries on one asset at once) needs a
+per-series sub-account — a minimal proxy that itself deposits into `DripCore`
+under its own address — so each series' custody, and each series' harvested
+dividend pool, stays cleanly separated from every other series on the same stock.
+
+What else production should look at:
+
+- **Split fee**: 10 bps default, 100 bps ceiling (`MAX_SPLIT_FEE_BPS`), same
+  shape as `AdvanceVault`'s fee ceiling. Fee stock is held in the vault rather
+  than deposited, specifically so `PT.totalSupply()` never has to account for
+  stock that never entered `DripCore` — do not change that without re-deriving
+  the accounting identity above.
+- **Harvest is permissionless**, deliberately, the same as `DripCore.activate`:
+  a keeper, a YT holder, or the UI can all trigger it, and the USDG can only ever
+  land in `SplitVault` itself.
+- **A harvest is a normal CASH_EARLY entitlement** from `DripCore`'s point of
+  view, so it is subject to `AdvanceVault`'s cash floor and utilisation cap like
+  any other CASH_EARLY holder — a harvest can revert for the same capacity
+  reasons a normal advance can. No special-casing was added for SplitVault here
+  on purpose: it should face the same risk surface as everyone else.
+- **YT decays to zero at maturity**, not before. Splitting after maturity is
+  blocked (`AlreadyMatured`) since it would mint a Yield Token with nothing left
+  to accrue; merging after maturity is still allowed, since burning PT+YT for
+  stock is harmless whenever it happens.
+- **No AMM.** There is no secondary market for PT or YT in this repo — the demo
+  UI's "implied yield" figure is the same annualised-yield arithmetic used
+  everywhere else in the app, not a market price. A real PT/YT market (Pendle's
+  own AMM shape, or a simpler constant-sum pool) is the actual "trade the drip"
+  half of the pitch and is the highest-leverage thing to build next here.
+- **Invariants to test further**: `dripCore.balanceOf(vault, token) ==
+  PT.totalSupply()` holds at every block for the active series; sum of all
+  `claimYield` payouts for one dividend never exceeds that dividend's harvested
+  pool; a YT balance transferred after a dividend's ex date can never change
+  what that dividend pays out (tested once in `SplitVault.t.sol`; worth an
+  invariant handler alongside the existing DripCore one).
+
 ## 12. Repo map
 
 ```
-contracts/src/            the six protocol contracts + interfaces + mocks + adapters
+contracts/src/            ten protocol contracts + interfaces + mocks + adapters
 contracts/test/           unit + integration suites, one per contract
 contracts/test/invariant/ handler driven invariant suite
 contracts/script/         Deploy.s.sol (writes deployments/<chainid>.json), Seed.s.sol

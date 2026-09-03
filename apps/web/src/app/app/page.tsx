@@ -359,6 +359,10 @@ const KIND_LABEL: Record<string, string> = {
   mode: "Rule",
   vault: "Vault",
   settle: "Settle",
+  split: "Split",
+  merge: "Merge",
+  harvest: "Harvest",
+  claim_yield: "Claim yield",
 };
 
 function ActivityFeed() {

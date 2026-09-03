@@ -87,7 +87,11 @@ export type ActivityKind =
   | "vault"
   | "borrow"
   | "repay"
-  | "settle";
+  | "settle"
+  | "split"
+  | "merge"
+  | "harvest"
+  | "claim_yield";
 
 export interface ActivityRow {
   id: number;
@@ -179,4 +183,50 @@ export interface PortfolioSummary {
   earnedThisWeekUsd: number;
   activeRules: number;
   nextDividend: { symbol: string; exDate: number } | null;
+}
+
+/**
+ * The Split side. The one module that wraps the share: deposit stock, receive a
+ * Principal Token (the share, minus the drip — redeemable 1:1 for the stock at
+ * maturity) and a Yield Token (the drip alone, tradable on its own until then).
+ * Early, Stream, Reinvest and Borrow never do this; Split is opt in, for holders
+ * who specifically want the dividend itself to be a liquid position rather than a
+ * stream or loan collateral.
+ */
+export interface SplitSeries {
+  seriesId: number;
+  symbol: string;
+  name: string;
+  maturity: number;
+  splitFeeBps: number;
+  /** Principal Token supply for this series, protocol wide. Backs 1:1 in custody. */
+  ptSupply: number;
+  ytSupply: number;
+  underlyingPriceUsd: number;
+  /** What the market is pricing the drip at, annualised, in the absence of a real AMM. */
+  impliedYieldApr: number;
+}
+
+/** A holder's position in one series. */
+export interface SplitPosition {
+  seriesId: number;
+  ptBalance: number;
+  ytBalance: number;
+}
+
+/** A dividend on a split token's underlying, from the series' point of view. */
+export interface SplitDividendRow {
+  seriesId: number;
+  dividendId: number;
+  symbol: string;
+  perShare: number;
+  exDate: number;
+  /** Set once anyone has pulled the entitlement into the series' yield pool. */
+  harvested: boolean;
+  /** The pool a harvest produced, split fee already taken at split time, advance
+   *  fee already taken by the vault the way any CASH_EARLY holder's is. */
+  poolUsd: number;
+  /** This holder's pro rata share of the pool, by YT balance at the ex date. */
+  claimableUsd: number;
+  claimed: boolean;
 }

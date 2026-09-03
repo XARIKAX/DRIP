@@ -13,6 +13,7 @@ import {AdvanceVault} from "../src/AdvanceVault.sol";
 import {DripCore} from "../src/DripCore.sol";
 import {StreamEngine} from "../src/StreamEngine.sol";
 import {Reinvestor} from "../src/Reinvestor.sol";
+import {SplitVault} from "../src/SplitVault.sol";
 import {IDividendRegistry} from "../src/interfaces/IDividendRegistry.sol";
 import {IAdvanceVault} from "../src/interfaces/IAdvanceVault.sol";
 import {IStreamEngine} from "../src/interfaces/IStreamEngine.sol";
@@ -50,6 +51,7 @@ contract Deploy is Script {
         address streamEngine;
         address reinvestor;
         address adapter;
+        address splitVault;
     }
 
     Deployment internal d;
@@ -101,6 +103,9 @@ contract Deploy is Script {
         d.adapter = address(new MockSwapAdapter(d.usdg, deployer));
         d.reinvestor =
             address(new Reinvestor(IERC20(d.usdg), IDripCore(d.core), ISwapAdapter(d.adapter), deployer));
+        d.splitVault = address(
+            new SplitVault(IDripCore(d.core), IDividendRegistry(d.registry), IERC20(d.usdg), deployer)
+        );
     }
 
     /// @dev Module pointers and roles. Only protocol contracts move protocol money.
@@ -126,6 +131,9 @@ contract Deploy is Script {
         reinvestor.grantRole(reinvestor.CORE_ROLE(), d.core);
         core.grantRole(core.REINVESTOR_ROLE(), d.reinvestor);
         registry.grantRole(registry.SETTLER_ROLE(), d.core);
+        // SplitVault deposits into DripCore like any ordinary holder — it needs no
+        // role there. Its own KEEPER_ROLE (createSeries, pause) is granted to the
+        // deployer at construction time, same pattern as every other module.
     }
 
     /// @dev Five tickers, priced, registered and stocked so the reinvest swap always fills.
@@ -164,6 +172,7 @@ contract Deploy is Script {
         vm.serializeAddress(root, "streamEngine", d.streamEngine);
         vm.serializeAddress(root, "reinvestor", d.reinvestor);
         vm.serializeAddress(root, "swapAdapter", d.adapter);
+        vm.serializeAddress(root, "splitVault", d.splitVault);
         vm.serializeString(root, "prices", pricesJson);
         string memory out = vm.serializeString(root, "tokens", tokensJson);
 

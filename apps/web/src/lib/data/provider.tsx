@@ -45,6 +45,9 @@ import type {
   ModeName,
   PendingAdvance,
   PortfolioSummary,
+  SplitDividendRow,
+  SplitPosition,
+  SplitSeries,
   StreamRow,
   TokenInfo,
   VaultView,
@@ -322,6 +325,51 @@ export function useCreditView(): CreditView {
   }, [source, version]);
 }
 
+/**
+ * Split. The one module that wraps the share — demo mode only, the same way
+ * Borrow's lending market is demo mode only: neither is deployed onchain yet.
+ * Chain mode returns the empty shape so every page still renders.
+ */
+export function useSplitSeries(): SplitSeries[] {
+  const source = useDataSource();
+  const version = useMockVersion();
+  return useMemo(() => {
+    if (source === "chain") return [];
+    return mockStore.splitSeriesList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source, version]);
+}
+
+export function useSplitPosition(seriesId: number): SplitPosition | null {
+  const source = useDataSource();
+  const version = useMockVersion();
+  return useMemo(() => {
+    if (source === "chain") return null;
+    return mockStore.splitPosition(seriesId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source, version, seriesId]);
+}
+
+export function useSplitDividendRows(seriesId: number): SplitDividendRow[] {
+  const source = useDataSource();
+  const version = useMockVersion();
+  return useMemo(() => {
+    if (source === "chain") return [];
+    return mockStore.splitDividendRows(seriesId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source, version, seriesId]);
+}
+
+export function useSplitWalletBalance(symbol: string): number {
+  const source = useDataSource();
+  const version = useMockVersion();
+  return useMemo(() => {
+    if (source === "chain") return 0;
+    return mockStore.splitWalletBalance(symbol);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source, version, symbol]);
+}
+
 export function usePortfolioSummary(): PortfolioSummary {
   const source = useDataSource();
   const version = useMockVersion();
@@ -368,6 +416,11 @@ export interface DataActions {
   vaultWithdraw: (usd: number) => Promise<void>;
   borrow: (usd: number) => Promise<void>;
   repay: (usd: number) => Promise<void>;
+  split: (seriesId: number, amount: number) => Promise<void>;
+  merge: (seriesId: number, amount: number) => Promise<void>;
+  redeemPrincipal: (seriesId: number, amount: number) => Promise<void>;
+  harvestDividend: (seriesId: number, dividendId: number) => Promise<void>;
+  claimYield: (seriesId: number, dividendId: number) => Promise<void>;
 }
 
 export function useDataActions(): DataActions {
@@ -410,6 +463,11 @@ export function useDataActions(): DataActions {
         vaultWithdraw: (usd) => demo(() => mockStore.vaultWithdraw(usd)),
         borrow: (usd) => demo(() => mockStore.borrow(usd)),
         repay: (usd) => demo(() => mockStore.repay(usd)),
+        split: (seriesId, amount) => demo(() => mockStore.split(seriesId, amount)),
+        merge: (seriesId, amount) => demo(() => mockStore.merge(seriesId, amount)),
+        redeemPrincipal: (seriesId, amount) => demo(() => mockStore.redeemPrincipal(seriesId, amount)),
+        harvestDividend: (seriesId, dividendId) => demo(() => mockStore.harvestDividend(seriesId, dividendId)),
+        claimYield: (seriesId, dividendId) => demo(() => mockStore.claimYield(seriesId, dividendId)),
       };
     }
 
@@ -468,6 +526,21 @@ export function useDataActions(): DataActions {
       },
       repay: async () => {
         throw new Error("The lending market is not deployed onchain yet. Try demo mode.");
+      },
+      split: async () => {
+        throw new Error("SplitVault is not deployed onchain yet. Try demo mode.");
+      },
+      merge: async () => {
+        throw new Error("SplitVault is not deployed onchain yet. Try demo mode.");
+      },
+      redeemPrincipal: async () => {
+        throw new Error("SplitVault is not deployed onchain yet. Try demo mode.");
+      },
+      harvestDividend: async () => {
+        throw new Error("SplitVault is not deployed onchain yet. Try demo mode.");
+      },
+      claimYield: async () => {
+        throw new Error("SplitVault is not deployed onchain yet. Try demo mode.");
       },
     };
   }, [source, demoBusy, demo, state.status, deployment, address, addressOf, run]);

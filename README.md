@@ -16,7 +16,14 @@ a USDG line whose interest the dividends pay.
 4. **Borrow** — USDG credit against deposited stocks; every dividend the collateral
    earns is applied against the interest first, so at a conservative LTV the loan
    carries itself
-5. **Agent** — every action exposed over MCP so an agent can manage the whole strategy
+5. **Split** — the one module that wraps the share: deposit a stock token into
+   `SplitVault` and receive a Principal Token (the share, redeemable 1:1 at
+   maturity) and a Yield Token (every dividend it pays before then, tradable on
+   its own). Merge them back at par, free, any time before maturity. Opt in only —
+   Early, Stream, Reinvest and Borrow never touch what a holder holds; this is the
+   one path that does, for holders who specifically want the drip to be a liquid
+   position rather than a stream or loan collateral
+6. **Agent** — every action exposed over MCP so an agent can manage the whole strategy
    from natural language, signing nothing itself
 
 **Hold the share. Stream the drip. Borrow on both.**
@@ -85,7 +92,7 @@ nothing else.
 ## Tests
 
 ```bash
-pnpm contracts:test    # 74 tests: unit, fuzz, integration, invariants
+pnpm contracts:test    # 96 tests: unit, fuzz, integration, invariants
 pnpm typecheck         # sdk + mcp + web
 ```
 
@@ -117,7 +124,7 @@ Point an MCP client at it with:
 
 ```
 apps/web/          Next.js app — home, dashboard, deposit, vault, calendar, agent console
-contracts/         Foundry — 6 protocol contracts, mocks, tests, deploy + seed scripts
+contracts/         Foundry — 10 protocol contracts, mocks, tests, deploy + seed scripts
 packages/sdk/      TypeScript SDK (viem) — typed reads, unsigned write builders
 packages/mcp/      MCP server wrapping the SDK
 scripts/           deploy-local.sh, sync-abis.mjs

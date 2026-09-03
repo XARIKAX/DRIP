@@ -47,6 +47,16 @@ const MODULES = [
   },
   {
     index: "05",
+    name: "Split",
+    claim: "The one module that wraps the share.",
+    body: "Deposit a stock token and receive two: a Principal Token redeemable for the whole share at maturity, and a Yield Token that carries every dividend it pays before then. Trade the drip on its own, or merge the two back at par, free, whenever you want the certificate whole again.",
+    stat: "10",
+    unit: "bps split fee",
+    href: "/app/split",
+    cta: "Split a position",
+  },
+  {
+    index: "06",
     name: "Agent",
     claim: "Your strategy, in one sentence.",
     body: "Every action in the protocol is exposed over MCP. Tell an agent to compound, claim, or borrow and it returns a plan with the numbers filled in. You confirm it with your own key. Nothing executes without a signature.",
@@ -105,14 +115,16 @@ export function Modules() {
       <Reveal className="shell">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="min-w-0">
-            <div className="reveal serial">Five modules</div>
+            <div className="reveal serial">Six modules</div>
             <h2 className="reveal reveal-1 mt-5 max-w-2xl display text-display">
-              One deposit, both sides
+              Hold it, borrow on it, or trade it
             </h2>
           </div>
           <p className="reveal reveal-2 max-w-sm text-[15px] leading-relaxed text-muted">
-            Income on one side, credit on the other, each feeding the other. A quarterly
-            cheque becomes a continuous, compounding, borrowable position.
+            Early, Stream, Reinvest and Borrow never wrap the share — a quarterly cheque
+            becomes a continuous, compounding, borrowable position, and the certificate
+            stays whole. Split is the exception, and it is opt in: wrap it anyway, and the
+            dividend becomes its own liquid position.
           </p>
         </div>
 
