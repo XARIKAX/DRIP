@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { listings } from "@drip-markets/sdk";
 import { fmt, LiveCounter, shortDate } from "@/components/live";
+import { Rosette } from "@/components/Guilloche";
 import { TokenMark } from "@/components/TokenMark";
 import { useCreditView, useDataSource, usePortfolioSummary, useTokensView, useVaultView } from "@/lib/data/provider";
 import { DocsShell, type GlanceRow, type QuickLink, type TocGroup } from "@/components/docs/DocsShell";
@@ -114,9 +115,14 @@ export function Docs() {
   ];
 
   const hero = (
-    <header>
+    <header className="relative">
+      {/* The rose engine, behind the title — the same watermark the certificate carries,
+          so the reference is visibly printed on the same stock as the product. */}
+      <div className="pointer-events-none absolute -right-10 -top-16 text-ink/[0.07] lg:-right-24" aria-hidden>
+        <Rosette size={380} rings={30} R={100} r={28} a={68} drift={0.8} />
+      </div>
       <div className="serial">Read me first</div>
-      <h1 className="display mt-5 text-[clamp(40px,5.4vw,70px)] leading-[0.98] tracking-[-0.02em]">
+      <h1 className="display relative mt-5 text-[clamp(40px,5.4vw,70px)] leading-[0.98] tracking-[-0.02em]">
         The Aave of stocks,
         <br />
         <span className="italic text-cyan-deep">in writing.</span>
@@ -135,12 +141,12 @@ export function Docs() {
         of parameters the contracts hold.
       </p>
       <div className="mt-8 flex flex-wrap gap-2">
-        <span className="pill">Testnet build</span>
+        <span className="pill">Robinhood Chain</span>
         <span className="pill">Self custody</span>
         <span className="pill">Interfaces frozen</span>
         <span className="pill-live">
           <span className="beacon" aria-hidden />
-          {source === "demo" ? "Live against the demo portfolio" : "Live against the chain"}
+          {source === "demo" ? "Live against the reference portfolio" : "Live against your wallet"}
         </span>
       </div>
     </header>
@@ -195,7 +201,7 @@ export function Docs() {
           name="dashboard"
           n={1}
           alt="The Osinko dashboard: portfolio value, earned this week, active rules and the next ex date, above a META dividend awaiting its advance and two live streams."
-          caption="The dashboard against the demo portfolio: two streams accruing per second, and a META dividend that went ex yesterday, waiting to be advanced. Every page in the app renders from the same store, with or without a wallet."
+          caption="The dashboard: two streams accruing per second, and a META dividend that went ex yesterday, waiting to be advanced. Every page in the app renders from the same data source, with or without a wallet."
         />
 
         <Sub id="aave-of-stocks" index="1.1" title="The Aave of stocks">
@@ -498,7 +504,7 @@ const deposit = buildDeposit(deployment, AAPL, amount, "AAPL");
         </Formula>
         <Figure
           n={8}
-          caption="The demo's MSFT stream: 220 shares × $0.83 × 0.99 = $180.77 over 21 days. Accrued rises in a straight line; claimed is a staircase beneath it; the gap is what a claim pays right now. Nothing is lost by waiting and nothing is gained by claiming often."
+          caption="The MSFT stream from Fig. 1: 220 shares × $0.83 × 0.99 = $180.77 over 21 days. Accrued rises in a straight line; claimed is a staircase beneath it; the gap is what a claim pays right now. Nothing is lost by waiting and nothing is gained by claiming often."
         >
           <StreamFigure />
         </Figure>
@@ -550,7 +556,7 @@ const deposit = buildDeposit(deployment, AAPL, amount, "AAPL");
           rows={[
             { name: "Slippage tolerance", value: "100 bps default · ceiling 1 000", note: "Per holder, via setMaxSlippage. Zero is rejected; so is anything over ten percent." },
             { name: "Quote source", value: "IPriceOracle, never the pool", note: "The reference price must come from a feed the trade itself cannot move inside one block. On mainnet that is ChainlinkPriceOracle (§12)." },
-            { name: "Swap venue", value: "ISwapAdapter", note: "MockSwapAdapter on testnet. UniswapV3SwapAdapter for production: SwapRouter02 semantics, USDG → token leg only, minimum output bounded against the feed." },
+            { name: "Swap venue", value: "ISwapAdapter", note: "UniswapV3SwapAdapter in production: SwapRouter02 semantics, USDG → token leg only, minimum output bounded against the feed. A mock adapter stands in for local development." },
             { name: "Cross token reinvestment", value: "Not supported, by design", note: "AAPL dividends buy AAPL. A holder who wants something else sets CASH_EARLY and buys it themselves — two steps they can see." },
           ]}
         />
@@ -576,8 +582,8 @@ const deposit = buildDeposit(deployment, AAPL, amount, "AAPL");
         kicker="Once the stock lives onchain it can do what collateral has always done on Wall Street: back a loan. This is where the name comes from."
       >
         <Callout label="Status">
-          Borrow is live in the app in demo mode, backed by the same data store as every other
-          page. The onchain market — a <code>LendingPool</code> alongside DripCore and the vault — is
+          Borrow is live in the app against the reference portfolio, backed by the same data
+          source as every other page. The onchain market — a <code>LendingPool</code> alongside DripCore and the vault — is
           specified in the developer handoff and is the credit side's build item. The parameters
           below are that specification; the interface the app already uses is frozen around them.
         </Callout>
@@ -598,7 +604,7 @@ const deposit = buildDeposit(deployment, AAPL, amount, "AAPL");
         </p>
         <Figure
           n={9}
-          caption="The loan to value scale. Up to 40% can be drawn. Between 40% and 65% nothing new can be borrowed and nothing is liquidated. Past 65% a liquidator may repay up to half the debt and take collateral plus a 5% bonus. The marker is the demo portfolio, live."
+          caption="The loan to value scale. Up to 40% can be drawn. Between 40% and 65% nothing new can be borrowed and nothing is liquidated. Past 65% a liquidator may repay up to half the debt and take collateral plus a 5% bonus. The marker is this portfolio, live."
         >
           <LtvFigure ltvPct={ltvPct} healthFactor={credit.healthFactor} />
         </Figure>
@@ -607,12 +613,12 @@ const deposit = buildDeposit(deployment, AAPL, amount, "AAPL");
             { name: "Maximum loan to value", value: "40%", note: "The hard borrow cap. Far below the liquidation line on purpose: the buffer is what lets a dividend serviced loan ride out a drawdown." },
             { name: "Liquidation threshold", value: "65%", note: "health factor = collateral × 0.65 ÷ debt. Below 1.00 the position is liquidatable." },
             { name: "Close factor · bonus", value: "50% · 5%", note: "A liquidator repays up to half the debt and takes collateral worth that plus five percent, sold through the swap adapter with an oracle bounded minimum." },
-            { name: "Borrow rate", value: "kinked, 2% base → 8% at 80%", note: "A utilisation curve in the Aave shape: slope one to the kink, steep past it. The demo market shows 5.8%." },
+            { name: "Borrow rate", value: "kinked, 2% base → 8% at 80%", note: "A utilisation curve in the Aave shape: slope one to the kink, steep past it. The market shows 5.8% today." },
             { name: "Servicing order", value: "interest → principal → mode", note: "One hook in DripCore's entitlement flow. A stale price freezes new borrows and blocks liquidations; nothing is ever liquidated on a stale feed." },
             { name: "Invariants to test", value: "4", note: "debt ≤ collateral × threshold at action time; cash + receivables + loans ≥ obligations; servicing never takes principal below zero; a stale oracle can never mint debt." },
           ]}
         />
-        <p>The demo portfolio, as it stands right now, in the same terms:</p>
+        <p>The portfolio in the app, as it stands right now, in the same terms:</p>
         <Params
           rows={[
             { name: "Collateral at Chainlink prices", value: `$${fmt(credit.collateralValueUsd, 0)}` },
@@ -715,7 +721,7 @@ const deposit = buildDeposit(deployment, AAPL, amount, "AAPL");
           name="split"
           n={12}
           alt="The split page: principal held, yield held, a countdown to maturity, implied yield, a harvested MU dividend with claimable yield, and a split, merge, redeem panel."
-          caption="The demo's MU series, ninety days from maturity, with a dividend that went ex four days ago sitting harvestable. Harvest is permissionless; claim pays pro rata by the yield token's own transfer history."
+          caption="The MU series, ninety days from maturity, with a dividend that went ex four days ago sitting harvestable. Harvest is permissionless; claim pays pro rata by the yield token's own transfer history."
         />
       </Section>
 
@@ -754,7 +760,7 @@ const deposit = buildDeposit(deployment, AAPL, amount, "AAPL");
         </p>
         <ol>
           <li>Cancel the undrawn part of the stream and the matching vault obligation. Money not yet paid is simply never paid.</li>
-          <li>Seize deposited stock worth the cash actually paid out, priced by the swap adapter on testnet and by the price oracle in production, and hand it to the vault (<code>receiveClawback</code>) for admin liquidation.</li>
+          <li>Seize deposited stock worth the cash actually paid out, priced by the price oracle, and hand it to the vault (<code>receiveClawback</code>) for admin liquidation.</li>
           <li>Write off whatever could not be recovered as a loss (<code>recordLoss</code>). Liquidity providers absorb it; the fee is what they are paid for.</li>
         </ol>
         <Callout label="Production hardening, listed in the handoff">
@@ -776,7 +782,7 @@ const deposit = buildDeposit(deployment, AAPL, amount, "AAPL");
         kicker="Only protocol contracts move protocol money. Human held roles feed data, pay money in, or push it to its rightful owner."
       >
         <Table
-          head={["Role", "Where", "Testnet holder", "Production holder"]}
+          head={["Role", "Where", "Holder today", "Holder in production"]}
           rows={[
             ["DEFAULT_ADMIN_ROLE", "everywhere", "deploy key", "multisig behind a timelock"],
             ["ORACLE_ROLE", "DividendRegistry", "deploy key", "dividend oracle reading issuer corporate action data"],
@@ -855,7 +861,7 @@ const deposit = buildDeposit(deployment, AAPL, amount, "AAPL");
           </li>
           <li>
             <strong>Smart contract risk.</strong> 96 tests, including handler driven invariants, and an audit
-            checklist in the handoff — but no audit yet. Testnet only.
+            checklist in the handoff — but no audit yet.
           </li>
           <li>
             <strong>Chain and token risk.</strong> Robinhood Chain is an Arbitrum Orbit L2, public since
@@ -898,7 +904,7 @@ const deposit = buildDeposit(deployment, AAPL, amount, "AAPL");
             ["PrincipalToken · YieldToken", "Per series ERC-20s, mint and burn gated to the vault", "YieldToken checkpoints every transfer for ex date accurate yield."],
             ["ChainlinkPriceOracle", "8 decimal USD feeds scaled to the 6 decimal USDG quote", "1 hour heartbeat. Fails closed on stale, zero, negative or incomplete rounds."],
             ["UniswapV3SwapAdapter", "SwapRouter02 execution of the USDG → token leg", "Minimum output bounded against the feed, never the mid leg. Production only."],
-            ["Mocks", "MockStockToken, MockUSDG, MockSwapAdapter, MockPriceOracle", "Testnet only, with faucets. Deleted from the production deployment."],
+            ["Mocks", "MockStockToken, MockUSDG, MockSwapAdapter, MockPriceOracle", "Local development only, with faucets. Deleted from the production deployment."],
           ]}
           mono={[0]}
         />
@@ -974,7 +980,7 @@ HANDOFF.md                for the Solidity developer taking this to mainnet`}</C
           <em>live</em> means real protocol buys have executed through the route; <em>quote first</em>{" "}
           means the route quotes in the right tiers but no buy has been observed, so the adapter
           quotes through QuoterV2 before every trade. Prices and yields above come from the same
-          source the app is on right now — the demo store, or Chainlink when a wallet is connected.
+          source the app is on right now — the reference portfolio, or Chainlink when a wallet is connected.
         </p>
         <Shot
           name="universe"
@@ -985,10 +991,8 @@ HANDOFF.md                for the Solidity developer taking this to mainnet`}</C
         <Table
           head={["Network", "Chain id", "RPC", "Role"]}
           rows={[
+            ["Robinhood Chain", "4663", "https://rpc.mainnet.chain.robinhood.com", "The product's home. The listing universe and the production adapters are written against it."],
             ["Anvil", "31337", "http://127.0.0.1:8545", "Local development. deploy-local.sh deploys, seeds, fast forwards and syncs ABIs."],
-            ["Robinhood Chain testnet", "46630", "https://rpc.testnet.chain.robinhood.com/rpc", "The product's home. Public since February 2026; the public RPC is rate limited."],
-            ["Arbitrum Sepolia", "421614", "https://sepolia-rollup.arbitrum.io/rpc", "Drop in stand in with the same Orbit stack semantics."],
-            ["Robinhood Chain mainnet", "4663", "https://rpc.mainnet.chain.robinhood.com", "The listing universe and the production adapters are written against it."],
           ]}
           mono={[1, 2]}
         />
@@ -1087,11 +1091,12 @@ const vault     = await reader.getVaultStats();
         kicker="Every page renders and every interaction works with no wallet, ever. Connecting one swaps the data source; it never gates the UI."
       >
         <p>
-          The app boots into <strong>demo mode</strong>: a seeded portfolio with live streams accruing per
-          second, three weeks of history, a funded vault, an open credit line, a split series and a
-          working agent console. Every action mutates one in memory store and every page reads from
-          it, so the numbers agree everywhere. Connecting a wallet against a deployed chain swaps
-          that store for chain reads through the SDK; components never know which one they are on.
+          Before a wallet is connected the app shows a <strong>reference portfolio</strong>: live streams
+          accruing per second, three weeks of history, a funded vault, an open credit line, a split
+          series and a working agent console. Every action mutates one in memory store and every
+          page reads from it, so the numbers agree everywhere. Connecting a wallet against a
+          deployed chain swaps that store for chain reads through the SDK; components never know
+          which one they are on.
         </p>
         <ol>
           <li><strong>Deposit</strong> (<Link href="/app/deposit">/app/deposit</Link>). Pick a token, type an amount, pick a mode, confirm against the receipt. Eligibility is checkpointed the second it lands; the next ex date after that is yours.</li>
@@ -1132,31 +1137,18 @@ pnpm dev                        # http://localhost:3000
 pnpm contracts:test             # 96 tests: unit, fuzz, integration, invariants
 pnpm typecheck                  # sdk + mcp + web`}</Code>
         <p>
-          <strong>Robinhood Chain testnet.</strong> Fund a deployer at the faucet, deploy and seed with
-          Foundry, sync ABIs, and set five environment variables. The address book is written to{" "}
-          <code>contracts/deployments/46630.json</code> and regenerated into the SDK; committing both makes
-          the next deploy fully interactive with no code changes.
+          <strong>Your own deployment.</strong> Deploy and seed with Foundry, sync ABIs into the SDK, and
+          point the app at the chain with five environment variables — chain id, chain name, RPC,
+          explorer name and explorer URL. The address book is written to{" "}
+          <code>contracts/deployments/&lt;chainId&gt;.json</code> and regenerated into the SDK; committing
+          both makes the next deploy fully interactive with no code changes. The README carries the
+          exact commands.
         </p>
-        <Code title="Deploy to testnet" lang="bash">{`cd contracts
-PRIVATE_KEY=0x… forge script script/Deploy.s.sol --rpc-url robinhood_testnet --broadcast
-PRIVATE_KEY=0x… forge script script/Seed.s.sol   --rpc-url robinhood_testnet --broadcast
-cd .. && pnpm abis`}</Code>
-        <Table
-          head={["Variable", "Value"]}
-          rows={[
-            ["NEXT_PUBLIC_CHAIN_ID", "46630"],
-            ["NEXT_PUBLIC_CHAIN_NAME", "Robinhood Chain Testnet"],
-            ["NEXT_PUBLIC_RPC_URL", "https://rpc.testnet.chain.robinhood.com/rpc"],
-            ["NEXT_PUBLIC_EXPLORER_NAME", "Robinhood Chain Explorer"],
-            ["NEXT_PUBLIC_EXPLORER_URL", "https://explorer.testnet.chain.robinhood.com"],
-          ]}
-          mono={[0, 1]}
-        />
         <p>
           Values pasted into a hosting dashboard are sanitised before use — wrapping quotes and
           stray whitespace once turned the chain id into <code>NaN</code> and took the whole app down —
-          and a set but broken value falls back to the Robinhood testnet, which is the sane recovery
-          for a hosted deployment. The vault page right now reports{" "}
+          and a set but broken value falls back to Robinhood Chain, which is the sane recovery for
+          a hosted deployment. The vault page right now reports{" "}
           <span className="num text-ink">${fmt(vault.tvlUsd, 0)}</span> locked at{" "}
           <span className="num text-ink">{vault.utilizationPct.toFixed(1)}%</span> utilisation of an{" "}
           <span className="num text-ink">{vault.capPct.toFixed(0)}%</span> cap; that line is live, like every
@@ -1183,9 +1175,9 @@ cd .. && pnpm abis`}</Code>
           ]}
         />
         <p className="border-t border-line-soft pt-6 text-[13px] text-faint">
-          Nothing here is financial advice. Osinko is a testnet build; every token in it is worthless
-          by design. PT and YT, once a market exists, are volatile, market priced tokens and may lose
-          value. Robinhood Chain and stock token names are used to describe what the software does.
+          Nothing here is financial advice. PT and YT, once a market exists, are volatile, market
+          priced tokens and may lose value. Robinhood Chain and stock token names are used to
+          describe what the software does.
         </p>
       </Section>
     </DocsShell>

@@ -54,7 +54,7 @@ export function Footer() {
             date, and secures a credit line the dividends themselves repay.
           </p>
           <div className="mt-7 flex flex-wrap gap-2">
-            <span className="pill">Testnet</span>
+            <span className="pill">Robinhood Chain</span>
             <span className="pill">Self custody</span>
             <span className="pill-live">Onchain</span>
           </div>
@@ -86,10 +86,16 @@ export function Footer() {
         <div className="text-cut select-none display text-colossal leading-[0.78]">OSINKO</div>
       </div>
 
+      {/* The colophon. A document that states how it was set is a document someone
+          cared about; the engraving here is generated, and it says so. */}
       <div className="border-t border-line-soft">
         <div className="shell flex flex-wrap items-center justify-between gap-3 py-6 font-mono text-nano font-medium uppercase text-ghost">
-          <span>$OSINKO · Finnish for dividend · Testnet build, tokens have no value</span>
+          <span>$OSINKO · Finnish for dividend · Robinhood Chain · USDG settlement</span>
           <span className="text-faint">Let the dividends do the work</span>
+        </div>
+        <div className="shell flex flex-wrap items-center justify-between gap-3 border-t border-line-soft py-4 font-mono text-nano font-medium uppercase text-ghost">
+          <span>Set in Bodoni Moda, Archivo &amp; IBM Plex Mono · Engine turning generated, not drawn</span>
+          <span>© 2026 Osinko</span>
         </div>
       </div>
     </footer>

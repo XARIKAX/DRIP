@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { activeChain, TESTNET_NOTICE } from "@/lib/chain.config";
+import { activeChain, STATUS_NOTICE } from "@/lib/chain.config";
 
 /**
  * The status rail. Black, 30px, mono, and it never says anything it does not know:
@@ -32,7 +32,7 @@ export function UtilityBar() {
       <div className="shell flex h-[30px] items-center justify-between font-mono text-nano font-medium uppercase">
         <div className="flex items-center gap-2.5">
           <span className="beacon beacon-bright" aria-hidden />
-          <span className="text-paper/80">{TESTNET_NOTICE}</span>
+          <span className="text-paper/80">{STATUS_NOTICE}</span>
         </div>
         <div className="flex items-center gap-5 text-paper/55 sm:gap-8">
           <span className="hidden sm:inline">{activeChain.name}</span>

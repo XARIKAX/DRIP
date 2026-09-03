@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Reveal } from "@/components/motion";
+import { Folio } from "@/components/site/Folio";
 
 const COMPARISON = [
   { term: "Reinvestment", them: "Trading day after the pay date", us: "The same transaction as the claim" },
@@ -21,11 +22,11 @@ const COMPARISON = [
  */
 export function Thesis() {
   return (
-    <section id="thesis" className="relative border-t border-line-soft py-band">
+    <section id="thesis" className="relative py-band">
       <Reveal className="shell">
-        <div className="reveal serial">The thesis</div>
+        <Folio serial="The thesis" index={6} />
 
-        <div className="mt-6 grid gap-16 lg:grid-cols-12 lg:gap-14">
+        <div className="mt-12 grid gap-16 lg:grid-cols-12 lg:gap-14">
           <article className="min-w-0 lg:col-span-7">
             <h2 className="reveal display text-display">
               Why dividends are
@@ -174,7 +175,10 @@ export function Closing() {
 
         <div className="reveal reveal-3 mt-14 flex flex-wrap items-center gap-4">
           <Link href="/app" className="btn-primary btn-lg">
-            Start on testnet
+            Open the app
+          </Link>
+          <Link href="/docs" className="btn-ghost btn-lg">
+            Read the docs
           </Link>
           <span className="font-mono text-nano uppercase text-ghost">
             No wallet required to look around

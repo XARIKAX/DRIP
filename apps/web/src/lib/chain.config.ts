@@ -50,7 +50,7 @@ function parseRpcUrl(raw: string, chainId: number): string {
 
 const envChainId = parseChainId(clean(process.env.NEXT_PUBLIC_CHAIN_ID));
 const envRpc = parseRpcUrl(clean(process.env.NEXT_PUBLIC_RPC_URL), envChainId);
-const envName = clean(process.env.NEXT_PUBLIC_CHAIN_NAME) || (envChainId === 46630 ? "Robinhood Chain Testnet" : "Anvil");
+const envName = clean(process.env.NEXT_PUBLIC_CHAIN_NAME) || (envChainId === 46630 || envChainId === 4663 ? "Robinhood Chain" : "Anvil");
 const explorerName = clean(process.env.NEXT_PUBLIC_EXPLORER_NAME) || "Explorer";
 const explorerUrl = clean(process.env.NEXT_PUBLIC_EXPLORER_URL);
 
@@ -101,5 +101,5 @@ export function explorerAddress(address: string): string | null {
   return `${explorerUrl}/address/${address}`;
 }
 
-/** Always visible. Nothing here is worth anything. */
-export const TESTNET_NOTICE = "Testnet — tokens have no value";
+/** The line the status rail leads with. The product's own description of itself. */
+export const STATUS_NOTICE = "The Aave of stocks · every number onchain";

@@ -97,7 +97,7 @@ export function DocsShell({
     <div className="shell pb-band pt-8 md:pt-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <span className="serial">Osinko protocol · Documentation</span>
-        <span className="serial hidden sm:inline">Testnet build · v0.1 · Interfaces frozen</span>
+        <span className="serial hidden sm:inline">Edition v0.1 · Revised September 2026 · Interfaces frozen</span>
       </div>
       <div className="rule-double mt-4" />
 

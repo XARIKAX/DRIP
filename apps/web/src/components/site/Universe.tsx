@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Reveal, usePointerGlow } from "@/components/motion";
+import { Folio } from "@/components/site/Folio";
 import { TokenMark } from "@/components/TokenMark";
 import { fmt, shortDate } from "@/components/live";
 import { useTokensView } from "@/lib/data/provider";
@@ -74,12 +75,12 @@ export function Universe() {
     setSort((s) => (s.key === key ? { key, desc: !s.desc } : { key, desc: key !== "symbol" }));
 
   return (
-    <section id="universe" className="relative border-t border-line-soft py-band">
+    <section id="universe" className="relative py-band">
       <Reveal className="shell">
-        <div className="flex flex-wrap items-end justify-between gap-6">
+        <Folio serial="The universe" index={4} />
+        <div className="mt-12 flex flex-wrap items-end justify-between gap-6">
           <div className="min-w-0">
-            <div className="reveal serial">The universe</div>
-            <h2 className="reveal reveal-1 mt-5 display text-display">
+            <h2 className="reveal reveal-1 display text-display">
               {tokens.length} names, priced by Chainlink
             </h2>
           </div>

@@ -100,7 +100,7 @@ export function LandingNav() {
           </Link>
           <span className="pill-live hidden lg:inline-flex">
             <span className="beacon" aria-hidden />
-            Live · Chain {activeChain.id}
+            Live · {activeChain.name}
           </span>
           <Link ref={cta} href="/app" className="btn-primary btn-sm magnetic">
             Open the app

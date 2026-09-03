@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { CountUp, Reveal } from "@/components/motion";
 import { DashboardPreview } from "@/components/DashboardPreview";
+import { Folio } from "@/components/site/Folio";
 
 const NUMBERS = [
   { value: 80, unit: "%", label: "Maximum vault utilisation", note: "Contract enforced ceiling" },
@@ -15,24 +16,27 @@ const NUMBERS = [
  * The demonstration.
  *
  * A landing page that describes a product is a brochure; one that runs it is a
- * demonstration. The frame on the right is the live dashboard against the demo
- * portfolio — the counters below the fold were already ticking before you arrived.
+ * demonstration. The frame on the right is the live dashboard, bound to the same
+ * portfolio the app opens on — the counters below the fold were already ticking
+ * before you arrived.
  */
 export function Live() {
   return (
-    <section id="live" className="relative border-t border-line-soft py-band">
-      <div className="pointer-events-none absolute inset-0 grid-bg opacity-50" aria-hidden />
+    <section id="live" className="relative py-band">
+      {/* Engineering paper, fading out toward the edges so it reads as a ground and
+          not as a pattern laid over the section. */}
+      <div className="pointer-events-none absolute inset-0 grid-bg grid-fade opacity-40" aria-hidden />
 
       <Reveal className="shell relative">
-        <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-14">
+        <Folio serial="The product, running" index={5} />
+        <div className="mt-12 grid items-center gap-14 lg:grid-cols-12 lg:gap-14">
           <div className="min-w-0 lg:col-span-4">
-            <div className="reveal serial">The product, running</div>
-            <h2 className="reveal reveal-1 mt-5 display text-display">
+            <h2 className="reveal reveal-1 display text-display">
               Not a screenshot
             </h2>
             <p className="reveal reveal-2 mt-7 max-w-md text-[16px] leading-[1.7] text-muted">
-              The panel beside this is the actual dashboard, bound to the same demo portfolio
-              you get when you open the app, accruing per second while you read. No wallet is
+              The panel beside this is the actual dashboard, bound to the same portfolio you
+              see when you open the app, accruing per second while you read. No wallet is
               required to use any of it — connect one only when you want the numbers to be
               yours.
             </p>

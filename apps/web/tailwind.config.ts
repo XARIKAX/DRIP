@@ -116,7 +116,7 @@ const config: Config = {
       },
       spacing: {
         gut: "clamp(20px, 4vw, 56px)",
-        band: "clamp(80px, 12vw, 176px)",
+        band: "clamp(72px, 10vw, 148px)",
       },
       transitionTimingFunction: {
         // The house curve. Everything decelerates; nothing bounces.

@@ -522,25 +522,25 @@ export function useDataActions(): DataActions {
         await run([buildVaultWithdraw(d, BigInt(Math.round(usd * 1e6)), owner, owner)]);
       },
       borrow: async () => {
-        throw new Error("The lending market is not deployed onchain yet. Try demo mode.");
+        throw new Error("The lending market is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
       },
       repay: async () => {
-        throw new Error("The lending market is not deployed onchain yet. Try demo mode.");
+        throw new Error("The lending market is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
       },
       split: async () => {
-        throw new Error("SplitVault is not deployed onchain yet. Try demo mode.");
+        throw new Error("SplitVault is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
       },
       merge: async () => {
-        throw new Error("SplitVault is not deployed onchain yet. Try demo mode.");
+        throw new Error("SplitVault is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
       },
       redeemPrincipal: async () => {
-        throw new Error("SplitVault is not deployed onchain yet. Try demo mode.");
+        throw new Error("SplitVault is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
       },
       harvestDividend: async () => {
-        throw new Error("SplitVault is not deployed onchain yet. Try demo mode.");
+        throw new Error("SplitVault is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
       },
       claimYield: async () => {
-        throw new Error("SplitVault is not deployed onchain yet. Try demo mode.");
+        throw new Error("SplitVault is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
       },
     };
   }, [source, demoBusy, demo, state.status, deployment, address, addressOf, run]);

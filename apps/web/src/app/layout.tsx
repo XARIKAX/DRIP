@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Osinko — The Aave of dividends",
     description:
-      "Dividends streamed per second and advanced at the ex date. Credit against your stocks, serviced by the dividends themselves. Testnet build.",
+      "Dividends streamed per second and advanced at the ex date. Credit against your stocks, serviced by the dividends themselves. On Robinhood Chain.",
     url: "https://dripmarkets.net",
     siteName: "Osinko",
     type: "website",

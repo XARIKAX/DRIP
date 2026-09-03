@@ -663,7 +663,7 @@ export function LtvFigure({ ltvPct, healthFactor }: { ltvPct: number; healthFact
           <line x1={at(ltvPct)} y1={y - 6} x2={at(ltvPct)} y2={y + 34} stroke={CYAN} strokeWidth="2" />
           <circle cx={at(ltvPct)} cy={y - 8} r="3.5" fill={CYAN} />
           <text x={at(ltvPct)} y={y + 86} fill={CYAN} fontSize="11.5" fontFamily={MONO} fontWeight="500" textAnchor={ltvPct > 80 ? "end" : "start"}>
-            DEMO PORTFOLIO · {ltvPct.toFixed(1)}% DRAWN · HEALTH FACTOR {Number.isFinite(healthFactor) ? healthFactor.toFixed(2) : "∞"}
+            THIS PORTFOLIO · {ltvPct.toFixed(1)}% DRAWN · HEALTH FACTOR {Number.isFinite(healthFactor) ? healthFactor.toFixed(2) : "∞"}
           </text>
         </g>
       ) : (

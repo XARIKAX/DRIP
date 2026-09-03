@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Reveal, usePointerGlow } from "@/components/motion";
+import { Folio } from "@/components/site/Folio";
 
 const MODULES = [
   {
@@ -111,12 +112,12 @@ export function Modules() {
   };
 
   return (
-    <section id="modules" className="relative border-t border-line-soft py-band">
+    <section id="modules" className="relative py-band">
       <Reveal className="shell">
-        <div className="flex flex-wrap items-end justify-between gap-6">
+        <Folio serial="Six modules" index={3} />
+        <div className="mt-12 flex flex-wrap items-end justify-between gap-6">
           <div className="min-w-0">
-            <div className="reveal serial">Six modules</div>
-            <h2 className="reveal reveal-1 mt-5 max-w-2xl display text-display">
+            <h2 className="reveal reveal-1 max-w-2xl display text-display">
               Hold it, borrow on it, or trade it
             </h2>
           </div>
@@ -162,7 +163,7 @@ export function Modules() {
                       <span className="min-w-0">
                         <span
                           className={`display block text-[clamp(32px,4.2vw,56px)] leading-[1] transition-all duration-500 ease-osk ${
-                            on ? "text-ink" : "text-ghost group-hover:text-muted"
+                            on ? "text-ink" : "text-faint group-hover:text-ink"
                           }`}
                           style={{ transform: on ? "translateX(10px)" : "translateX(0)" }}
                         >
@@ -178,15 +179,23 @@ export function Modules() {
                         </span>
                       </span>
 
-                      <span
-                        className={`hidden shrink-0 items-baseline gap-1.5 transition-opacity duration-500 sm:flex ${
-                          on ? "opacity-100" : "opacity-0"
-                        }`}
-                      >
-                        <span className="figure text-[30px] leading-none text-cyan-deep">
+                      {/* Every row keeps its figure; only the live one takes the ink. A list
+                          whose numbers vanish until hovered reads as six disabled rows. */}
+                      <span className="hidden shrink-0 items-baseline gap-1.5 sm:flex">
+                        <span
+                          className={`figure text-[30px] leading-none transition-colors duration-500 ${
+                            on ? "text-cyan-deep" : "text-ghost"
+                          }`}
+                        >
                           {m.stat}
                         </span>
-                        <span className="ml-2 font-mono text-nano uppercase text-faint">{m.unit}</span>
+                        <span
+                          className={`ml-2 font-mono text-nano uppercase transition-colors duration-500 ${
+                            on ? "text-faint" : "text-ghost"
+                          }`}
+                        >
+                          {m.unit}
+                        </span>
                       </span>
                     </button>
                   </li>

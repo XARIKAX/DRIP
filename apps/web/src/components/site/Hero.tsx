@@ -108,7 +108,7 @@ export function Hero() {
                 <span className="italic">Stream the drip.</span>
               </MaskLine>
             </h1>
-            <div className="display-light mt-4 text-[clamp(24px,3vw,44px)] leading-none text-ghost">
+            <div className="display-light mt-4 text-[clamp(24px,3vw,44px)] leading-none text-muted">
               <MaskLine>
                 <span className="whitespace-nowrap italic">Borrow on both.</span>
               </MaskLine>

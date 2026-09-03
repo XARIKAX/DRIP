@@ -377,7 +377,7 @@ export default function AgentPage() {
       <section className="panel flex flex-col" aria-label="Agent console">
         <div className="panel-head">
           <span className="panel-title">osinko · agent</span>
-          <span className="num text-micro font-bold uppercase text-panel-faint">{source === "demo" ? "demo session" : "chain session"}</span>
+          <span className="num text-micro font-bold uppercase text-panel-faint">{source === "demo" ? "portfolio session" : "wallet session"}</span>
         </div>
 
         <div ref={logRef} className="dark-scroll min-h-[280px] flex-1 space-y-5 overflow-y-auto px-5 py-5" style={{ maxHeight: 560 }}>

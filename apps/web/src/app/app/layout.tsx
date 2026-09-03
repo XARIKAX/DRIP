@@ -3,7 +3,6 @@ import { UtilityBar } from "@/components/UtilityBar";
 import { SiteNav } from "@/components/SiteNav";
 import { TickerStrip } from "@/components/TickerStrip";
 import { Footer } from "@/components/Footer";
-import { DemoBanner } from "@/components/DemoBanner";
 
 /**
  * The app shell. Status rail, nav, tape, page, footer — identical on every screen, so
@@ -16,7 +15,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <UtilityBar />
       <SiteNav />
       <TickerStrip />
-      <DemoBanner />
       <main className="shell relative z-[2] py-12 md:py-16">{children}</main>
       <Footer />
     </div>
