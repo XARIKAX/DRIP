@@ -36,7 +36,7 @@ export function buildDeposit(d: Deployment, stockToken: Address, amount: bigint,
   return tx(
     d.dripCore,
     encodeFunctionData({ abi: dripCoreAbi, functionName: "deposit", args: [stockToken, amount] }),
-    `Deposit ${symbol || "stock tokens"} into Drip Markets`
+    `Deposit ${symbol || "stock tokens"} into Osinko`
   );
 }
 
@@ -45,7 +45,7 @@ export function buildWithdraw(d: Deployment, stockToken: Address, amount: bigint
   return tx(
     d.dripCore,
     encodeFunctionData({ abi: dripCoreAbi, functionName: "withdraw", args: [stockToken, amount] }),
-    `Withdraw ${symbol || "stock tokens"} from Drip Markets`
+    `Withdraw ${symbol || "stock tokens"} from Osinko`
   );
 }
 

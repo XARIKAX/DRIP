@@ -27,7 +27,7 @@ export function DashboardPreview() {
           <span className="block h-2.5 w-2.5 border border-ink" />
           <span className="block h-2.5 w-2.5 border border-ink bg-cyan" />
         </div>
-        <span className="num text-micro font-bold uppercase text-muted">dripmarkets.net/app — live demo</span>
+        <span className="num text-micro font-bold uppercase text-muted">osinko — live demo</span>
         <span className="tag-accent">Ticking now</span>
       </div>
 

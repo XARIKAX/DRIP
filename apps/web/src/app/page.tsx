@@ -24,25 +24,32 @@ const MODULES = [
   },
   {
     index: "03",
-    name: "DRIP",
+    name: "Reinvest",
     line: "Reinvested the moment it lands.",
     body: "Every claim swaps straight into more of the same stock token and returns to your position. The cash never touches your wallet. The next dividend is calculated on a bigger balance.",
     stat: "Same block",
   },
   {
     index: "04",
+    name: "Borrow",
+    line: "Your dividends pay the interest.",
+    body: "Draw USDG against your holdings without selling a share. Every dividend your collateral earns is applied to the interest first. At a conservative loan, the yield covers the whole rate.",
+    stat: "40% max LTV",
+  },
+  {
+    index: "05",
     name: "Agent",
     line: "Your strategy, in a sentence.",
-    body: "Every action is exposed over MCP. Tell an agent to stream half and compound half and it builds the transactions. You sign them. Nothing executes without you.",
-    stat: "6 MCP tools",
+    body: "Every action is exposed over MCP. Tell an agent to compound, claim, or borrow and it builds the plan. You confirm it. Nothing executes without you.",
+    stat: "MCP native",
   },
 ];
 
 const STATS = [
   { label: "Days early you get paid", value: "21" },
-  { label: "Advance fee", value: "1.00%" },
   { label: "Stream resolution", value: "1s" },
-  { label: "Reinvest delay", value: "0" },
+  { label: "Borrow APR", value: "5.8%" },
+  { label: "Max borrow LTV", value: "40%" },
 ];
 
 const COMPARISON = [
@@ -51,6 +58,7 @@ const COMPARISON = [
   { term: "Fractional shares", them: "Locked inside the app", us: "Self custodied ERC-20" },
   { term: "Cash timing", them: "Pay date, weeks after ex", us: "Ex date, minus one percent" },
   { term: "Cadence", them: "Quarterly lump", us: "Continuous stream" },
+  { term: "Borrowing", them: "Margin account, interest drag", us: "Dividends service the interest" },
 ];
 
 export default function HomePage() {
@@ -71,19 +79,20 @@ export default function HomePage() {
           aria-hidden
         />
         <div className="shell relative py-20 md:py-28">
-          <Eyebrow className="text-cyan-dark">The dividend layer for Robinhood Chain</Eyebrow>
+          <Eyebrow className="text-cyan-dark">The Aave of dividends · Robinhood Chain</Eyebrow>
           <h1 className="mt-6 text-hero font-extrabold">
-            Get paid before
+            Get paid.
             <br />
-            Wall Street does
+            Don&apos;t sell.
           </h1>
 
           <div className="mt-12 grid gap-12 md:grid-cols-12 md:gap-8">
             <div className="md:col-span-6 lg:col-span-5">
               <p className="max-w-xl text-[17px] leading-relaxed text-ink/80">
-                Stock tokens on Robinhood Chain pay dividends the old way. Offchain. Weeks late. In
-                quarterly lumps. Only inside one app. Drip Markets pays you at the ex date, streams
-                the money per second, and turns every drop back into stock the moment it lands.
+                Osinko puts both sides of your portfolio to work. The income side: dividends
+                stream per second and arrive weeks early, at the ex date. The credit side: your
+                holdings back a USDG line whose interest the dividends pay. Deposit once. Never
+                sell a share.
               </p>
               <div className="mt-9 flex flex-wrap gap-3">
                 <Link href="/app" className="btn-primary">
@@ -129,18 +138,18 @@ export default function HomePage() {
       <section className="shell py-24 md:py-36">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <Eyebrow className="text-cyan-dark">Four modules</Eyebrow>
-            <h2 className="mt-3 text-display font-extrabold">One dividend, rebuilt</h2>
+            <Eyebrow className="text-cyan-dark">Five modules</Eyebrow>
+            <h2 className="mt-3 text-display font-extrabold">One deposit, both sides</h2>
           </div>
           <p className="max-w-sm text-[14px] text-muted">
-            Each module fixes one thing that is broken. Together they turn a quarterly cheque into
-            a continuous, compounding position.
+            Income on one side, credit on the other, feeding each other. A quarterly cheque
+            becomes a continuous, compounding, borrowable position.
           </p>
         </div>
 
         <div className="mt-10 grid gap-px border border-ink bg-ink md:grid-cols-2">
-          {MODULES.map((m) => (
-            <div key={m.index} className="bg-paper p-8 md:p-10">
+          {MODULES.map((m, i) => (
+            <div key={m.index} className={`bg-paper p-8 md:p-10 ${i === MODULES.length - 1 && MODULES.length % 2 === 1 ? "md:col-span-2" : ""}`}>
               <div className="flex items-baseline justify-between">
                 <span className="num text-micro font-bold text-cyan-dark">{m.index}</span>
                 <span className="num text-micro font-bold uppercase text-muted">{m.stat}</span>
@@ -188,9 +197,9 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-8 md:col-span-3 md:grid-cols-4">
             {[
               { v: "80%", l: "Max vault utilisation" },
+              { v: "40%", l: "Max borrow LTV" },
               { v: "1%", l: "Advance fee to LPs" },
               { v: "0", l: "Days between claim and reinvest" },
-              { v: "100%", l: "Of state read from chain" },
             ].map((s) => (
               <div key={s.l}>
                 <div className="num text-4xl font-extrabold tracking-tightest text-cyan">{s.v}</div>
@@ -237,8 +246,16 @@ export default function HomePage() {
                 than a quarterly batch. The reinvestment delay is a market hours artefact, and a pool
                 does not keep office hours.
               </p>
+              <p>
+                And once the stock lives onchain, it can finally do what collateral has always done
+                on Wall Street: back a loan. Osinko is the Aave of dividends. One deposit streams
+                income and secures credit at once, and the dividends the collateral keeps earning
+                are applied straight against the interest. The oldest private-banking product,
+                minus the private banker.
+              </p>
               <p className="text-[17px] font-bold">
-                Nothing here is a new financial instrument. It is the same dividend, paid on time.
+                Nothing here is a new financial instrument. It is the same dividend, finally put to
+                work.
               </p>
             </div>
           </article>
@@ -253,7 +270,7 @@ export default function HomePage() {
                   <tr>
                     <th>Term</th>
                     <th>Today</th>
-                    <th className="text-cyan-dark">$DRIP</th>
+                    <th className="text-cyan-dark">OSINKO</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -273,9 +290,9 @@ export default function HomePage() {
               <Eyebrow className="text-muted">For liquidity providers</Eyebrow>
               <h3 className="mt-3 text-xl font-extrabold tracking-tighter">The other side of early</h3>
               <p className="mt-3 text-[14px] leading-relaxed text-muted">
-                Somebody has to front the money. The advance vault is an ERC-4626 pool of USDG that
-                does exactly that and charges one percent for it. Advances are capped at eighty
-                percent of assets and every advance is repaid by the issuer at the pay date.
+                One pool of USDG funds both sides: it fronts dividends for one percent and lends
+                against portfolios at a floating rate. Advances are capped at eighty percent of
+                assets and every advance is repaid at the pay date. Two revenue streams, one vault.
               </p>
               <Link href="/app/vault" className="btn-accent btn-sm mt-5">
                 Open the vault
@@ -302,7 +319,7 @@ export default function HomePage() {
       <section className="rule-t">
         <div className="shell flex flex-wrap items-center justify-between gap-6 py-24 md:py-32">
           <h2 className="max-w-2xl text-display font-extrabold">
-            Dividends the way they should work
+            Let the dividends do the work
           </h2>
           <Link href="/app" className="btn-primary">
             Start on testnet

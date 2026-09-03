@@ -5,6 +5,7 @@ import { fmt, shortDate } from "@/components/live";
 import { EXAMPLE_PROMPTS, parseIntent, type Intent } from "@/lib/intents";
 import {
   useCalendarRows,
+  useCreditView,
   useDataActions,
   useDataSource,
   useHoldings,
@@ -48,6 +49,7 @@ export default function AgentPage() {
   const calendar = useCalendarRows();
   const pending = usePendingAdvances();
   const vault = useVaultView();
+  const credit = useCreditView();
   const actions = useDataActions();
 
   const [messages, setMessages] = useState<Message[]>(() => [
@@ -205,6 +207,58 @@ export default function AgentPage() {
         };
       }
 
+      case "borrow": {
+        const usd = Number.parseFloat(intent.amount);
+        tools.push(`get_credit → $${fmt(credit.availableUsd, 0)} available`);
+        if (usd > credit.availableUsd) {
+          return { toolLines: tools, text: `Only $${fmt(credit.availableUsd)} is available at ${credit.maxLtvPct.toFixed(0)}% LTV. Deposit more collateral or borrow less.` };
+        }
+        const newDebt = credit.borrowedUsd + usd;
+        const hf = newDebt > 0 ? (credit.collateralValueUsd * (credit.liqThresholdPct / 100)) / newDebt : Infinity;
+        const interest = newDebt * (credit.borrowAprPct / 100);
+        return {
+          toolLines: tools,
+          plan: {
+            title: `Borrow $${fmt(usd)} USDG`,
+            rows: [
+              { label: "Debt after", value: `$${fmt(newDebt)}` },
+              { label: "Health factor after", value: hf.toFixed(2) },
+              { label: "Interest / year", value: `$${fmt(interest)} at ${credit.borrowAprPct.toFixed(1)}%` },
+              { label: "Dividends / year", value: `$${fmt(credit.dividendsPerYearUsd)}` },
+            ],
+            effect:
+              credit.dividendsPerYearUsd >= interest
+                ? "Your dividends still out-earn the interest. The loan carries itself."
+                : "Interest would exceed your dividend income. The gap accrues to the debt.",
+            confirmLabel: `Borrow $${fmt(usd)}`,
+            execute: async () => {
+              await actions.borrow(usd);
+              return `$${fmt(usd)} USDG drawn. It is in your wallet.`;
+            },
+          },
+        };
+      }
+
+      case "repay": {
+        const usd = intent.amount === "ALL" ? credit.borrowedUsd : Number.parseFloat(intent.amount);
+        tools.push(`get_credit → $${fmt(credit.borrowedUsd, 0)} outstanding`);
+        if (credit.borrowedUsd <= 0) return { toolLines: tools, text: "Nothing is borrowed. Your credit line is clean." };
+        const amount = Math.min(usd, credit.borrowedUsd);
+        return {
+          toolLines: tools,
+          plan: {
+            title: `Repay $${fmt(amount)} USDG`,
+            rows: [{ label: "Debt after", value: `$${fmt(credit.borrowedUsd - amount)}` }],
+            effect: amount >= credit.borrowedUsd ? "Clears the line entirely. Collateral keeps earning either way." : "Health factor improves; interest cost drops immediately.",
+            confirmLabel: `Repay $${fmt(amount)}`,
+            execute: async () => {
+              await actions.repay(amount);
+              return `Repaid $${fmt(amount)}. Debt now $${fmt(credit.borrowedUsd - amount)}.`;
+            },
+          },
+        };
+      }
+
       case "set_slippage":
         return {
           toolLines: tools,
@@ -239,6 +293,12 @@ export default function AgentPage() {
           return {
             toolLines: tools,
             text: next.length === 0 ? "Nothing declared." : next.map((d) => `${d.symbol}: $${fmt(d.perShare)}/share, ex ${shortDate(d.exDate)}, paid ${d.daysEarly} days early`).join("\n"),
+          };
+        }
+        if (intent.what === "credit") {
+          return {
+            toolLines: tools,
+            text: `Collateral $${fmt(credit.collateralValueUsd, 0)} · borrowed $${fmt(credit.borrowedUsd, 0)} of $${fmt(credit.maxBorrowUsd, 0)} · health factor ${Number.isFinite(credit.healthFactor) ? credit.healthFactor.toFixed(2) : "∞"}.\nDividends $${fmt(credit.dividendsPerYearUsd)}/yr vs interest $${fmt(credit.interestPerYearUsd)}/yr → net carry ${credit.netCarryPerYearUsd >= 0 ? "+" : "-"}$${fmt(Math.abs(credit.netCarryPerYearUsd))}/yr.`,
           };
         }
         if (intent.what === "vault") {
@@ -316,7 +376,7 @@ export default function AgentPage() {
 
       <section className="panel flex flex-col" aria-label="Agent console">
         <div className="panel-head">
-          <span className="panel-title">drip-markets · agent</span>
+          <span className="panel-title">osinko · agent</span>
           <span className="num text-micro font-bold uppercase text-panel-faint">{source === "demo" ? "demo session" : "chain session"}</span>
         </div>
 

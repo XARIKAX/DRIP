@@ -17,7 +17,7 @@ import { DataProvider } from "@/lib/data/provider";
  * down. Everything in here runs on the client, after mount, where it belongs.
  */
 const wagmiConfig = getDefaultConfig({
-  appName: "Drip Markets",
+  appName: "Osinko",
   // RainbowKit requires a string here. Without a real id WalletConnect is unavailable
   // and injected wallets still work, which is all the testnet demo needs.
   projectId: walletConnectProjectId || "drip-testnet-local",

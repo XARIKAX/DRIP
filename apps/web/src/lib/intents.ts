@@ -19,7 +19,9 @@ export type Intent =
   | { kind: "deposit"; symbol: string; amount: string }
   | { kind: "withdraw"; symbol: string; amount: string }
   | { kind: "set_slippage"; bps: number }
-  | { kind: "show"; what: "positions" | "streams" | "calendar" | "vault" }
+  | { kind: "borrow"; amount: string }
+  | { kind: "repay"; amount: string | "ALL" }
+  | { kind: "show"; what: "positions" | "streams" | "calendar" | "vault" | "credit" }
   | { kind: "unsupported"; reason: string; suggestion: string }
   | { kind: "unknown"; input: string };
 
@@ -88,6 +90,25 @@ export function parseIntent(input: string, symbols: string[]): Intent {
     };
   }
 
+  if (/\b(borrow|draw|loan)\b/i.test(text) && !/\b(show|what|how)\b/i.test(text)) {
+    const amount = findAmount(text);
+    if (amount) return { kind: "borrow", amount };
+    return {
+      kind: "unsupported",
+      reason: "A borrow needs an amount.",
+      suggestion: 'Try "borrow 5000 USDG".',
+    };
+  }
+
+  if (/\brepay\b|\bpay (back|off|down)\b/i.test(text)) {
+    const amount = findAmount(text);
+    return { kind: "repay", amount: amount ?? "ALL" };
+  }
+
+  if (/\b(health factor|credit|carry|ltv|loan)\b/i.test(text) && /\b(show|what|how|my|check)\b/i.test(text)) {
+    return { kind: "show", what: "credit" };
+  }
+
   if (/\b(show|list|what|which|how much|status)\b/i.test(text)) {
     if (/\bstream/i.test(text)) return { kind: "show", what: "streams" };
     if (/\b(calendar|ex date|dividend|upcoming)\b/i.test(text)) return { kind: "show", what: "calendar" };
@@ -147,10 +168,11 @@ export function parseIntent(input: string, symbols: string[]): Intent {
 
 /** Suggested commands. The honest ones and the executable ones, mixed. */
 export const EXAMPLE_PROMPTS = [
-  "Reinvest all my MSFT dividends",
+  "Borrow 5000 USDG",
   "Claim everything",
+  "Reinvest all my MSFT dividends",
+  "Show my credit",
   "Cash out AAPL early",
-  "Compound all my MSFT dividends into NVDA",
   "Stream half, reinvest half",
   "Protect my portfolio this weekend",
   "Show my streams",

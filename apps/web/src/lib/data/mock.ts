@@ -1,5 +1,6 @@
 import {
   streamClaimable,
+  type CreditView,
   type ActivityRow,
   type DividendRow,
   type Holding,
@@ -89,6 +90,11 @@ interface MockState {
   dividends: DividendRow[];
   pending: PendingAdvance[];
   wallet: WalletBalances;
+  credit: {
+    borrowedUsd: number;
+    /** When the current debt level was last changed, for the serviced counter. */
+    sinceMs: number;
+  };
   vault: {
     tvlUsd: number;
     advancesUsd: number;
@@ -211,6 +217,12 @@ class MockStore {
           ORCL: 8, PLTR: 20, CRWV: 15, AMD: 10, INTC: 100, MU: 18, SNDK: 30,
         },
       },
+      credit: {
+        // The demo wallet already runs a modest line against its collateral, so the
+        // carry math is visible the moment the page opens.
+        borrowedUsd: 15_000,
+        sinceMs: (BOOT - 9 * DAY) * 1000,
+      },
       vault: {
         tvlUsd: 2_841_000,
         advancesUsd: 1_739_000,
@@ -325,6 +337,59 @@ class MockStore {
       maxWithdrawUsd: Math.min(yourAssets, v.tvlUsd - v.advancesUsd),
       apyHistory: history,
     };
+  }
+
+  /** Lending parameters for the demo market. Conservative on purpose. */
+  private static readonly MAX_LTV = 0.40;
+  private static readonly LIQ_THRESHOLD = 0.65;
+  private static readonly BORROW_APR = 0.058;
+
+  credit(): CreditView {
+    const collateral = this.holdings().reduce((sum, h) => sum + h.valueUsd, 0);
+    const dividendsPerYear = this.holdings().reduce((sum, h) => {
+      const t = this.token(h.symbol);
+      return sum + (t ? h.amount * t.perShare * 4 : 0);
+    }, 0);
+    const borrowed = this.state.credit.borrowedUsd;
+    const maxBorrow = collateral * MockStore.MAX_LTV;
+    const interestPerYear = borrowed * MockStore.BORROW_APR;
+    const servicedPerSec = Math.min(dividendsPerYear, interestPerYear) / (365 * DAY);
+    return {
+      collateralValueUsd: collateral,
+      maxBorrowUsd: maxBorrow,
+      borrowedUsd: borrowed,
+      availableUsd: Math.max(maxBorrow - borrowed, 0),
+      healthFactor: borrowed > 0 ? (collateral * MockStore.LIQ_THRESHOLD) / borrowed : Infinity,
+      maxLtvPct: MockStore.MAX_LTV * 100,
+      liqThresholdPct: MockStore.LIQ_THRESHOLD * 100,
+      borrowAprPct: MockStore.BORROW_APR * 100,
+      dividendsPerYearUsd: dividendsPerYear,
+      interestPerYearUsd: interestPerYear,
+      netCarryPerYearUsd: dividendsPerYear - interestPerYear,
+      servicedBaseUsd: servicedPerSec * ((Date.now() - this.state.credit.sinceMs) / 1000),
+      servicedRatePerSec: servicedPerSec,
+    };
+  }
+
+  borrow(usd: number): void {
+    const c = this.credit();
+    const amount = Math.min(usd, c.availableUsd);
+    if (amount <= 0) return;
+    this.state.credit.borrowedUsd += amount;
+    this.state.credit.sinceMs = Date.now();
+    this.state.wallet.usdg += amount;
+    this.log("borrow", `Borrowed ${amount.toFixed(2)} USDG against the portfolio`, amount);
+    this.emit();
+  }
+
+  repay(usd: number): void {
+    const amount = Math.min(usd, this.state.credit.borrowedUsd, this.state.wallet.usdg);
+    if (amount <= 0) return;
+    this.state.credit.borrowedUsd -= amount;
+    this.state.credit.sinceMs = Date.now();
+    this.state.wallet.usdg -= amount;
+    this.log("repay", `Repaid ${amount.toFixed(2)} USDG of the credit line`, amount);
+    this.emit();
   }
 
   summary(): PortfolioSummary {

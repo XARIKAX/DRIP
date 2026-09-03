@@ -1,8 +1,17 @@
-# HANDOFF — Drip Markets production contracts
+# HANDOFF — Osinko production contracts
 
-Product name **Drip Markets**; ticker **$DRIP** (backronym: Dividend Reinvestment
-Plan). Solidity contract names, roles and events keep their existing identifiers —
-the brand lives in the UI and docs, not in the ABI.
+Product name **Osinko** (Finnish for *dividend* — the Aave of dividends); ticker
+**$OSINKO**. The product was previously branded Drip Markets and, before that,
+$DRIP. Solidity contract names, roles, events and package identifiers keep their
+existing Drip-era names — the brand lives in the UI and docs, not in the ABI, and
+renaming deployed-artifact identifiers buys nothing but churn.
+
+The protocol has two sides sharing one balance sheet:
+- **Income** (built, tested): advances at the ex date, per-second streams,
+  auto-reinvestment. Contracts in this repo, 83 tests green.
+- **Credit** (demo live, contracts to build): USDG borrowing against deposited
+  stock collateral with dividend-serviced interest. Specified in section 13 below;
+  currently implemented only in the web app's demo data layer.
 
 For the Solidity developer taking this to mainnet. Everything in `contracts/` compiles,
 passes 74 tests including invariants, and runs the full product loop on a local chain.
@@ -283,6 +292,38 @@ additive changes are fine, breaking changes are not.
 - [ ] Oracle timing: `declareDividend` requires `exDate ≥ now`; a same second declare +
       activate is possible for an oracle — decide if a minimum notice period is wanted.
 - [ ] `MAX_SETTLEMENT_WINDOW` (90 days) bounds vault duration risk; revisit per market.
+
+## 13. Credit side — LendingPool specification (to build)
+
+The web app already ships the Borrow experience in demo mode
+(`apps/web/src/app/app/borrow`, backed by `mock.ts`). The onchain market that
+replaces it should follow Aave's economics with one Osinko twist: dividend income
+on the collateral services the debt.
+
+Shape:
+
+- **Collateral**: stock tokens already custodied in DripCore. Pledged collateral is
+  locked against withdrawal while it backs debt (this also closes the clawback gap
+  in section 6 for borrowers).
+- **Borrow asset**: USDG from the same AdvanceVault balance sheet. LP yield becomes
+  advance fees plus borrow interest — the vault's `totalAssets` identity gains a
+  `loansOutstanding` receivable term, mirroring `receivables`.
+- **Parameters** (initial, conservative): max LTV 40%, liquidation threshold 65%,
+  liquidation bonus 5%, borrow rate from a kinked utilisation curve (base 2%,
+  slope1 to 8% at 80% utilisation, slope2 steep past the kink).
+- **Pricing**: ChainlinkPriceOracle (section 8), staleness fail-closed. A stale feed
+  freezes new borrows against that collateral and blocks liquidations that depend
+  on it — never liquidate on a stale price.
+- **Dividend servicing**: when the protocol realises dividend value for a borrower
+  (advance, stream claim, settlement), route it debt-first: interest, then
+  principal if the holder opts in, then the holder's chosen mode. One hook in
+  DripCore's entitlement flow.
+- **Liquidation**: repay up to close factor (50%) of debt, seize collateral plus
+  bonus, sell through the SwapRouter02 adapter with oracle-bounded minOut. Same
+  no-pool-as-oracle rule as everything else.
+- **Invariants to test**: debt of any account ≤ collateral value × liq threshold at
+  action time; vault cash + receivables + loans ≥ obligations; dividend servicing
+  never reduces principal below zero; a stale oracle can never mint debt.
 
 ## 12. Repo map
 

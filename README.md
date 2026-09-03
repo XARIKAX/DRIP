@@ -1,20 +1,25 @@
-# Drip Markets — the dividend layer for Robinhood Chain
+# Osinko — the Aave of dividends
 
-Ticker **$DRIP**, backronym **Dividend Reinvestment Plan**: the same name as the thing
-it replaces, with none of the limits.
+**Osinko** is Finnish for *dividend* — the same language that gave DeFi its ghost.
+Aave built the money market for crypto collateral; Osinko builds it for the income
+side of tokenized stocks on Robinhood Chain. Ticker **$OSINKO**.
 
-Stock tokens on Robinhood Chain pay dividends the old way: offchain, weeks late, in
-quarterly lumps, only inside the Robinhood app. Drip Markets fixes all three onchain.
+One deposit puts both sides of a portfolio to work. The **income side**: dividends
+stream per second and arrive weeks early. The **credit side**: the same holdings back
+a USDG line whose interest the dividends pay.
 
 1. **Early** — dividends advanced at the ex date instead of the pay date, funded by a
    USDG vault that earns the 1% advance fee
 2. **Stream** — dividend value drips to the wallet per second instead of arriving as a lump
-3. **DRIP** — streamed dividends auto reinvest into more of the same stock token the
+3. **Reinvest** — streamed dividends auto reinvest into more of the same stock token the
    moment they land
-4. **Agent** — every action exposed over MCP so an agent can manage a dividend strategy
+4. **Borrow** — USDG credit against deposited stocks; every dividend the collateral
+   earns is applied against the interest first, so at a conservative LTV the loan
+   carries itself
+5. **Agent** — every action exposed over MCP so an agent can manage the whole strategy
    from natural language, signing nothing itself
 
-**Get paid before Wall Street does.**
+**Get paid. Don't sell. Let the dividends do the work.**
 
 > Testnet build. Every token in here is worthless by design.
 
@@ -99,7 +104,7 @@ Point an MCP client at it with:
 ```json
 {
   "mcpServers": {
-    "drip-markets": {
+    "osinko": {
       "command": "pnpm",
       "args": ["--filter", "@drip-markets/mcp", "start"],
       "env": { "DRIP_RPC_URL": "http://127.0.0.1:8545", "DRIP_CHAIN_ID": "31337" }

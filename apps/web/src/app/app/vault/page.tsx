@@ -16,8 +16,8 @@ export default function VaultPage() {
         <div className="eyebrow text-cyan-dark">The other side of early</div>
         <h1 className="mt-2 text-headline font-extrabold">Advance vault</h1>
         <p className="mt-4 text-[15px] leading-relaxed text-ink/80">
-          Somebody has to front the money three weeks early. This is where it comes from. Deposit
-          USDG, earn the advance fee, get repaid when the issuer pays.
+          One pool of USDG funds both sides of Osinko: it fronts dividends weeks early and it
+          lends against portfolios. Deposit USDG, earn the advance fee plus borrow interest.
         </p>
       </header>
 
@@ -51,7 +51,7 @@ function HeroStats() {
           <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-cyan">
             <AnimatedNumber value={vault.apyPct} decimals={2} suffix="%" flash="dark" />
           </div>
-          <div className="mt-1 text-[12px] text-panel-muted">Annualised from advance fees</div>
+          <div className="mt-1 text-[12px] text-panel-muted">Advance fees plus borrow interest</div>
         </div>
         <div className="bg-panel p-6">
           <div className="panel-title">Utilisation</div>

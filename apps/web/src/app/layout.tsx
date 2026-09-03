@@ -5,22 +5,22 @@ import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://dripmarkets.net"),
-  title: "Drip Markets — Dividends the way they should work",
+  title: "Osinko — Get paid. Don't sell.",
   description:
-    "The dividend layer for Robinhood Chain. Paid at the ex date, streamed per second, reinvested the moment it lands.",
+    "The Aave of dividends. Stream stock dividends per second, take them early at the ex date, and borrow against your portfolio while the dividends pay the interest. On Robinhood Chain.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Drip Markets — Get paid before Wall Street does",
+    title: "Osinko — The Aave of dividends",
     description:
-      "Dividends advanced at the ex date, streamed per second, auto reinvested onchain. Testnet build.",
+      "Dividends streamed per second and advanced at the ex date. Credit against your stocks, serviced by the dividends themselves. Testnet build.",
     url: "https://dripmarkets.net",
-    siteName: "Drip Markets",
+    siteName: "Osinko",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Drip Markets — Get paid before Wall Street does",
-    description: "Dividends advanced at the ex date, streamed per second, auto reinvested onchain.",
+    title: "Osinko — The Aave of dividends",
+    description: "Dividends streamed per second, advanced at the ex date, and credit your dividends repay.",
   },
 };
 

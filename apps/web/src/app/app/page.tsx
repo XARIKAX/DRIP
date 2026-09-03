@@ -60,13 +60,13 @@ function TopStrip() {
     const anchor = { value: summary.valueUsd, at: Date.now() };
     const tick = () => {
       const v = anchor.value + ((Date.now() - anchor.at) / 1000) * summary.streamRatePerSec;
-      document.title = `$${fmt(v, 2)} — Drip Markets`;
+      document.title = `$${fmt(v, 2)} — Osinko`;
     };
     tick();
     const id = setInterval(tick, 1000);
     return () => {
       clearInterval(id);
-      document.title = "Drip Markets — Dividends the way they should work";
+      document.title = "Osinko — Get paid. Don't sell.";
     };
   }, [summary.valueUsd, summary.streamRatePerSec]);
 

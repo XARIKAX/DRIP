@@ -45,7 +45,7 @@ export default function DepositPage() {
         <div className="eyebrow text-cyan-dark">Custody</div>
         <h1 className="mt-2 text-headline font-extrabold">Deposit stock</h1>
         <p className="mt-4 text-[15px] leading-relaxed text-ink/80">
-          Only tokens held in Drip Markets before an ex date are eligible. Deposit once, pick a mode,
+          Only tokens held in Osinko before an ex date are eligible. Deposit once, pick a mode,
           and every dividend after that arrives early, per second, or as more stock.
         </p>
       </header>

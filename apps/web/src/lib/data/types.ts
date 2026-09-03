@@ -85,6 +85,8 @@ export type ActivityKind =
   | "reinvest"
   | "mode"
   | "vault"
+  | "borrow"
+  | "repay"
   | "settle";
 
 export interface ActivityRow {
@@ -139,6 +141,35 @@ export interface WalletBalances {
   usdg: number;
   /** symbol -> shares held in the wallet, outside the protocol. */
   stocks: Record<string, number>;
+}
+
+/**
+ * The credit side. Stocks are the collateral, dividends are the repayment engine:
+ * the yield the collateral earns services the interest on what you borrowed.
+ * Positive net carry means the dividends out-earn the interest.
+ */
+export interface CreditView {
+  /** USD value of everything on deposit. */
+  collateralValueUsd: number;
+  /** Hard borrow cap: collateral times the max LTV. */
+  maxBorrowUsd: number;
+  borrowedUsd: number;
+  /** Still available to draw. */
+  availableUsd: number;
+  /** collateral x liquidation threshold / debt. Infinity when nothing is borrowed. */
+  healthFactor: number;
+  maxLtvPct: number;
+  liqThresholdPct: number;
+  borrowAprPct: number;
+  /** What the collateral's dividends earn per year, in USD. */
+  dividendsPerYearUsd: number;
+  /** What the current debt costs per year, in USD. */
+  interestPerYearUsd: number;
+  /** dividendsPerYearUsd minus interestPerYearUsd. The whole thesis in one number. */
+  netCarryPerYearUsd: number;
+  /** Interest serviced by dividends since the loan opened, live. */
+  servicedBaseUsd: number;
+  servicedRatePerSec: number;
 }
 
 export interface PortfolioSummary {

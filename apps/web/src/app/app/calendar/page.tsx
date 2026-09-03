@@ -54,7 +54,7 @@ export default function CalendarPage() {
         <h1 className="mt-2 text-headline font-extrabold">Ex date calendar</h1>
         <p className="mt-4 text-[15px] leading-relaxed text-ink/80">
           The ex date is when the money becomes yours. The pay date is when the issuer gets around
-          to it. Drip Markets pays you on the first one.
+          to it. Osinko pays you on the first one.
         </p>
       </header>
 
@@ -111,7 +111,7 @@ export default function CalendarPage() {
 
         <p className="text-[13px] text-muted">
           Paid early by is the gap between the ex date and the pay date. Wait for the issuer and you
-          get the right hand date. Use Drip Markets and you get the left hand one, minus one percent.
+          get the right hand date. Use Osinko and you get the left hand one, minus one percent.
         </p>
       </section>
     </div>

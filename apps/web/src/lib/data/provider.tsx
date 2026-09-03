@@ -39,6 +39,7 @@ import { useTxRunner } from "@/lib/tx";
 import { mockStore } from "./mock";
 import type {
   ActivityRow,
+  CreditView,
   DividendRow,
   Holding,
   ModeName,
@@ -306,6 +307,21 @@ export function usePendingAdvances(): PendingAdvance[] {
   }, [source, version, activatable.data]);
 }
 
+export function useCreditView(): CreditView {
+  const source = useDataSource();
+  const version = useMockVersion();
+  return useMemo(() => {
+    // The lending market exists in demo mode today; the chain deployment follows the
+    // audited LendingPool. Chain mode shows the same shape with nothing drawn.
+    if (source === "chain") {
+      const empty = mockStore.credit();
+      return { ...empty, borrowedUsd: 0, availableUsd: empty.maxBorrowUsd, healthFactor: Infinity, servicedBaseUsd: 0, servicedRatePerSec: 0 };
+    }
+    return mockStore.credit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source, version]);
+}
+
 export function usePortfolioSummary(): PortfolioSummary {
   const source = useDataSource();
   const version = useMockVersion();
@@ -350,6 +366,8 @@ export interface DataActions {
   faucet: (symbol: string) => Promise<void>;
   vaultDeposit: (usd: number) => Promise<void>;
   vaultWithdraw: (usd: number) => Promise<void>;
+  borrow: (usd: number) => Promise<void>;
+  repay: (usd: number) => Promise<void>;
 }
 
 export function useDataActions(): DataActions {
@@ -390,6 +408,8 @@ export function useDataActions(): DataActions {
         faucet: (symbol) => demo(() => mockStore.faucet(symbol)),
         vaultDeposit: (usd) => demo(() => mockStore.vaultDeposit(usd)),
         vaultWithdraw: (usd) => demo(() => mockStore.vaultWithdraw(usd)),
+        borrow: (usd) => demo(() => mockStore.borrow(usd)),
+        repay: (usd) => demo(() => mockStore.repay(usd)),
       };
     }
 
@@ -442,6 +462,12 @@ export function useDataActions(): DataActions {
         const d = need(deployment, "deployment");
         const owner = need(address, "wallet");
         await run([buildVaultWithdraw(d, BigInt(Math.round(usd * 1e6)), owner, owner)]);
+      },
+      borrow: async () => {
+        throw new Error("The lending market is not deployed onchain yet. Try demo mode.");
+      },
+      repay: async () => {
+        throw new Error("The lending market is not deployed onchain yet. Try demo mode.");
       },
     };
   }, [source, demoBusy, demo, state.status, deployment, address, addressOf, run]);

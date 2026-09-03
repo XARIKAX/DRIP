@@ -2,7 +2,7 @@
   "name": "@drip-markets/mcp",
   "version": "0.1.0",
   "private": true,
-  "description": "MCP server exposing Drip Markets protocol actions to agents",
+  "description": "MCP server exposing Osinko protocol actions to agents",
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",

@@ -8,6 +8,7 @@ import { Wordmark } from "@/components/Wordmark";
 const LINKS = [
   { href: "/app", label: "Dashboard" },
   { href: "/app/deposit", label: "Deposit" },
+  { href: "/app/borrow", label: "Borrow" },
   { href: "/app/vault", label: "Vault" },
   { href: "/app/calendar", label: "Calendar" },
   { href: "/app/agent", label: "Agent" },
@@ -20,7 +21,7 @@ export function SiteNav() {
   return (
     <header className="rule-b sticky top-0 z-40 bg-paper">
       <div className="shell flex h-16 items-center justify-between gap-6">
-        <Link href="/" aria-label="Drip Markets home">
+        <Link href="/" aria-label="Osinko home">
           <Wordmark />
         </Link>
 

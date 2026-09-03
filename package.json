@@ -2,7 +2,7 @@
   "name": "drip-markets",
   "private": true,
   "version": "0.1.0",
-  "description": "Drip Markets ($DRIP) \u2014 the dividend layer for Robinhood Chain",
+  "description": "Osinko ($OSINKO) \u2014 the Aave of dividends, on Robinhood Chain",
   "packageManager": "pnpm@10.33.0",
   "scripts": {
     "dev": "pnpm --filter @drip-markets/web dev",

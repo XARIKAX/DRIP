@@ -7,6 +7,7 @@ const COLUMNS = [
     links: [
       { href: "/app", label: "Dashboard" },
       { href: "/app/deposit", label: "Deposit" },
+      { href: "/app/borrow", label: "Borrow" },
       { href: "/app/vault", label: "Advance vault" },
       { href: "/app/calendar", label: "Ex date calendar" },
       { href: "/app/agent", label: "Agent console" },
@@ -29,11 +30,11 @@ export function Footer() {
         <div className="md:col-span-2">
           <Wordmark size="lg" />
           <div className="mt-2 text-micro font-bold uppercase text-muted">
-            $DRIP · Dividend Reinvestment Plan
+            $OSINKO · Finnish for dividend
           </div>
           <p className="mt-3 max-w-sm text-[14px] text-muted">
-            The dividend layer for Robinhood Chain. Paid at the ex date, streamed per second,
-            reinvested the moment it lands.
+            The Aave of dividends. Streamed per second, advanced at the ex date, and credit
+            your dividends repay. On Robinhood Chain.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <span className="tag">Testnet</span>
@@ -61,7 +62,7 @@ export function Footer() {
       <div className="rule-t">
         <div className="shell flex flex-wrap items-center justify-between gap-3 py-5 text-micro font-bold uppercase text-muted">
           <span>Testnet build. Tokens have no value.</span>
-          <span>Dividends the way they should work</span>
+          <span>Let the dividends do the work</span>
         </div>
       </div>
     </footer>
