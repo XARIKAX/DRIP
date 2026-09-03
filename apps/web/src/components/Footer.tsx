@@ -18,6 +18,7 @@ const COLUMNS = [
   {
     title: "Protocol",
     links: [
+      { href: "/docs", label: "Documentation" },
       { href: "/app/calendar", label: "Dividend registry" },
       { href: "/app/vault", label: "Vault stats" },
       { href: "/app", label: "Your streams" },

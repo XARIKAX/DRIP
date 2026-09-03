@@ -92,6 +92,12 @@ export function LandingNav() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-3">
+          <Link
+            href="/docs"
+            className="hidden px-2 py-1 font-mono text-micro font-medium uppercase text-faint transition-colors duration-300 hover:text-ink md:inline-block"
+          >
+            Docs
+          </Link>
           <span className="pill-live hidden lg:inline-flex">
             <span className="beacon" aria-hidden />
             Live · Chain {activeChain.id}
@@ -135,12 +141,20 @@ export function LandingNav() {
               key={s.id}
               href={`#${s.id}`}
               onClick={() => setOpen(false)}
-              className="flex items-center justify-between border-b border-line-soft px-5 py-4 font-mono text-micro font-medium uppercase text-muted last:border-b-0"
+              className="flex items-center justify-between border-b border-line-soft px-5 py-4 font-mono text-micro font-medium uppercase text-muted"
             >
               {s.label}
               <span className="text-ghost">→</span>
             </a>
           ))}
+          <Link
+            href="/docs"
+            onClick={() => setOpen(false)}
+            className="flex items-center justify-between px-5 py-4 font-mono text-micro font-medium uppercase text-muted"
+          >
+            Docs
+            <span className="text-ghost">→</span>
+          </Link>
         </nav>
       </div>
     </header>

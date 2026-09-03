@@ -673,6 +673,94 @@
     border-color: rgba(10, 10, 10, 0.24);
     @apply shadow-lift;
   }
+
+  /* ------------------------------------------------------------------ */
+  /* Documentation prose                                                 */
+  /* ------------------------------------------------------------------ */
+
+  /*
+   * Reading type for the docs. A 62ch measure in the UI face; anything that is a
+   * number, an identifier or a unit drops to mono, the way it does everywhere else
+   * in the product. Lists are marked with a cyan square rather than a bullet so the
+   * one accent keeps meaning "this is a point on the ledger", and ordered lists
+   * count in zero-padded mono — the same serial numbering the sections carry.
+   */
+  .docs-prose {
+    @apply text-[15.5px] leading-[1.75] text-muted;
+  }
+
+  .docs-prose > * + * {
+    @apply mt-5;
+  }
+
+  .docs-prose p {
+    @apply max-w-prose;
+  }
+
+  .docs-prose strong {
+    @apply font-semibold text-ink;
+  }
+
+  .docs-prose em {
+    @apply font-editorial text-[1.06em] italic text-ink;
+  }
+
+  .docs-prose a {
+    @apply text-ink underline decoration-line-strong underline-offset-[3px] transition-colors duration-200 hover:decoration-cyan-dark;
+  }
+
+  .docs-prose code,
+  .docs-code {
+    @apply num border border-line bg-paper-2 px-1.5 py-0.5 text-[12.5px] text-ink;
+  }
+
+  .docs-prose ul,
+  .docs-prose ol {
+    @apply max-w-prose space-y-2.5;
+  }
+
+  .docs-prose ul > li {
+    position: relative;
+    padding-left: 1.25rem;
+  }
+
+  .docs-prose ul > li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.72em;
+    width: 5px;
+    height: 5px;
+    background: #1899b1;
+  }
+
+  .docs-prose ol {
+    counter-reset: docs;
+  }
+
+  .docs-prose ol > li {
+    position: relative;
+    padding-left: 2.25rem;
+    counter-increment: docs;
+  }
+
+  .docs-prose ol > li::before {
+    content: counter(docs, decimal-leading-zero);
+    @apply num absolute left-0 top-[0.3em] text-[11px] font-medium text-cyan-deep;
+  }
+
+  /* The sidebar table of contents. Rows are hairlines apart; the live row is ink. */
+  .docs-toc a {
+    @apply flex items-baseline gap-3 py-1.5 text-[13px] text-faint transition-colors duration-300 hover:text-ink;
+  }
+
+  .docs-toc a[aria-current="true"] {
+    @apply text-ink;
+  }
+
+  .docs-toc a[aria-current="true"] .num {
+    @apply text-cyan-deep;
+  }
 }
 
 @layer utilities {

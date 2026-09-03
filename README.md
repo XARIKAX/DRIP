@@ -62,6 +62,15 @@ swaps the data source from the in-memory demo store to chain reads; it never gat
 the UI. The seam is `apps/web/src/lib/data/` — one `DataProvider`, two
 implementations, and components never know which one they are on.
 
+## Docs
+
+The protocol documentation ships inside the app at `/docs`
+(https://dripmarkets.net/docs): the mechanism module by module, every number a
+contract enforces, roles and trust assumptions, settlement and clawback, the agent
+tools and SDK, and how to use the app — with diagrams and screenshots, numbered like
+a prospectus, and bound to the same live data as the dashboard. It says what Osinko
+is in one line: the Aave of stocks.
+
 ## Robinhood Chain testnet
 
 The real target: chain id 46630, an Arbitrum Orbit L2, public since February 2026.
@@ -123,7 +132,7 @@ Point an MCP client at it with:
 ## Repo
 
 ```
-apps/web/          Next.js app — home, dashboard, deposit, vault, calendar, agent console
+apps/web/          Next.js app — home, dashboard, deposit, borrow, split, vault, calendar, agent, docs
 contracts/         Foundry — 10 protocol contracts, mocks, tests, deploy + seed scripts
 packages/sdk/      TypeScript SDK (viem) — typed reads, unsigned write builders
 packages/mcp/      MCP server wrapping the SDK
