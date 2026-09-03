@@ -7,12 +7,13 @@
  * no outbound network. The fallback stacks in tailwind.config.ts carry the layout if
  * Google Fonts never answers.
  */
-@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@1,6..72,300;1,6..72,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..700&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@1,6..72,300;1,6..72,400&display=swap");
 
 @layer base {
   :root {
     color-scheme: light;
 
+    --ground: #fafaf7;
     --paper: #ffffff;
     --ink: #0a0a0a;
     --cyan: #35c2db;
@@ -31,14 +32,14 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     scroll-behavior: smooth;
-    background: var(--paper);
+    background: var(--ground);
     /* The marquee is a `w-max` row inside an overflow-hidden parent; sub-pixel
        rounding on its transform still leaked a 1px horizontal scroll at 360px. */
     overflow-x: clip;
   }
 
   body {
-    @apply bg-paper font-sans text-ink;
+    @apply bg-ground font-sans text-ink;
     font-weight: 500;
     font-synthesis-weight: none;
     overflow-x: clip;
@@ -70,11 +71,11 @@
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: #f6f7f8;
+    background: #fafaf7;
   }
   ::-webkit-scrollbar-thumb {
-    background: #d3d7db;
-    border: 3px solid #f6f7f8;
+    background: #d6d6cf;
+    border: 3px solid #fafaf7;
   }
   ::-webkit-scrollbar-thumb:hover {
     background: #1899b1;
@@ -181,6 +182,73 @@
 
   .panel .eyebrow {
     @apply text-panel-faint;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* The certificate                                                     */
+  /* ------------------------------------------------------------------ */
+
+  /*
+   * Display type. Bodoni is optically sized, so the weight has to come down as the
+   * size goes up or the hairlines clog; `opsz` is driven from the size itself.
+   */
+  .display {
+    @apply font-display;
+    font-variation-settings: "opsz" 96;
+    font-weight: 600;
+  }
+
+  .display-light {
+    @apply font-display;
+    font-variation-settings: "opsz" 96;
+    font-weight: 500;
+  }
+
+  /* The engraved double rule that frames every document of this kind. */
+  .rule-double {
+    border-top: 1px solid rgba(10, 10, 10, 0.55);
+    box-shadow: 0 3px 0 -2px rgba(10, 10, 10, 0.28);
+  }
+
+  .rule-double-b {
+    border-bottom: 1px solid rgba(10, 10, 10, 0.55);
+    box-shadow: 0 -3px 0 -2px rgba(10, 10, 10, 0.28);
+  }
+
+  /*
+   * A certificate. Brighter than the ground it sits on, framed by a hairline inside a
+   * hairline — the way an engraved border is actually printed — and lifted just enough
+   * that the paper reads as a separate sheet.
+   */
+  .certificate {
+    @apply relative bg-paper;
+    border: 1px solid rgba(10, 10, 10, 0.5);
+    box-shadow:
+      inset 0 0 0 1px #ffffff,
+      inset 0 0 0 2px rgba(10, 10, 10, 0.12),
+      0 1px 1px rgba(10, 10, 10, 0.03),
+      0 22px 48px -26px rgba(10, 10, 10, 0.26);
+  }
+
+  /* An inked stamp: cyan overprint, off-axis, sitting on top of the engraving. */
+  .stamp {
+    @apply inline-flex items-center gap-2 font-mono text-micro font-semibold uppercase;
+    /* Double-ruled like a real rubber stamp, and saturated enough to read as ink that
+       was pressed on rather than a chip that was placed. */
+    border: 1.5px solid #1899b1;
+    outline: 1px solid #1899b1;
+    outline-offset: 2.5px;
+    color: #0b6b7e;
+    background: rgba(53, 194, 219, 0.14);
+    padding: 8px 14px;
+    letter-spacing: 0.26em;
+    transform: rotate(-2.4deg);
+  }
+
+  /* A serial number. Certificates are numbered; so is every section of this site. */
+  .serial {
+    @apply font-mono text-nano font-medium uppercase text-faint;
+    letter-spacing: 0.32em;
   }
 
   /* ------------------------------------------------------------------ */
@@ -409,7 +477,7 @@
   }
 
   .data-table tbody tr:hover {
-    background: #f6f7f8;
+    background: #fafaf7;
   }
 
   .panel-table {
@@ -575,6 +643,17 @@
     to { transform: translateX(-50%); }
   }
 
+  @keyframes rosette-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes stamp-in {
+    from { opacity: 0; transform: rotate(6deg) scale(1.5); }
+    60% { opacity: 1; }
+    to { opacity: 1; transform: rotate(-1.6deg) scale(1); }
+  }
+
   @keyframes drift {
     0%, 100% { transform: translate3d(0, 0, 0); }
     50% { transform: translate3d(0, -10px, 0); }
@@ -626,10 +705,9 @@
 
   /* Big type filled with a vertical gradient. Used once per page, at most. */
   .text-lit {
-    background: linear-gradient(178deg, #0a0a0a 18%, #23282c 62%, #565d63 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    /* Solid ink. A gradient across a didone's hairlines turns them to mush, so the
+       display face is never filled with anything but one colour. */
+    color: #0a0a0a;
   }
 
   .text-lit-dark {
@@ -774,6 +852,15 @@
     animation: drift 9s ease-in-out infinite;
   }
 
+  /* The stamp lands: it arrives rotated and oversized, then sets. */
+  .in-view .stamp-in {
+    animation: stamp-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+  }
+
+  .stamp-in {
+    opacity: 0;
+  }
+
   .marquee {
     animation: marquee 70s linear infinite;
   }
@@ -827,6 +914,8 @@
     }
 
     .marquee,
+    [style*="rosette-spin"],
+    .stamp-in,
     .rise-group > *,
     .draw-line,
     .chart-fill,

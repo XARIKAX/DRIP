@@ -42,8 +42,8 @@ export default function DepositPage() {
   return (
     <div className="rise-group space-y-10">
       <header className="max-w-2xl border-b border-line pb-8">
-        <div className="eyebrow">Custody</div>
-        <h1 className="mt-4 text-display font-black tracking-cut text-lit">Deposit stock</h1>
+        <div className="serial">Custody</div>
+        <h1 className="mt-4 display text-display">Deposit stock</h1>
         <p className="mt-5 text-[16px] leading-relaxed text-muted">
           Only tokens held in Osinko before an ex date are eligible. Deposit once, pick a mode,
           and every dividend after that arrives early, per second, or as more stock.
@@ -227,7 +227,7 @@ function WithdrawPanel() {
   return (
     <section className="panel" aria-label="Withdraw">
       <div className="border-b border-panel-line px-5 py-4">
-        <span className="eyebrow">Withdraw</span>
+        <span className="serial">Withdraw</span>
       </div>
       <div className="px-5 py-4">
         {holdings.rows.map((h) => {

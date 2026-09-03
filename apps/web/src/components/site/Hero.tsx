@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { MaskLine, Reveal, useMagnetic, useTilt } from "@/components/motion";
+import { EngravedBand, EngravedField, Perforation, Rosette } from "@/components/Guilloche";
 import { HeroCounter } from "@/components/HeroCounter";
 import { usePortfolioSummary, useTokensView } from "@/lib/data/provider";
 import { fmt, shortDate } from "@/components/live";
@@ -13,15 +14,40 @@ const RAIL = [
   { value: "40", unit: "%", label: "Maximum loan to value" },
 ];
 
+const ONES = [
+  "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+  "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen",
+];
+const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+/**
+ * Shares written out in words, the way a certificate states them.
+ *
+ * The numeral is already on the document in mono; the words are the legal statement of
+ * it. Two renderings of one quantity is not redundancy on an instrument like this — it
+ * is the convention that makes it an instrument.
+ */
+function inWords(n: number): string {
+  if (n < 20) return ONES[n];
+  if (n < 100) {
+    const t = TENS[Math.floor(n / 10)];
+    const o = n % 10;
+    return o ? `${t}-${ONES[o]}` : t;
+  }
+  const h = Math.floor(n / 100);
+  const rest = n % 100;
+  return rest ? `${ONES[h]} hundred and ${inWords(rest)}` : `${ONES[h]} hundred`;
+}
+
 /**
  * The hero.
  *
- * One argument, stated three ways: a headline that says what you get, an object that
+ * One argument, stated three ways: a headline that says what you get, a document that
  * shows the mechanism, and a number that proves it is already running.
  *
- * The composition is deliberately asymmetric — type anchored hard left on paper, the
- * object floating right as the page's first black panel — so the page reads as designed
- * rather than as a template filled in.
+ * The document is the point. Osinko replaces the oldest paperwork in finance, so the
+ * page opens with that paperwork — engraved, serialised, stamped, and still holding a
+ * detachable dividend coupon along a perforation.
  */
 export function Hero() {
   const tokens = useTokensView();
@@ -29,61 +55,56 @@ export function Hero() {
   const primary = useMagnetic<HTMLAnchorElement>(7, 140);
   const secondary = useMagnetic<HTMLAnchorElement>(5, 120);
 
-  // The hero object shows a real token from the live universe, not a mock.
   const lead = tokens.find((t) => t.symbol === "AAPL") ?? tokens[0];
 
   return (
     <section className="relative isolate overflow-hidden">
-      {/* Atmosphere: engineering paper and nothing else. A cyan wash on white reads as
-          a smudge rather than as light, so the paper is left alone. */}
-      <div className="pointer-events-none absolute inset-0 grid-bg grid-fade" aria-hidden />
+      {/* The engraved ground. Security printing, at the opacity of a watermark. */}
+      <EngravedField
+        width={1600}
+        height={520}
+        lines={54}
+        amplitude={34}
+        frequency={2.1}
+        opacity={0.5}
+        className="pointer-events-none absolute -top-12 left-0 h-[520px] w-full text-ink/[0.055]"
+      />
 
-      {/* The name, cropped by the fold. Scale contrast is the whole trick. */}
-      <div
-        className="pointer-events-none absolute -bottom-[7vw] left-0 w-full select-none overflow-hidden"
-        aria-hidden
-      >
-        <div className="shell text-cut text-colossal font-black leading-[0.75]">OSINKO</div>
-      </div>
+      <Reveal className="shell relative pb-16 pt-12 md:pb-24 md:pt-16">
+        {/* The issue line. Every document here is numbered. */}
+        <div className="reveal flex flex-wrap items-center justify-between gap-4">
+          <span className="serial">Issue No. 0001 · Series A</span>
+          <span className="serial hidden sm:inline">Robinhood Chain · USDG settlement</span>
+        </div>
+        <div className="reveal rule-double mt-4" />
 
-      <Reveal className="shell relative pb-14 pt-16 md:pb-20 md:pt-24 lg:pt-28">
-        <div className="grid items-start gap-14 lg:grid-cols-12 lg:gap-10">
+        <div className="mt-14 grid items-start gap-16 lg:grid-cols-12 lg:gap-12">
           {/* The argument */}
-          <div className="min-w-0 lg:col-span-7">
-            <div className="reveal flex flex-wrap items-center gap-3">
-              <span className="pill-live">
-                <span className="beacon" aria-hidden />
-                The Aave of dividends
-              </span>
-              <span className="pill">Robinhood Chain</span>
+          <div className="min-w-0 lg:col-span-6">
+            {/* Two lines at full scale; the third is a coda and is set as one — at hero
+                size it wrapped, and a wrapped third line unbalances the whole spread. */}
+            <h1 className="display text-hero">
+              <MaskLine>
+                <span>Get paid.</span>
+              </MaskLine>
+              <MaskLine>
+                <span className="italic">Don&apos;t sell.</span>
+              </MaskLine>
+            </h1>
+            <div className="display-light mt-4 text-[clamp(24px,3vw,44px)] leading-none text-ghost">
+              <MaskLine>
+                <span className="whitespace-nowrap italic">Borrow anyway.</span>
+              </MaskLine>
             </div>
 
-            {/* Two lines at full scale, then a deliberate step down — the third beat is
-                the consequence of the first two, and should not shout as loudly. */}
-            <h1 className="mt-8 font-black md:mt-10">
-              <span className="block text-hero">
-                <MaskLine>
-                  <span className="text-lit">Get paid.</span>
-                </MaskLine>
-                <MaskLine>
-                  <span className="text-ink">Don&apos;t sell.</span>
-                </MaskLine>
-              </span>
-              <span className="mt-3 block text-[clamp(26px,3.4vw,50px)] leading-none tracking-cut">
-                <MaskLine>
-                  <span className="text-ghost">Borrow anyway.</span>
-                </MaskLine>
-              </span>
-            </h1>
-
-            <p className="reveal reveal-4 mt-9 max-w-xl text-[17px] leading-[1.65] text-muted md:text-[19px]">
+            <p className="reveal reveal-4 mt-10 max-w-lg text-[17px] leading-[1.7] text-muted">
               Your stock keeps paying whether you watch it or not. Osinko puts both sides of
               that to work: the dividend streams to you per second and lands weeks early, at
               the ex date, while the same position quietly backs a credit line the dividends
               themselves repay.
             </p>
 
-            <div className="reveal reveal-5 mt-10 flex flex-wrap items-center gap-3">
+            <div className="reveal reveal-5 mt-11 flex flex-wrap items-center gap-3">
               <Link ref={primary} href="/app" className="btn-primary btn-lg magnetic">
                 Open the app
               </Link>
@@ -92,17 +113,20 @@ export function Hero() {
               </Link>
             </div>
 
-            <div className="reveal reveal-6 mt-9 flex flex-wrap gap-2">
-              <span className="pill">Self custody</span>
-              <span className="pill">No lock in</span>
-              <span className="pill">Contract enforced</span>
+            <div className="reveal reveal-6 mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
+              {["Self custody", "No lock in", "Contract enforced"].map((t) => (
+                <span key={t} className="serial">
+                  {t}
+                </span>
+              ))}
             </div>
           </div>
 
-          {/* The object */}
-          <div className="reveal reveal-3 relative min-w-0 lg:col-span-5">
-            <HeroObject
+          {/* The document */}
+          <div className="reveal reveal-3 min-w-0 lg:col-span-6">
+            <Certificate
               symbol={lead?.symbol ?? "AAPL"}
+              name={lead?.name ?? "Apple Inc"}
               price={lead?.priceUsd ?? 230.1}
               perShare={0.26}
               exDate={summary.nextDividend?.exDate}
@@ -110,33 +134,31 @@ export function Hero() {
           </div>
         </div>
 
-        {/* The proof: the protocol counter and the four numbers that define the product. */}
-        <div className="reveal reveal-6 mt-20 md:mt-28">
-          <div className="rule rule-draw" />
-          <div className="grid gap-10 pt-9 lg:grid-cols-12 lg:gap-8">
+        {/* The proof. */}
+        <div className="reveal reveal-6 mt-24 md:mt-32">
+          <div className="rule-double" />
+          <div className="grid gap-12 pt-10 lg:grid-cols-12 lg:gap-8">
             <div className="min-w-0 lg:col-span-4">
-              <div className="eyebrow">Streaming now, protocol wide</div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="num text-[20px] font-medium text-faint">$</span>
-                <span className="figure text-[clamp(30px,4.2vw,52px)] leading-none">
+              <div className="serial">Streaming now, protocol wide</div>
+              <div className="mt-5 flex items-baseline gap-2">
+                <span className="num text-[19px] font-medium text-faint">$</span>
+                <span className="figure text-[clamp(30px,4.2vw,50px)] leading-none">
                   <HeroCounter />
                 </span>
               </div>
-              <div className="mt-3 font-mono text-nano uppercase text-faint">
+              <div className="mt-3 text-[13px] text-muted">
                 USDG delivered to holders this quarter
               </div>
             </div>
 
-            <div className="grid min-w-0 grid-cols-2 gap-x-6 gap-y-8 lg:col-span-8 lg:grid-cols-4">
+            <div className="grid min-w-0 grid-cols-2 gap-x-8 gap-y-9 lg:col-span-8 lg:grid-cols-4">
               {RAIL.map((r) => (
                 <div key={r.label} className="min-w-0 border-l border-line pl-5">
                   <div className="flex items-baseline gap-1">
                     <span className="figure text-[clamp(26px,3vw,38px)] leading-none">{r.value}</span>
                     <span className="num text-[13px] font-medium text-cyan-deep">{r.unit}</span>
                   </div>
-                  <div className="mt-2.5 font-mono text-nano uppercase leading-relaxed text-faint">
-                    {r.label}
-                  </div>
+                  <div className="mt-3 text-[12px] leading-snug text-faint">{r.label}</div>
                 </div>
               ))}
             </div>
@@ -148,86 +170,123 @@ export function Hero() {
 }
 
 /**
- * The hero object: a share, annotated.
+ * The certificate.
  *
- * The first black panel on the page, and the first statement of the system's one
- * inversion — chrome is paper, data is black. It tilts toward the pointer and lights
- * from wherever the cursor is, so the page's most important object is the one that
- * most obviously responds to you.
+ * Engraved border, corner ornaments, a rose-engine watermark turning behind the
+ * quantity, the shares stated in both words and numerals, an inked ex-date stamp, and
+ * a dividend coupon still attached along its perforation. Everything the product does
+ * to a dividend, this object states in the language of the document it replaces.
  */
-function HeroObject({
+function Certificate({
   symbol,
+  name,
   price,
   perShare,
   exDate,
 }: {
   symbol: string;
+  name: string;
   price: number;
   perShare: number;
   exDate?: number;
 }) {
-  const tiltRef = useTilt<HTMLDivElement>(3);
+  const tiltRef = useTilt<HTMLDivElement>(2.5);
   const shares = 150;
-  const annual = perShare * 4;
+  const coupon = shares * perShare;
 
   return (
-    <div className="relative mx-auto max-w-[420px] lg:mx-0 lg:max-w-none">
-      <div ref={tiltRef} className="tilt">
-        <div className="panel spotlight drift p-7 md:p-8">
-          <div className="flex items-start justify-between gap-4">
+    <div ref={tiltRef} className="tilt mx-auto max-w-[520px] lg:mx-0 lg:max-w-none">
+      <div className="certificate overflow-hidden">
+        {/* Engraved bands at head and foot. Unambiguously printing, unlike a rosette
+            cropped into a corner, which at watermark opacity reads as a scuff. */}
+        <EngravedBand height={22} className="absolute inset-x-0 top-0 h-[22px] w-full text-ink/25" />
+        <EngravedBand
+          height={22}
+          flip
+          className="absolute inset-x-0 bottom-0 h-[22px] w-full text-ink/25"
+        />
+
+        {/* The rose engine turns behind the document, clipped by the sheet. */}
+        <div
+          className="pointer-events-none absolute -right-16 top-16 text-ink/[0.16]"
+          aria-hidden
+        >
+          <Rosette size={280} rings={34} R={100} r={29} a={66} drift={0.8} spin={150} />
+        </div>
+
+        <div className="relative px-8 py-11 md:px-10 md:py-12">
+          {/* Masthead */}
+          <div className="flex items-start justify-between gap-6">
             <div className="min-w-0">
-              <div className="text-[26px] font-extrabold tracking-cut text-panel-text">
-                {symbol}
+              <div className="display text-[19px] leading-none">Osinko</div>
+              <div className="serial mt-2">Share certificate</div>
+            </div>
+            <div className="text-right">
+              <div className="serial">No.</div>
+              <div className="num mt-1.5 text-[13px] font-medium text-ink">000150</div>
+            </div>
+          </div>
+
+          <div className="rule-double mt-5" />
+
+          {/* The holding, stated the way a document states it. */}
+          <div className="relative mt-7">
+            <div className="serial">This certifies the holding of</div>
+            <div className="display mt-3.5 text-[clamp(36px,4.6vw,52px)] leading-[1]">
+              {inWords(shares)}
+            </div>
+            <div className="display-light mt-1 text-[20px] italic text-muted">
+              shares of {name}
+            </div>
+
+            <div className="mt-6 grid grid-cols-3 gap-4 border-t border-line-soft pt-5">
+              <div className="min-w-0">
+                <div className="serial">Quantity</div>
+                <div className="figure mt-2 text-[22px] leading-none">{fmt(shares, 4)}</div>
               </div>
-              <div className="mt-1.5 font-mono text-nano uppercase text-panel-faint">
-                Stock token · ERC-20 · {exDate ? `ex ${shortDate(exDate)}` : "declared"}
+              <div className="min-w-0">
+                <div className="serial">Ticker</div>
+                <div className="mt-2 text-[20px] font-bold leading-none tracking-tight">
+                  {symbol}
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="serial">Value</div>
+                <div className="figure mt-2 text-[22px] leading-none">
+                  ${fmt(shares * price, 0)}
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-9">
-            <div className="panel-title">Position held</div>
-            <div className="mt-2.5 flex items-baseline gap-2">
-              <span className="figure text-[clamp(38px,5vw,54px)] leading-none">
-                {fmt(shares, 4)}
-              </span>
-              <span className="num text-[13px] text-panel-faint">shares</span>
-            </div>
-            <div className="num mt-2 text-[13px] text-panel-muted">
-              ${fmt(shares * price)} at ${fmt(price)}
-            </div>
-          </div>
+          {/* The perforation, and the coupon still attached to it. */}
+          <Perforation className="mt-7 text-ink/45" label="detach at ex date" />
 
-          {/* The seam. Where the dividend separates from the share. */}
-          <div className="my-7 flex items-center gap-3" aria-hidden>
-            <div className="h-px flex-1 bg-panel-line" />
-            <span className="font-mono text-nano uppercase text-panel-faint">separates at ex</span>
-            <div className="h-px flex-1 bg-gradient-to-r from-cyan/70 to-transparent" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-5">
+          <div className="mt-6 flex flex-wrap items-end justify-between gap-5">
             <div className="min-w-0">
-              <div className="panel-title">Dividend, per share</div>
-              <div className="num mt-2 text-[19px] font-medium text-cyan">${fmt(perShare)}</div>
-            </div>
-            <div className="min-w-0">
-              <div className="panel-title">Yield, annualised</div>
-              <div className="num mt-2 text-[19px] font-medium text-panel-text">
-                {fmt((annual / price) * 100, 2)}%
+              <div className="serial">Dividend coupon</div>
+              <div className="mt-2.5 flex items-baseline gap-2.5">
+                <span className="figure text-[28px] leading-none text-cyan-deep">
+                  ${fmt(coupon, 2)}
+                </span>
+                <span className="num text-[12px] text-faint">
+                  ${fmt(perShare)} × {fmt(shares, 0)}
+                </span>
               </div>
             </div>
+
+            <span className="stamp stamp-in shrink-0">
+              {exDate ? `Ex ${shortDate(exDate)}` : "Declared"}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Annotations, sat on the panel's own edges: they label the object without ever
-          crossing its content or leaving the column. The only rounded shapes here. */}
-      <span className="pill absolute -top-3.5 right-7 hidden md:inline-flex">
-        the dividend · leaves
-      </span>
-      <span className="pill-live absolute -bottom-3.5 left-7 hidden bg-paper md:inline-flex">
-        the share · stays
-      </span>
+      {/* The countersignature line: the last thing on a real certificate. */}
+      <div className="mt-4 flex items-center justify-between gap-6 px-1">
+        <span className="serial">Countersigned · onchain</span>
+        <span className="serial">Non-transferable custody · self held</span>
+      </div>
     </div>
   );
 }

@@ -15,8 +15,8 @@ export default function BorrowPage() {
   return (
     <div className="rise-group space-y-10">
       <header className="max-w-2xl border-b border-line pb-8">
-        <div className="eyebrow">The credit side</div>
-        <h1 className="mt-4 text-display font-black tracking-cut text-lit">Borrow</h1>
+        <div className="serial">The credit side</div>
+        <h1 className="mt-4 display text-display">Borrow</h1>
         <p className="mt-5 text-[16px] leading-relaxed text-muted">
           Draw USDG against your holdings without selling a share. The dividends your
           collateral keeps earning are applied against the interest automatically. At a
@@ -255,7 +255,7 @@ function HowItWorks() {
       {holdings.rows.length > 0 ? (
         <div className="border border-panel-line">
           <div className="flex items-baseline justify-between border-b border-panel-line px-5 py-3">
-            <span className="eyebrow">Your collateral</span>
+            <span className="serial">Your collateral</span>
             <span className="text-micro font-bold uppercase text-panel-muted">Keeps earning while pledged</span>
           </div>
           <div className="grid grid-cols-2 gap-px bg-panel-3 p-px sm:grid-cols-3 lg:grid-cols-6">

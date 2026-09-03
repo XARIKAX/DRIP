@@ -60,7 +60,7 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-10 md:col-span-7 md:grid-cols-3 lg:col-span-7 lg:col-start-6">
           {COLUMNS.map((col, i) => (
             <div key={col.title} className={`reveal reveal-${i + 1} min-w-0`}>
-              <div className="eyebrow">{col.title}</div>
+              <div className="serial">{col.title}</div>
               <ul className="mt-5 space-y-3">
                 {col.links.map((link) => (
                   <li key={`${col.title}-${link.label}`}>
@@ -80,7 +80,7 @@ export function Footer() {
 
       {/* The name, at the scale it deserves, cut from the background. */}
       <div className="shell overflow-hidden pb-6" aria-hidden>
-        <div className="text-cut select-none text-colossal font-black leading-[0.78]">OSINKO</div>
+        <div className="text-cut select-none display text-colossal leading-[0.78]">OSINKO</div>
       </div>
 
       <div className="border-t border-line-soft">

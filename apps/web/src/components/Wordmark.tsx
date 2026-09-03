@@ -39,13 +39,17 @@ export function Wordmark({
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
-  const type = size === "lg" ? "text-[30px]" : size === "sm" ? "text-[16px]" : "text-[20px]";
-  const glyph = size === "lg" ? 30 : size === "sm" ? 17 : 21;
+  const type = size === "lg" ? "text-[30px]" : size === "sm" ? "text-[17px]" : "text-[22px]";
+  const glyph = size === "lg" ? 28 : size === "sm" ? 16 : 20;
 
+  // The wordmark is set in the display face. A brand whose logotype is in a different
+  // typeface from its headlines has two identities and commits to neither.
   return (
-    <span className={`inline-flex items-center gap-2.5 text-ink ${className}`}>
+    <span className={`inline-flex items-center gap-3 text-ink ${className}`}>
       <Mark size={glyph} />
-      <span className={`${type} font-extrabold leading-none tracking-cut`}>OSINKO</span>
+      <span className={`font-display ${type} font-semibold leading-none tracking-[0.06em]`}>
+        OSINKO
+      </span>
     </span>
   );
 }

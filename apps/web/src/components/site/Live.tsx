@@ -26,8 +26,8 @@ export function Live() {
       <Reveal className="shell relative">
         <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-14">
           <div className="min-w-0 lg:col-span-4">
-            <div className="reveal eyebrow">The product, running</div>
-            <h2 className="reveal reveal-1 mt-5 text-display font-black tracking-cut text-lit">
+            <div className="reveal serial">The product, running</div>
+            <h2 className="reveal reveal-1 mt-5 display text-display">
               Not a screenshot
             </h2>
             <p className="reveal reveal-2 mt-7 max-w-md text-[16px] leading-[1.7] text-muted">
@@ -56,7 +56,7 @@ export function Live() {
           <div className="rule rule-draw" />
           <div className="grid gap-10 pt-12 lg:grid-cols-12">
             <div className="reveal min-w-0 lg:col-span-3">
-              <div className="eyebrow">The numbers</div>
+              <div className="serial">The numbers</div>
               <p className="kicker mt-4 max-w-xs">
                 Every figure here is enforced by a contract, not by a policy anyone can revise.
               </p>

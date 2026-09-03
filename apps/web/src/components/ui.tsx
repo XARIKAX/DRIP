@@ -40,7 +40,7 @@ export function Stat({
 }) {
   return (
     <div className="min-w-0">
-      <div className="eyebrow">{label}</div>
+      <div className="serial">{label}</div>
       <div
         className={`figure mt-3 text-[clamp(24px,2.6vw,34px)] leading-none ${
           accent ? "text-cyan" : "text-ink"
@@ -68,7 +68,7 @@ export function SectionHead({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <Eyebrow className="text-cyan">{eyebrow}</Eyebrow>
-          <h2 className="mt-3 text-headline font-black tracking-cut text-ink">{title}</h2>
+          <h2 className="mt-3 display text-headline">{title}</h2>
         </div>
         {action}
       </div>
@@ -81,7 +81,7 @@ export function Loading({ label = "Loading" }: { label?: string }) {
   return (
     <div className="flex items-center gap-3 border border-line-soft bg-paper-2 px-5 py-6">
       <span className="beacon" aria-hidden />
-      <span className="eyebrow">{label}</span>
+      <span className="serial">{label}</span>
     </div>
   );
 }
@@ -89,7 +89,7 @@ export function Loading({ label = "Loading" }: { label?: string }) {
 export function Empty({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
   return (
     <div className="border border-line-soft bg-paper-2 px-6 py-14 text-center">
-      <div className="text-title font-bold tracking-tighter text-ink">{title}</div>
+      <div className="display text-title">{title}</div>
       <p className="mx-auto mt-3 max-w-md text-[14px] leading-relaxed text-muted">{body}</p>
       {action ? <div className="mt-7 flex justify-center">{action}</div> : null}
     </div>

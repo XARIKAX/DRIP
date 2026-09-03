@@ -13,8 +13,8 @@ export default function VaultPage() {
   return (
     <div className="rise-group space-y-10">
       <header className="max-w-2xl border-b border-line pb-8">
-        <div className="eyebrow">The other side of early</div>
-        <h1 className="mt-4 text-display font-black tracking-cut text-lit">Advance vault</h1>
+        <div className="serial">The other side of early</div>
+        <h1 className="mt-4 display text-display">Advance vault</h1>
         <p className="mt-5 text-[16px] leading-relaxed text-muted">
           One pool of USDG funds both sides of Osinko: it fronts dividends weeks early and it
           lends against portfolios. Deposit USDG, earn the advance fee plus borrow interest.

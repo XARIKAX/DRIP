@@ -78,8 +78,8 @@ export function Universe() {
       <Reveal className="shell">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="min-w-0">
-            <div className="reveal eyebrow">The universe</div>
-            <h2 className="reveal reveal-1 mt-5 text-display font-black tracking-cut text-lit">
+            <div className="reveal serial">The universe</div>
+            <h2 className="reveal reveal-1 mt-5 display text-display">
               {tokens.length} names, priced by Chainlink
             </h2>
           </div>

@@ -121,8 +121,8 @@ export function Mechanism() {
       {/* Unpinned fallback. */}
       <div className="lg:hidden">
         <div className="shell py-20">
-          <div className="eyebrow">The mechanism</div>
-          <h2 className="mt-4 text-display font-black text-lit-dark">A share that never moves</h2>
+          <div className="serial">The mechanism</div>
+          <h2 className="mt-4 display text-display text-panel-text">A share that never moves</h2>
           <div className="mt-10 -mx-2">
             <Scene progress={1} />
           </div>
@@ -131,7 +131,7 @@ export function Mechanism() {
               <li key={s.index} className="border-t border-panel-line pt-6">
                 <div className="flex items-baseline gap-4">
                   <span className="num text-micro font-medium text-cyan">{s.index}</span>
-                  <h3 className="text-title font-bold tracking-tighter text-panel-text">{s.title}</h3>
+                  <h3 className="display text-title text-panel-text">{s.title}</h3>
                 </div>
                 <p className="mt-3 text-[15px] leading-relaxed text-panel-muted">{s.body}</p>
               </li>
@@ -151,7 +151,7 @@ function StageText({ progress }: { progress: number }) {
 
   return (
     <div>
-      <div className="eyebrow">The mechanism</div>
+      <div className="serial">The mechanism</div>
 
       {/* Chapter marker and the track itself. */}
       <div className="mt-5 flex items-center gap-4">
@@ -175,7 +175,7 @@ function StageText({ progress }: { progress: number }) {
       <div className="mt-9 min-h-[340px]">
         <div key={active.index} className="rise-group">
           <div>
-            <h2 className="text-display font-black tracking-cut text-lit-dark">{active.title}</h2>
+            <h2 className="display text-display text-panel-text">{active.title}</h2>
             <p className="mt-6 max-w-lg text-[17px] leading-[1.65] text-panel-muted">{active.body}</p>
             <div className="mt-8 inline-flex items-center gap-3 border-l border-cyan pl-4">
               <span className="font-mono text-nano uppercase text-cyan">{active.note}</span>

@@ -50,8 +50,8 @@ export default function CalendarPage() {
   return (
     <div className="rise-group space-y-10">
       <header className="max-w-2xl border-b border-line pb-8">
-        <div className="eyebrow">Registry</div>
-        <h1 className="mt-4 text-display font-black tracking-cut text-lit">Ex date calendar</h1>
+        <div className="serial">Registry</div>
+        <h1 className="mt-4 display text-display">Ex date calendar</h1>
         <p className="mt-5 text-[16px] leading-relaxed text-muted">
           The ex date is when the money becomes yours. The pay date is when the issuer gets around
           to it. Osinko pays you on the first one.

@@ -366,8 +366,8 @@ export default function AgentPage() {
     <div className="rise-group space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-6 border-b border-line pb-8">
         <div className="min-w-0">
-          <div className="eyebrow">Module 05</div>
-          <h1 className="mt-4 text-display font-black tracking-cut text-lit">Agent console</h1>
+          <div className="serial">Module 05</div>
+          <h1 className="mt-4 display text-display">Agent console</h1>
         </div>
         <p className="max-w-sm text-[13px] text-panel-muted">
           The same six tools are exposed over MCP, so an external agent drives exactly what this console drives.

@@ -23,11 +23,11 @@ export function Thesis() {
   return (
     <section id="thesis" className="relative border-t border-line-soft py-band">
       <Reveal className="shell">
-        <div className="reveal eyebrow">The thesis</div>
+        <div className="reveal serial">The thesis</div>
 
         <div className="mt-6 grid gap-16 lg:grid-cols-12 lg:gap-14">
           <article className="min-w-0 lg:col-span-7">
-            <h2 className="reveal text-display font-black tracking-cut text-lit">
+            <h2 className="reveal display text-display">
               Why dividends are
               <br />
               still broken
@@ -39,7 +39,7 @@ export function Thesis() {
             </p>
 
             <div className="reveal reveal-2 mt-10 max-w-prose space-y-6 text-[16.5px] leading-[1.75] text-muted">
-              <p className="first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:font-sans first-letter:text-[62px] first-letter:font-black first-letter:leading-[0.8] first-letter:tracking-cut first-letter:text-ink">
+              <p className="first-letter:float-left first-letter:mr-2.5 first-letter:mt-1.5 first-letter:font-display first-letter:text-[68px] first-letter:font-semibold first-letter:leading-[0.72] first-letter:text-ink">
                 The shares go ex on a Monday. The company pays on a Friday three weeks later.
                 In between, the money exists, is owed to you, and does nothing at all. It sits
                 in a ledger at a transfer agent while you wait for it. That gap is not a law of
@@ -95,28 +95,34 @@ export function Thesis() {
           {/* The side rail */}
           <aside className="min-w-0 space-y-6 lg:col-span-5">
             <div className="reveal reveal-1 card card-pad lg:sticky lg:top-28">
-              <div className="eyebrow">Side by side</div>
-              <h3 className="mt-4 text-title font-bold tracking-tighter text-ink">
+              <div className="serial">Side by side</div>
+              <h3 className="mt-4 display text-title">
                 The same name, a different machine
               </h3>
 
-              <div className="mt-7 space-y-0">
+              {/* Column headings once, at the top. Repeating "Osinko" on all six rows
+                  turned the accent into wallpaper and said nothing six times. */}
+              <div className="mt-8 grid grid-cols-[1fr_1fr] gap-5 rule-double-b pb-2.5">
+                <div className="serial">Today</div>
+                <div className="serial pl-5 text-cyan-deep">Osinko</div>
+              </div>
+
+              <div>
                 {COMPARISON.map((row) => (
                   <div
                     key={row.term}
-                    className="grid grid-cols-[1fr_1fr] gap-4 border-t border-line-soft py-4 first:border-t-0 first:pt-0"
+                    className="grid grid-cols-[1fr_1fr] gap-5 border-b border-line-soft py-4 last:border-b-0"
                   >
                     <div className="min-w-0">
-                      <div className="font-mono text-nano uppercase text-ghost">{row.term}</div>
-                      <div className="mt-2 text-[13px] leading-snug text-faint line-through decoration-faint/40">
+                      <div className="text-[13px] leading-snug text-faint line-through decoration-faint/40">
                         {row.them}
                       </div>
-                    </div>
-                    <div className="min-w-0 border-l border-line-soft pl-4">
-                      <div className="font-mono text-nano uppercase text-cyan">Osinko</div>
-                      <div className="mt-2 text-[13px] font-medium leading-snug text-ink">
-                        {row.us}
+                      <div className="mt-1.5 font-mono text-nano uppercase text-ghost">
+                        {row.term}
                       </div>
+                    </div>
+                    <div className="min-w-0 border-l border-line-soft pl-5">
+                      <div className="text-[13px] font-medium leading-snug text-ink">{row.us}</div>
                     </div>
                   </div>
                 ))}
@@ -157,12 +163,12 @@ export function Closing() {
       />
 
       <Reveal className="shell relative py-band">
-        <h2 className="max-w-5xl text-hero font-black tracking-cut">
+        <h2 className="display max-w-5xl text-hero">
           <span className="mask-line">
-            <span className="text-lit">Let the dividends</span>
+            <span>Let the dividends</span>
           </span>
           <span className="mask-line">
-            <span className="text-ink">do the work.</span>
+            <span className="italic">do the work.</span>
           </span>
         </h2>
 

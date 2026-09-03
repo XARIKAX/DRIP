@@ -105,8 +105,8 @@ export function Modules() {
       <Reveal className="shell">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="min-w-0">
-            <div className="reveal eyebrow">Five modules</div>
-            <h2 className="reveal reveal-1 mt-5 max-w-2xl text-display font-black tracking-cut text-lit">
+            <div className="reveal serial">Five modules</div>
+            <h2 className="reveal reveal-1 mt-5 max-w-2xl display text-display">
               One deposit, both sides
             </h2>
           </div>
@@ -149,7 +149,7 @@ export function Modules() {
 
                       <span className="min-w-0">
                         <span
-                          className={`block text-[clamp(30px,4vw,52px)] font-black leading-[0.95] tracking-cut transition-all duration-500 ease-osk ${
+                          className={`display block text-[clamp(32px,4.2vw,56px)] leading-[1] transition-all duration-500 ease-osk ${
                             on ? "text-ink" : "text-ghost group-hover:text-muted"
                           }`}
                           style={{ transform: on ? "translateX(10px)" : "translateX(0)" }}
@@ -174,7 +174,7 @@ export function Modules() {
                         <span className="figure text-[30px] leading-none text-cyan-deep">
                           {m.stat}
                         </span>
-                        <span className="font-mono text-nano uppercase text-faint">{m.unit}</span>
+                        <span className="ml-2 font-mono text-nano uppercase text-faint">{m.unit}</span>
                       </span>
                     </button>
                   </li>
@@ -185,26 +185,26 @@ export function Modules() {
 
           {/* The detail. Sticky so it stays beside whichever row you are on. */}
           <div className="reveal reveal-3 min-w-0 lg:col-span-5">
-            <div ref={glow} className="panel spotlight p-6 md:p-8 lg:sticky lg:top-28">
+            <div ref={glow} className="certificate spotlight p-7 md:p-9 lg:sticky lg:top-28">
               <div className="flex items-start justify-between gap-4">
                 <span className="pill-live">Module {current.index}</span>
                 <span className="flex items-baseline gap-1.5 sm:hidden">
-                  <span className="figure text-[26px] leading-none text-cyan">{current.stat}</span>
-                  <span className="font-mono text-nano uppercase text-panel-faint">
+                  <span className="figure text-[26px] leading-none text-cyan-deep">{current.stat}</span>
+                  <span className="font-mono text-nano uppercase text-faint">
                     {current.unit}
                   </span>
                 </span>
               </div>
 
-              <h3 className="mt-8 text-headline font-black tracking-cut text-panel-text">
+              <h3 className="mt-8 display text-headline">
                 {current.claim}
               </h3>
 
-              <p key={current.index} className="mt-5 text-[15px] leading-[1.7] text-panel-muted">
+              <p key={current.index} className="mt-5 text-[15px] leading-[1.7] text-muted">
                 {current.body}
               </p>
 
-              <div className="mt-9 border-t border-panel-line pt-7">
+              <div className="mt-9 border-t border-line-soft pt-7">
                 <Link href={current.href} className="btn-ghost btn-sm">
                   {current.cta}
                 </Link>
