@@ -9,62 +9,62 @@ const MODULES = [
   {
     index: "01",
     name: "Early",
-    claim: "Paid at the ex date, not the pay date.",
-    body: "A USDG vault fronts the dividend the moment your shares go ex. The three week wait between the date you earn the money and the date a transfer agent releases it becomes zero. The vault takes one percent and keeps it as yield for the people who funded it.",
+    claim: "Get paid the day you qualify, not three weeks later.",
+    body: "Most companies pay a dividend about three weeks after you qualify for it. Osinko pays you on day one. A pool of USDG fronts the money and takes 1% for doing it. That 1% goes to the people who put cash into the pool.",
     stat: "21",
     unit: "days early",
     href: "/app/vault",
-    cta: "Open the vault",
+    cta: "See the pool",
   },
   {
     index: "02",
     name: "Stream",
-    claim: "Per second, not per quarter.",
-    body: "Your entitlement stops being a lump and becomes a flow. It accrues every second from the ex date to the pay date and you draw it whenever you want — no calendar, no market hours, no cutoff at midnight.",
+    claim: "A little every second, not one lump a quarter.",
+    body: "Your dividend pays out steadily from the day you qualify to the day the company pays. Collect it whenever you want. No market hours, no waiting for the quarter to end.",
     stat: "1",
-    unit: "second resolution",
+    unit: "second",
     href: "/app",
-    cta: "See your streams",
+    cta: "See it drip",
   },
   {
     index: "03",
     name: "Reinvest",
-    claim: "Compounded in the same transaction.",
-    body: "Every claim swaps straight into more of the same stock token and returns to your position without the cash ever touching your wallet. No trading day delay, no fractional share trapped inside an app. The next dividend is calculated on a bigger balance.",
+    claim: "Buys more stock the moment the money lands.",
+    body: "Every payout buys more of the same stock right away, in the same transaction. No waiting a day, no fraction of a share stuck inside an app. Your next dividend is bigger because you own more.",
     stat: "0",
-    unit: "days of drag",
+    unit: "days of delay",
     href: "/app/deposit",
-    cta: "Set a mode",
+    cta: "Pick a mode",
   },
   {
     index: "04",
     name: "Borrow",
     claim: "Your dividends pay the interest.",
-    body: "Draw USDG against your holdings without selling a share. Every dividend the collateral earns is applied against the interest before anything else, so at a conservative loan the yield covers the whole rate and the position carries itself.",
+    body: "Borrow USDG against your stock without selling a share. Every dividend the stock earns goes toward the interest first. Borrow a modest amount and the loan pays for itself.",
     stat: "40",
-    unit: "% max LTV",
+    unit: "% max loan",
     href: "/app/borrow",
-    cta: "Open a line",
+    cta: "Open a loan",
   },
   {
     index: "05",
     name: "Split",
-    claim: "The one module that wraps the share.",
-    body: "Deposit a stock token and receive two: a Principal Token redeemable for the whole share at maturity, and a Yield Token that carries every dividend it pays before then. Trade the drip on its own, or merge the two back at par, free, whenever you want the certificate whole again.",
-    stat: "10",
-    unit: "bps split fee",
+    claim: "Sell the dividend on its own.",
+    body: "Turn one share into two tokens. One is the share itself, which you get back in full on a set date. The other is every dividend the share pays until then. Sell either one, or put them back together at any time for free.",
+    stat: "0.1",
+    unit: "% fee to split",
     href: "/app/split",
-    cta: "Split a position",
+    cta: "Split a stock",
   },
   {
     index: "06",
     name: "Agent",
-    claim: "Your strategy, in one sentence.",
-    body: "Every action in the protocol is exposed over MCP. Tell an agent to compound, claim, or borrow and it returns a plan with the numbers filled in. You confirm it with your own key. Nothing executes without a signature.",
+    claim: "Say what you want in plain words.",
+    body: "Type “reinvest my Microsoft dividends” or “borrow $5,000”. The agent shows you a plan with the numbers filled in. Nothing happens until you approve it and sign with your own wallet.",
     stat: "6",
-    unit: "MCP tools",
+    unit: "commands",
     href: "/app/agent",
-    cta: "Open the console",
+    cta: "Try the agent",
   },
 ];
 
@@ -114,18 +114,17 @@ export function Modules() {
   return (
     <section id="modules" className="relative py-band">
       <Reveal className="shell">
-        <Folio serial="Six modules" index={3} />
+        <Folio serial="Six ways to use it" index={3} />
         <div className="mt-12 flex flex-wrap items-end justify-between gap-6">
           <div className="min-w-0">
             <h2 className="reveal reveal-1 max-w-2xl display text-display">
-              Hold it, borrow on it, or trade it
+              Keep it, borrow on it, or sell the dividend
             </h2>
           </div>
           <p className="reveal reveal-2 max-w-sm text-[15px] leading-relaxed text-muted">
-            Early, Stream, Reinvest and Borrow never wrap the share — a quarterly cheque
-            becomes a continuous, compounding, borrowable position, and the certificate
-            stays whole. Split is the exception, and it is opt in: wrap it anyway, and the
-            dividend becomes its own liquid position.
+            Four of these never touch your shares. The dividend becomes a steady drip, more
+            stock, or a way to pay a loan, and the share stays whole. Split is the one that
+            does touch the share, and only if you ask it to.
           </p>
         </div>
 

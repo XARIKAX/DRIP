@@ -18,9 +18,9 @@ export const MODE_LABEL: Record<ModeName, string> = {
 };
 
 export const MODE_SENTENCE: Record<ModeName, string> = {
-  CASH_EARLY: "The whole dividend hits your wallet at the ex date, weeks before the issuer pays.",
-  STREAM: "The dividend drips into your wallet per second from the ex date to the pay date.",
-  REINVEST: "The dividend drips in and buys more of the same stock the moment it lands.",
+  CASH_EARLY: "Get the whole dividend the day you qualify, weeks before the company pays. Costs 1%.",
+  STREAM: "The dividend drips into your wallet a little every second until pay day.",
+  REINVEST: "The dividend drips in and buys more of the same stock as it lands.",
 };
 
 export interface TokenInfo {

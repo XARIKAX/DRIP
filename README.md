@@ -26,7 +26,7 @@ a USDG line whose interest the dividends pay.
 6. **Agent** — every action exposed over MCP so an agent can manage the whole strategy
    from natural language, signing nothing itself
 
-**Hold the share. Stream the drip. Borrow on both.**
+**Split the stock. Trade the dividend. Borrow on both.**
 
 > Testnet build. Every token in here is worthless by design.
 

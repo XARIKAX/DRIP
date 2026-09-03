@@ -8,10 +8,10 @@ import { usePortfolioSummary, useTokensView } from "@/lib/data/provider";
 import { fmt, shortDate } from "@/components/live";
 
 const RAIL = [
-  { value: "21", unit: "days", label: "Paid before the pay date" },
-  { value: "1", unit: "sec", label: "Accrual resolution" },
-  { value: "5.8", unit: "%", label: "Borrow rate, floating" },
-  { value: "40", unit: "%", label: "Maximum loan to value" },
+  { value: "21", unit: "days", label: "Paid early, on average" },
+  { value: "1", unit: "sec", label: "How often you get paid" },
+  { value: "5.8", unit: "%", label: "Interest on a loan today" },
+  { value: "40", unit: "%", label: "Most you can borrow against your stock" },
 ];
 
 const ONES = [
@@ -74,38 +74,28 @@ export function Hero() {
         {/* The issue line. Every document here is numbered. */}
         <div className="reveal flex flex-wrap items-center justify-between gap-4">
           <span className="serial">Issue No. 0001 · Series A</span>
-          <span className="serial hidden sm:inline">Robinhood Chain · USDG settlement</span>
+          <span className="serial hidden sm:inline">Robinhood Chain · Paid in USDG</span>
         </div>
         <div className="reveal rule-double mt-4" />
 
         <div className="mt-14 grid items-start gap-16 lg:grid-cols-12 lg:gap-12">
           {/* The argument */}
           <div className="min-w-0 lg:col-span-7">
-            {/* Three beats in the product's own vocabulary, matching a competitor's own
-                cadence line for line — "split the stock / trade the drip / merge at
-                par" — without using their words, since we do the opposite of what that
-                line describes: nothing splits, nothing merges back, the share just
-                stays where it is. First draft of this exact phrasing wrapped to two
-                lines at every desktop width tested (the "verb the noun" pattern with
-                articles is simply wider than the shortened version shipped earlier), so
-                rather than cut the words again the column beside it gave up some of its
-                width instead (7/5 split, was 6/6) — confirmed by rendering and
-                measuring computed line height at 1024 through 1600, not by guessing.
-                One more thing the widened column alone didn't fix: text-hero scales off
-                viewport width (vw), so past 1523px the font keeps growing even though
-                the shell's own max-width caps the column at a fixed pixel size — a
-                widening column can't out-run a font that scales off the wrong
-                dimension. Sized this h1 on its own clamp instead, fit to the measured
-                container width at each breakpoint with real margin (natural text width
-                stayed 7-8% under the box at every one of 1024/1280/1440/1600, not
-                shaving it to the wire) rather than reusing text-hero, which stays as it
-                was for the wide, unconstrained closing headline that still needs it. */}
-            <h1 className="display text-[clamp(52px,7.4vw,112px)] leading-[0.94] tracking-[-0.025em]">
+            {/* Three beats, a lifecycle: the SplitVault separates the share into principal
+                and yield, the yield token is an ERC-20 anyone can trade, and the credit
+                line borrows against the stock while the dividend services the interest.
+                Each line is something a contract in this repository does; "both" in the
+                last line is the stock and the dividend the first two lines just named.
+                The h1 is sized on its own clamp rather than text-hero because the column
+                is a fixed 7/12 of a capped shell while vw keeps growing past it; the clamp
+                is fit so the longest line, the second, clears the column at 1024 through
+                1600 without wrapping — measured by rendering, not guessed. */}
+            <h1 className="display text-[clamp(40px,6.1vw,92px)] leading-[0.94] tracking-[-0.025em]">
               <MaskLine>
-                <span>Hold the share.</span>
+                <span>Split the stock.</span>
               </MaskLine>
               <MaskLine>
-                <span className="italic">Stream the drip.</span>
+                <span className="italic">Trade the dividend.</span>
               </MaskLine>
             </h1>
             <div className="display-light mt-4 text-[clamp(24px,3vw,44px)] leading-none text-muted">
@@ -115,10 +105,10 @@ export function Hero() {
             </div>
 
             <p className="reveal reveal-4 mt-10 max-w-lg text-[17px] leading-[1.7] text-muted">
-              Your stock keeps paying whether you watch it or not. Osinko puts both sides of
-              that to work: the dividend streams to you per second and lands weeks early, at
-              the ex date, while the same position quietly backs a credit line the dividends
-              themselves repay.
+              Stocks pay dividends. Today the cash shows up weeks after you earned it, then
+              sits there. Osinko changes that. Deposit your stock and the dividend pays out
+              the day you earn it. Split it off and sell it on its own. Or borrow against the
+              stock and let the dividends cover the interest.
             </p>
 
             <div className="reveal reveal-5 mt-11 flex flex-wrap items-center gap-3">
@@ -126,12 +116,12 @@ export function Hero() {
                 Open the app
               </Link>
               <Link ref={secondary} href="#mechanism" className="btn-ghost btn-lg magnetic">
-                See the mechanism
+                See how it works
               </Link>
             </div>
 
             <div className="reveal reveal-6 mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
-              {["Self custody", "No lock in", "Contract enforced"].map((t) => (
+              {["You keep your keys", "Leave any time", "Rules live in code"].map((t) => (
                 <span key={t} className="serial">
                   {t}
                 </span>
@@ -156,7 +146,7 @@ export function Hero() {
           <div className="rule-double" />
           <div className="grid gap-12 pt-10 lg:grid-cols-12 lg:gap-8">
             <div className="min-w-0 lg:col-span-4">
-              <div className="serial">Streaming now, protocol wide</div>
+              <div className="serial">Paid to holders, and counting</div>
               <div className="mt-5 flex items-baseline gap-2">
                 <span className="num text-[19px] font-medium text-faint">$</span>
                 <span className="figure text-[clamp(30px,4.2vw,50px)] leading-none">
@@ -164,7 +154,7 @@ export function Hero() {
                 </span>
               </div>
               <div className="mt-3 text-[13px] text-muted">
-                USDG delivered to holders this quarter
+                In USDG, this quarter. It moves while you read.
               </div>
             </div>
 
@@ -292,7 +282,7 @@ function Certificate({
           </div>
 
           {/* The perforation, and the coupon still attached to it. */}
-          <Perforation className="mt-7 text-ink/45" label="detach at ex date" />
+          <Perforation className="mt-7 text-ink/45" label="tear off on the ex date" />
 
           <div className="mt-6 flex flex-wrap items-end justify-between gap-5">
             <div className="min-w-0">
@@ -316,8 +306,8 @@ function Certificate({
 
       {/* The countersignature line: the last thing on a real certificate. */}
       <div className="mt-4 flex items-center justify-between gap-6 px-1">
-        <span className="serial">Countersigned · onchain</span>
-        <span className="serial">Non-transferable custody · self held</span>
+        <span className="serial">Recorded onchain</span>
+        <span className="serial">Held by you, not by us</span>
       </div>
     </div>
   );

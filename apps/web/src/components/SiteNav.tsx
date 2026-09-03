@@ -11,7 +11,7 @@ const LINKS = [
   { href: "/app/deposit", label: "Deposit" },
   { href: "/app/borrow", label: "Borrow" },
   { href: "/app/split", label: "Split" },
-  { href: "/app/vault", label: "Vault" },
+  { href: "/app/vault", label: "Pool" },
   { href: "/app/calendar", label: "Calendar" },
   { href: "/app/agent", label: "Agent" },
 ];
@@ -19,7 +19,7 @@ const LINKS = [
 /* The docs sit beside the connect button rather than in the row of app destinations:
    the seven app links already fill the row to the wire at 1024px, and a reference is
    a different kind of place from a screen you operate. Below lg it joins the rail. */
-const DOCS = { href: "/docs", label: "Docs" };
+const DOCS = { href: "/docs", label: "Guide" };
 
 /**
  * The application header. Wordmark, seven destinations, the docs, one connect button.

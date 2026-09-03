@@ -96,8 +96,8 @@ export function DocsShell({
   return (
     <div className="shell pb-band pt-8 md:pt-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <span className="serial">Osinko protocol · Documentation</span>
-        <span className="serial hidden sm:inline">Edition v0.1 · Revised September 2026 · Interfaces frozen</span>
+        <span className="serial">Osinko · How it works</span>
+        <span className="serial hidden sm:inline">Version 0.1 · Updated September 2026</span>
       </div>
       <div className="rule-double mt-4" />
 
@@ -219,7 +219,7 @@ function Glance({ rows, layout }: { rows: GlanceRow[]; layout: "rail" | "grid" }
   if (layout === "grid") {
     return (
       <div className="card !p-0">
-        <div className="serial border-b border-line-soft px-5 py-3">At a glance</div>
+        <div className="serial border-b border-line-soft px-5 py-3">The short version</div>
         <dl className="grid grid-cols-2 gap-px bg-line-soft md:grid-cols-3">
           {rows.map((r) => (
             <div key={r.label} className="bg-paper px-5 py-3.5">
@@ -233,7 +233,7 @@ function Glance({ rows, layout }: { rows: GlanceRow[]; layout: "rail" | "grid" }
   }
   return (
     <div className="card !p-6">
-      <div className="serial">At a glance</div>
+      <div className="serial">The short version</div>
       <dl className="mt-3">
         {rows.map((r) => (
           <div key={r.label} className="border-b border-line-soft py-2.5 last:border-b-0">
@@ -249,7 +249,7 @@ function Glance({ rows, layout }: { rows: GlanceRow[]; layout: "rail" | "grid" }
 function QuickLinks({ links }: { links: QuickLink[] }) {
   return (
     <div className="card !p-6">
-      <div className="serial">Quick links</div>
+      <div className="serial">Go to</div>
       <ul className="mt-3">
         {links.map((l) => (
           <li key={l.href + l.label} className="border-b border-line-soft last:border-b-0">

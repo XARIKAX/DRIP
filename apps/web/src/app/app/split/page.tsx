@@ -29,13 +29,12 @@ export default function SplitPage() {
   return (
     <div className="rise-group space-y-10">
       <header className="max-w-2xl border-b border-line pb-8">
-        <div className="serial">The trade side</div>
+        <div className="serial">Sell the dividend on its own</div>
         <h1 className="mt-4 display text-display">Split</h1>
         <p className="mt-5 text-[16px] leading-relaxed text-muted">
-          Deposit a stock token, receive two: a Principal Token redeemable for the whole
-          share at maturity, and a Yield Token that carries every dividend it pays out
-          before then. Merge them back at par, free, any time before maturity — the same
-          promise a certificate&apos;s own perforation makes, just liquid on both sides of it.
+          Turn one share into two tokens. The first is the share itself. You get it back
+          in full on the end date. The second is every dividend that share pays until then.
+          Sell either one, or put them back together at any time for free.
         </p>
       </header>
 
@@ -43,10 +42,9 @@ export default function SplitPage() {
         <SplitSeriesPage series={active} />
       ) : (
         <div className="border border-line-soft bg-paper-2 px-6 py-14 text-center">
-          <div className="display text-title">No series open</div>
+          <div className="display text-title">Nothing to split yet</div>
           <p className="mx-auto mt-3 max-w-md text-[14px] leading-relaxed text-muted">
-            A keeper opens a series against a stock token and a maturity date. None is
-            open right now.
+            Splitting opens one stock at a time, with an end date. None is open right now.
           </p>
         </div>
       )}
@@ -69,35 +67,35 @@ function SplitSeriesPage({ series }: { series: SplitSeries }) {
       <section className="panel" aria-label="Series position">
         <div className="grid grid-cols-2 gap-px bg-panel-line lg:grid-cols-4">
           <div className="bg-panel p-6">
-            <div className="panel-title">Principal held</div>
+            <div className="panel-title">Share tokens you hold</div>
             <div className="mt-3 flex items-baseline gap-2">
               <TokenMark symbol={series.symbol} dark size={22} />
               <span className="text-[clamp(22px,2.2vw,32px)] font-semibold tracking-tighter text-panel-text">
                 <AnimatedNumber value={position?.ptBalance ?? 0} decimals={4} flash="dark" />
               </span>
             </div>
-            <div className="mt-1 text-[12px] text-panel-muted">${fmt(ptValue, 0)} redeemable at maturity</div>
+            <div className="mt-1 text-[12px] text-panel-muted">Worth ${fmt(ptValue, 0)} in stock on the end date</div>
           </div>
           <div className="bg-panel p-6">
-            <div className="panel-title">Yield held</div>
+            <div className="panel-title">Dividend tokens you hold</div>
             <div className="mt-3 text-[clamp(22px,2.2vw,32px)] font-semibold tracking-tighter text-cyan">
               <AnimatedNumber value={position?.ytBalance ?? 0} decimals={4} flash="dark" />
             </div>
-            <div className="mt-1 text-[12px] text-panel-muted">≈${fmt(ytAnnual, 0)}/yr at the implied rate</div>
+            <div className="mt-1 text-[12px] text-panel-muted">About ${fmt(ytAnnual, 0)} a year in dividends</div>
           </div>
           <div className="bg-panel p-6">
-            <div className="panel-title">Maturity</div>
+            <div className="panel-title">End date</div>
             <div className={`mt-3 text-[clamp(20px,2vw,28px)] font-semibold tracking-tighter ${matured ? "text-cyan" : "text-panel-text"}`}>
-              {matured ? "Matured" : <Countdown to={series.maturity} />}
+              {matured ? "Reached" : <Countdown to={series.maturity} />}
             </div>
             <div className="mt-1 text-[12px] text-panel-muted">{shortDate(series.maturity)}</div>
           </div>
           <div className="bg-panel p-6">
-            <div className="panel-title">Implied yield</div>
+            <div className="panel-title">Dividend yield</div>
             <div className="mt-3 text-[clamp(22px,2.2vw,32px)] font-semibold tracking-tighter text-panel-text">
-              {series.impliedYieldApr.toFixed(2)}<span className="text-[15px] text-panel-muted">% APR</span>
+              {series.impliedYieldApr.toFixed(2)}<span className="text-[15px] text-panel-muted">% a year</span>
             </div>
-            <div className="mt-1 text-[12px] text-panel-muted">{(series.splitFeeBps / 100).toFixed(2)}% split fee, merge free</div>
+            <div className="mt-1 text-[12px] text-panel-muted">{(series.splitFeeBps / 100).toFixed(2)}% fee to split, free to rejoin</div>
           </div>
         </div>
       </section>
@@ -135,13 +133,13 @@ function YieldPanel({ series, rows }: { series: SplitSeries; rows: ReturnType<ty
   return (
     <section className="panel lg:col-span-2" aria-label="Yield pool">
       <div className="panel-head">
-        <span className="panel-title">The drip, harvested</span>
-        <span className="text-micro font-bold uppercase text-panel-faint">Every dividend this series has seen</span>
+        <span className="panel-title">Dividends</span>
+        <span className="text-micro font-bold uppercase text-panel-faint">Every payout on this stock</span>
       </div>
 
       {rows.length === 0 ? (
         <div className="px-6 py-10 text-center text-[13px] text-panel-muted">
-          Nothing declared for {series.symbol} yet.
+          No dividends announced for {series.symbol} yet.
         </div>
       ) : (
         <div>
@@ -161,26 +159,26 @@ function YieldPanel({ series, rows }: { series: SplitSeries; rows: ReturnType<ty
                     ${fmt(row.perShare)} / share
                   </div>
                   <div className="mt-1 text-micro font-bold uppercase text-panel-faint">
-                    Ex {shortDate(row.exDate)} · {past ? (row.harvested ? "Harvested" : "Awaiting harvest") : "Not yet ex"}
+                    Ex date {shortDate(row.exDate)} · {past ? (row.harvested ? "Collected" : "Ready to collect") : "Not yet"}
                   </div>
                 </div>
 
                 {row.harvested ? (
                   <div className="text-right">
                     <div className="num text-[15px] font-semibold text-cyan">
-                      {row.claimed ? "Claimed" : `$${fmt(row.claimableUsd)} yours`}
+                      {row.claimed ? "Paid to you" : `$${fmt(row.claimableUsd)} is yours`}
                     </div>
-                    <div className="text-[11px] text-panel-faint">${fmt(row.poolUsd)} pool</div>
+                    <div className="text-[11px] text-panel-faint">${fmt(row.poolUsd)} total for everyone</div>
                   </div>
                 ) : null}
 
                 {canHarvest ? (
                   <button type="button" className="btn-accent btn-sm" disabled={busy} onClick={() => void harvest(row.dividendId)}>
-                    Harvest
+                    Collect it
                   </button>
                 ) : canClaim ? (
                   <button type="button" className="btn-accent btn-sm" disabled={busy} onClick={() => void claim(row.dividendId)}>
-                    Claim yield
+                    Take my share
                   </button>
                 ) : null}
               </div>
@@ -190,10 +188,9 @@ function YieldPanel({ series, rows }: { series: SplitSeries; rows: ReturnType<ty
       )}
 
       <p className="border-t border-panel-line px-6 py-4 text-[12px] leading-relaxed text-panel-faint">
-        Harvesting is permissionless — anyone can pull a declared dividend into the pool
-        once it goes ex. Claiming pays out pro rata to whoever held the Yield Token at
-        that exact ex date, proven from the token&apos;s own transfer history, not from who
-        holds it now.
+        Anyone can press collect once a dividend&apos;s ex date has passed. The money is then
+        shared out to whoever held dividend tokens on that exact day. If you sold your
+        tokens the day after, you still get paid for that one.
       </p>
     </section>
   );
@@ -253,7 +250,7 @@ function ActionPanel({ series, matured }: { series: SplitSeries; matured: boolea
       <div className="space-y-4 p-5">
         <div className="flex items-baseline justify-between text-micro font-bold uppercase text-panel-muted">
           <span>
-            {activeTab === "split" ? `${series.symbol} spare in wallet` : activeTab === "merge" ? "PT + YT held" : "Redeemable now"}
+            {activeTab === "split" ? `${series.symbol} in your wallet` : activeTab === "merge" ? "Pairs you can rejoin" : "Share tokens you can cash in"}
           </span>
           <span className="num">{fmt(max, 4)}</span>
         </div>
@@ -277,25 +274,25 @@ function ActionPanel({ series, matured }: { series: SplitSeries; matured: boolea
 
         <dl className="text-[13px]">
           <div className="flex justify-between border-b border-panel-line py-2">
-            <dt className="text-panel-muted">Split fee</dt>
+            <dt className="text-panel-muted">Fee to split</dt>
             <dd className="num text-panel-text">{(series.splitFeeBps / 100).toFixed(2)}%</dd>
           </div>
           <div className="flex justify-between py-2">
-            <dt className="text-panel-muted">Merge / redeem fee</dt>
+            <dt className="text-panel-muted">Fee to rejoin or cash in</dt>
             <dd className="num text-panel-text">None</dd>
           </div>
         </dl>
 
         <button type="button" className="btn-accent w-full" disabled={!valid || actions.busy} onClick={() => void submit()}>
-          {activeTab === "split" ? "Split into PT + YT" : activeTab === "merge" ? "Merge back to stock" : "Redeem principal"}
+          {activeTab === "split" ? "Split it" : activeTab === "merge" ? "Rejoin into stock" : "Cash in for stock"}
         </button>
         {error ? <p className="text-[12px] text-down">{error}</p> : null}
         <p className="text-[12px] leading-snug text-panel-faint">
           {activeTab === "split"
-            ? "Mints equal PT and YT, net of the split fee. The stock deposits into the same vault Early holders use, so it keeps earning until maturity."
+            ? "You get one share token and one dividend token for each share, minus the small fee. The stock keeps earning dividends the whole time."
             : activeTab === "merge"
-              ? "Burns equal PT and YT and returns the whole stock token. Works before or after maturity, and never costs a fee."
-              : "Burns PT alone for the underlying stock token. Only available once the series has matured."}
+              ? "Hand back one share token and one dividend token, get the whole share back. Works any time, and never costs a fee."
+              : "Hand back share tokens alone and get the stock back. Only possible once the end date has passed."}
         </p>
       </div>
     </section>
@@ -306,18 +303,18 @@ function HowItWorks() {
   const rows = [
     {
       n: "01",
-      h: "One deposit, two tokens",
-      p: "Split a stock token and receive a Principal Token and a Yield Token, minted 1:1 net of a small fee. The stock itself sits in custody, still earning, until one of them is redeemed.",
+      h: "One share becomes two tokens",
+      p: "Split a share and you get a share token and a dividend token. The share token is the stock itself, minus its dividends. The dividend token is the dividends, minus the stock.",
     },
     {
       n: "02",
-      h: "The drip has its own price",
-      p: "The Yield Token is a claim on every dividend the stock pays before maturity — nothing else. Trade it, and you are trading the dividend on its own, separated from the share underneath it.",
+      h: "The dividend gets its own price",
+      p: "The dividend token is worth exactly the dividends the stock will pay before the end date, and nothing else. Sell it, and you have sold the dividends on their own.",
     },
     {
       n: "03",
-      h: "Merge back, free, any time",
-      p: "Hold equal PT and YT and you can always recombine them into the whole stock token, at par, with no fee — the same certificate, made whole again, whenever you want it back.",
+      h: "Rejoin them any time, for free",
+      p: "Hold one of each and you can always put them back together into the whole share. No fee, no waiting. The same stock, whole again, whenever you want it.",
     },
   ];
   return (

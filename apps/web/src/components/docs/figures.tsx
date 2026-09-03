@@ -169,36 +169,36 @@ export function ArchitectureFigure() {
 
       {/* Oracle */}
       <Label x={24} y={64}>
-        CORPORATE ACTION ORACLE
+        DIVIDEND NEWS FEED
       </Label>
       <Label x={24} y={80} color="rgba(90,99,107,0.8)" size={9.5}>
-        ORACLE_ROLE
+        A TRUSTED SOURCE
       </Label>
       <Arrow d="M206,58 L298,58" />
       <Label x={252} y={50} anchor="middle" size={9}>
-        DECLARE · VOID
+        ANNOUNCE · CANCEL
       </Label>
 
-      <Box x={300} y={24} w={240} h={68} title="DividendRegistry" sub="DECLARED → SETTLED | VOIDED" />
-      <Box x={640} y={24} w={196} h={96} title="AdvanceVault" sub="USDG · ERC-4626 · LPs" sub2="cash floor · 80% cap" accent />
+      <Box x={300} y={24} w={240} h={68} title="DividendRegistry" sub="the list of announced dividends" />
+      <Box x={640} y={24} w={196} h={96} title="AdvanceVault" sub="the pool · USDG from lenders" sub2="never lends out more than 80%" accent />
 
       {/* Registry → DripCore */}
       <Arrow d="M420,92 L420,128" />
       <Label x={410} y={114} anchor="end" size={9.5}>
-        STATUS · EX DATE · PAY DATE
+        WHAT WAS ANNOUNCED, AND WHEN
       </Label>
 
       {/* Stock wallet → DripCore */}
-      <Box x={24} y={150} w={140} h={76} title="Your wallet" sub="stock tokens" />
+      <Box x={24} y={150} w={140} h={76} title="Your wallet" sub="your stock" />
       <Arrow d="M164,188 L298,188" />
       <Label x={231} y={178} anchor="middle" size={9}>
         DEPOSIT · WITHDRAW
       </Label>
       <Label x={231} y={202} anchor="middle" size={9}>
-        SETMODE
+        PICK A RULE
       </Label>
 
-      <Box x={300} y={130} w={240} h={110} title="DripCore" sub="custody · ex date checkpoints" sub2="entitlements · routing · settlement" accent />
+      <Box x={300} y={130} w={240} h={110} title="DripCore" sub="holds the stock · keeps the record" sub2="works out who is owed what" accent />
 
       {/* DripCore ↔ Vault. Labels run along the vertical legs, where there is room. */}
       <Arrow d="M540,160 L590,160 L590,60 L638,60" />
@@ -212,7 +212,7 @@ export function ArchitectureFigure() {
         letterSpacing="1.6"
         textAnchor="middle"
       >
-        BOOKADVANCE · FEE
+        FRONTS THE CASH · 1%
       </text>
       <Arrow d="M640,84 L610,84 L610,200 L542,200" />
       <text
@@ -225,59 +225,59 @@ export function ArchitectureFigure() {
         letterSpacing="1.6"
         textAnchor="middle"
       >
-        REPAYADVANCE
+        PAID BACK ON PAY DAY
       </text>
 
       {/* DripCore → StreamEngine */}
       <Arrow d="M420,240 L420,328" cyan />
       <Label x={430} y={262} color={CYAN}>
-        ACTIVATE → STARTSTREAM (NET)
+        STARTS THE PAYOUT
       </Label>
 
       {/* Vault → StreamEngine cash */}
       <Arrow d="M738,120 L738,292 L480,292 L480,328" />
       <Label x={746} y={214} size={9.5}>
-        RELEASEADVANCE
+        SENDS CASH
       </Label>
       <Label x={746} y={227} size={9.5}>
-        PER CLAIM
+        EACH TIME YOU COLLECT
       </Label>
 
-      <Box x={300} y={330} w={240} h={90} title="StreamEngine" sub="accrues per second, ex → pay" sub2="claim · claimFor · cancel" />
+      <Box x={300} y={330} w={240} h={90} title="StreamEngine" sub="pays out a little every second" sub2="from the ex date to pay day" />
 
       {/* StreamEngine → USDG wallet */}
       <Arrow d="M540,375 L638,375" cyan />
       <Label x={589} y={365} anchor="middle" size={8.5} color={CYAN}>
-        CLAIM · STREAM
+        CASH TO YOU
       </Label>
-      <Box x={640} y={330} w={196} h={90} title="Your wallet" sub="USDG, per second" sub2="or all at once at ex" />
+      <Box x={640} y={330} w={196} h={90} title="Your wallet" sub="USDG, a little every second" sub2="or all at once, early" />
 
       {/* StreamEngine → Reinvestor */}
       <Arrow d="M300,375 L166,375" cyan />
       <Label x={233} y={365} anchor="middle" size={8.5} color={CYAN}>
-        CLAIM · REINVEST
+        BUY MORE STOCK
       </Label>
-      <Box x={24} y={330} w={140} h={90} title="Reinvestor" sub="USDG → stock" sub2="slippage guard" />
+      <Box x={24} y={330} w={140} h={90} title="Reinvestor" sub="USDG → stock" sub2="checks the price" />
 
       {/* Reinvestor → DripCore */}
       <Arrow d="M94,330 L94,270 L260,270 L260,214 L298,214" />
       <Label x={102} y={262} size={9.5}>
-        SWAP · CREDITREINVEST
+        ADDS THE NEW STOCK BACK
       </Label>
 
       {/* The modules beside the core */}
-      <Box x={300} y={470} w={240} h={60} title="SplitVault" sub="a DripCore holder like any other · §7" dashed />
-      <Box x={640} y={470} w={196} h={60} title="LendingPool" sub="specified, not deployed · §6" dashed />
+      <Box x={300} y={470} w={240} h={60} title="SplitVault" sub="deposits stock like anyone else · §7" dashed />
+      <Box x={640} y={470} w={196} h={60} title="LendingPool" sub="designed, not yet live · §6" dashed />
       <Label x={24} y={492}>
-        ALSO ON THE
+        ALSO USING
       </Label>
       <Label x={24} y={507}>
-        BALANCE SHEET
+        THE SAME POOL
       </Label>
 
       <line x1="24" y1="548" x2="836" y2="548" stroke={LINE_SOFT} />
       <Label x={24} y={559} size={9.5}>
-        ONLY PROTOCOL CONTRACTS MOVE PROTOCOL MONEY. HUMAN ROLES FEED DATA, PAY MONEY IN, OR PUSH IT TO ITS OWNER.
+        ONLY THE CONTRACTS MOVE MONEY. PEOPLE CAN ADD DATA, PAY MONEY IN, OR SEND IT TO ITS OWNER. NOTHING ELSE.
       </Label>
     </Frame>
   );
@@ -292,42 +292,42 @@ export function TimelineFigure() {
   return (
     <Frame
       h={300}
-      label="A dividend's timeline: declared, then the ex date snapshot, then a stream from the ex date to the pay date, when the issuer settles. A voided dividend branches into clawback."
+      label="The life of one dividend: announced, then the ex date, then a payout from the ex date to pay day, when the company pays. A cancelled dividend has its early cash taken back instead."
     >
       <Regs points={[[40, 40], [820, 260]]} />
 
       {/* Eligibility window */}
       <rect x="60" y="70" width="330" height="100" fill="rgba(53,194,219,0.06)" />
       <Label x={72} y={92} color={CYAN} size={9.5}>
-        DEPOSIT BEFORE THIS LINE TO BE ELIGIBLE
+        DEPOSIT BEFORE THIS LINE TO GET THIS DIVIDEND
       </Label>
       <Label x={72} y={106} size={9.5}>
-        ELIGIBILITY IS READ FROM DRIPCORE&apos;S OWN CHECKPOINTS
+        OSINKO CHECKS ITS OWN RECORDS, NOT YOUR WALLET
       </Label>
 
       {/* The stream */}
       <path d={`M390,${y} L710,88 L710,${y} Z`} fill="rgba(53,194,219,0.12)" />
       <line x1="390" y1={y} x2="710" y2="88" stroke={CYAN} strokeWidth="1.8" />
       <Label x={550} y={112} anchor="middle" color={CYAN}>
-        ACCRUES PER SECOND
+        PAYS OUT A LITTLE EVERY SECOND
       </Label>
       <Label x={550} y={126} anchor="middle" size={9.5}>
-        CLAIM AT ANY MOMENT
+        COLLECT WHENEVER YOU LIKE
       </Label>
 
       {/* Early chip */}
       <rect x="396" y="40" width="150" height="22" fill={BOX} stroke="rgba(53,194,219,0.5)" />
       <Label x={471} y={55} anchor="middle" color={CYAN} size={9.5}>
-        EARLY · ALL OF IT, −1%
+        OR ALL OF IT TODAY, −1%
       </Label>
       <line x1="396" y1="62" x2="392" y2={y - 4} stroke="rgba(53,194,219,0.4)" strokeDasharray="2 3" />
 
       {/* Axis */}
       <line x1="60" y1={y} x2="800" y2={y} stroke={LINE} />
       {[
-        [140, "DECLARE", "ORACLE_ROLE"],
-        [390, "EX DATE", "SNAPSHOT SECOND"],
-        [710, "PAY DATE", "ISSUER SETTLES"],
+        [140, "ANNOUNCED", "THE COMPANY SAYS IT WILL PAY"],
+        [390, "EX DATE", "WHO OWNS IT NOW GETS PAID"],
+        [710, "PAY DATE", "THE COMPANY PAYS"],
       ].map(([x, t, s]) => (
         <g key={t}>
           <line x1={x} y1={y - 8} x2={x} y2={y + 8} stroke={INK} strokeWidth="1.4" />
@@ -343,24 +343,24 @@ export function TimelineFigure() {
       {/* Window bracket */}
       <path d="M390,232 L390,240 L710,240 L710,232" fill="none" stroke={LINE} />
       <Label x={550} y={256} anchor="middle" size={9.5}>
-        ≤ 90 DAYS · MAX_SETTLEMENT_WINDOW
+        AT MOST 90 DAYS APART
       </Label>
 
       {/* Settlement */}
       <Label x={800} y={y - 14} anchor="end" size={9.5}>
-        SETTLEDIVIDEND → VAULT REPAID
+        THE POOL GETS ITS MONEY BACK
       </Label>
       <Label x={800} y={y - 1} anchor="end" size={9.5}>
-        CLAIMSETTLED, NO FEE, FOR THE REST
+        LATECOMERS STILL GET PAID, NO FEE
       </Label>
 
       {/* Void branch */}
       <Arrow d="M470,178 L560,270" dashed />
       <Label x={568} y={276} color={RED} size={9.5}>
-        VOIDED → CLAWBACK PER HOLDER
+        IF THE COMPANY CANCELS
       </Label>
       <Label x={568} y={289} size={9.5}>
-        CANCEL STREAM · SEIZE STOCK · WRITE OFF
+        THE EARLY CASH IS TAKEN BACK FROM THE STOCK
       </Label>
     </Frame>
   );
@@ -377,7 +377,7 @@ export function CheckpointFigure() {
   return (
     <Frame
       h={330}
-      label="A holder's deposited balance over time, stepping at each deposit and withdrawal. The ex date falls while the balance is 150, so the entitlement is 150 shares times the per share amount, whatever happens afterwards."
+      label="Someone's balance over time, stepping up at each deposit and down at a withdrawal. The ex date falls while the balance is 150, so the dividend is 150 shares times the amount per share, whatever happens afterwards."
     >
       <Regs points={[[40, 40], [820, 300]]} />
 
@@ -418,7 +418,7 @@ export function CheckpointFigure() {
               {t}
             </Label>
             <Label x={Number(x) + 10} y={y2} size={9.5}>
-              CHECKPOINT WRITTEN
+              WRITTEN TO THE RECORD
             </Label>
           </g>
         );
@@ -436,23 +436,23 @@ export function CheckpointFigure() {
       <rect x="520" y="72" width="270" height="86" fill={BOX} stroke={LINE} />
       <rect x="520" y="72" width="3" height="86" fill={CYAN} />
       <text x="536" y="96" fill={INK} fontSize="12.5" fontFamily={MONO} fontWeight="500">
-        balanceOfAt(you, AAPL, ex) = 150.0000
+        shares on record on the ex date: 150
       </text>
       <text x="536" y="118" fill={MUTED} fontSize="11.5" fontFamily={MONO}>
-        gross = 150 × $0.26 = $39.00
+        150 × $0.26 a share = $39.00
       </text>
       <text x="536" y="140" fill={CYAN} fontSize="11.5" fontFamily={MONO}>
-        net after the 1% advance fee = $38.61
+        paid early, after the 1% fee = $38.61
       </text>
 
       <Label x={600} y={base + 24} size={9.5}>
-        THE WITHDRAWAL AFTER EX CHANGES NOTHING
+        TAKING STOCK OUT AFTERWARDS CHANGES NOTHING
       </Label>
       <Label x={80} y={base + 24} size={9.5}>
         TIME →
       </Label>
       <Label x={80} y={base + 40} size={9.5} color="rgba(90,99,107,0.8)">
-        OPENZEPPELIN CHECKPOINTS.TRACE208, KEYED BY TIMESTAMP, WRITTEN ON EVERY BALANCE CHANGE
+        EVERY DEPOSIT AND WITHDRAWAL IS WRITTEN DOWN WITH THE EXACT SECOND IT HAPPENED
       </Label>
     </Frame>
   );
@@ -467,15 +467,15 @@ export function VaultFigure() {
   const x0 = 250;
   const scale = 0.55;
   const rows: [string, number, string, "pos" | "neg" | "sum"][] = [
-    ["CASH", 500, "USDG in the vault", "pos"],
-    ["RECEIVABLES", 400, "gross owed by issuers at pay dates", "pos"],
-    ["OBLIGATIONS", 300, "net still owed to holders who advanced", "neg"],
-    ["TOTAL ASSETS", 600, "what LP shares are priced on", "sum"],
+    ["CASH IN THE POOL", 500, "USDG sitting in the pool", "pos"],
+    ["OWED TO THE POOL", 400, "what companies will pay back on pay day", "pos"],
+    ["OWED BY THE POOL", 300, "what it still owes people it paid early", "neg"],
+    ["THE POOL IS WORTH", 600, "what a lender's share is based on", "sum"],
   ];
   return (
     <Frame
       h={330}
-      label="The vault's balance sheet as four bars: cash plus receivables minus obligations equals total assets. Two checks below: cash covers obligations, and receivables sit under the utilisation cap."
+      label="The pool as four bars: cash, plus what companies owe it, minus what it owes people, equals what the pool is worth. Two rules below: cash covers every promise, and no more than 80 percent is lent out."
     >
       <Regs points={[[40, 40], [820, 300]]} />
       {rows.map(([name, v, note, kind], i) => {
@@ -506,26 +506,26 @@ export function VaultFigure() {
       {/* The two admission checks */}
       <line x1="24" y1="236" x2="836" y2="236" stroke={LINE_SOFT} />
       <Label x={24} y={258} color={INK} size={10.5}>
-        CHECK 1 · CASH FLOOR
+        RULE 1 · CASH COVERS EVERY PROMISE
       </Label>
       <text x="24" y="278" fill={MUTED} fontSize="11.5" fontFamily={MONO}>
-        cash ≥ obligations → 500 ≥ 300
+        cash 500 ≥ owed 300
       </text>
       <text x="300" y="278" fill={CYAN} fontSize="11.5" fontFamily={MONO}>
-        ✓ every promised holder is payable today
+        ✓ everyone promised money could be paid today
       </text>
 
       <Label x={24} y={302} color={INK} size={10.5}>
-        CHECK 2 · UTILISATION CAP
+        RULE 2 · NEVER MORE THAN 80% LENT OUT
       </Label>
       <text x="24" y="322" fill={MUTED} fontSize="11.5" fontFamily={MONO}>
-        receivables / assets = 66.7% ≤ 80%
+        400 lent out of 600 = 66.7%
       </text>
       <rect x="300" y="312" width="300" height="6" fill={BOX_2} />
       <rect x="300" y="312" width={300 * 0.667} height="6" fill={CYAN} />
       <rect x={300 + 300 * 0.8 - 1} y="308" width="2" height="14" fill={INK} />
       <Label x={608} y={322} size={9.5}>
-        CAP 80% · ADMIN CEILING 95%
+        LIMIT 80% · CAN NEVER BE SET PAST 95%
       </Label>
     </Frame>
   );
@@ -546,7 +546,7 @@ export function StreamFigure() {
   return (
     <Frame
       h={290}
-      label="A stream's accrued amount rises in a straight line from the ex date to the pay date. The claimed amount is a staircase beneath it; the gap between them is what is claimable right now."
+      label="A payout builds up in a straight line from the ex date to pay day. What has been collected is a staircase beneath it. The gap between them is what you can collect right now."
     >
       <Regs points={[[40, 40], [820, 260]]} />
       <line x1={x0} y1={yBase} x2={x1} y2={yBase} stroke={LINE} />
@@ -562,14 +562,14 @@ export function StreamFigure() {
       <path d={`M${x0},${yBase} L${at(4 / 21)},${yBase} L${at(4 / 21)},${acc(4 / 21)} L${at(now)},${acc(4 / 21)}`} fill="none" stroke={INK} strokeWidth="1.5" />
       <circle cx={at(4 / 21)} cy={acc(4 / 21)} r="4" fill={BOX} stroke={INK} strokeWidth="1.5" />
       <Label x={at(4 / 21) + 10} y={acc(4 / 21) + 18} size={9.5} color={MUTED}>
-        CLAIMED ON DAY 4 · $34.43
+        COLLECTED ON DAY 4 · $34.43
       </Label>
 
       {/* Claimable gap */}
       <line x1={at(now)} y1={acc(now)} x2={at(now)} y2={acc(4 / 21)} stroke={CYAN} strokeWidth="1.5" />
       <rect x={at(now) + 12} y={acc(now) - 4} width="188" height="40" fill={BOX} stroke="rgba(53,194,219,0.5)" />
       <text x={at(now) + 24} y={acc(now) + 13} fill={CYAN} fontSize="11.5" fontFamily={MONO} fontWeight="500">
-        claimable = accrued − claimed
+        ready to collect = the gap
       </text>
       <text x={at(now) + 24} y={acc(now) + 29} fill={MUTED} fontSize="11" fontFamily={MONO}>
         today · day 6 of 21
@@ -579,8 +579,8 @@ export function StreamFigure() {
       <line x1={at(now)} y1={acc(now) - 4} x2={at(now)} y2={yBase} stroke="rgba(53,194,219,0.35)" strokeDasharray="2 4" />
 
       {[
-        [x0, "EX DATE", "STREAM OPENS"],
-        [x1, "PAY DATE", "STREAM ENDS · TOTAL REACHED"],
+        [x0, "EX DATE", "PAYOUT STARTS"],
+        [x1, "PAY DATE", "PAYOUT ENDS · ALL OF IT PAID"],
       ].map(([x, t, s]) => (
         <g key={t}>
           <line x1={x} y1={yBase - 6} x2={x} y2={yBase + 6} stroke={INK} strokeWidth="1.4" />
@@ -601,7 +601,7 @@ export function StreamFigure() {
       </Label>
 
       <text x="24" y="276" fill={MUTED} fontSize="11.5" fontFamily={MONO}>
-        accrued(t) = total × (t − start) / (end − start)  →  $8.608 / day · $0.3587 / hour · $0.0000996 / second
+        $180.77 spread evenly over 21 days  →  $8.61 a day · $0.36 an hour · $0.0001 a second
       </text>
     </Frame>
   );
@@ -620,7 +620,7 @@ export function LtvFigure({ ltvPct, healthFactor }: { ltvPct: number; healthFact
   return (
     <Frame
       h={250}
-      label="The loan to value scale. Up to 40 percent can be drawn. Between 40 and 65 percent nothing new can be borrowed and nothing is liquidated. Past 65 percent a liquidator may repay up to half the debt and take collateral plus a five percent bonus."
+      label="How much of your stock's value you can borrow. Up to 40 percent. Between 40 and 65 percent nothing new can be borrowed and nothing is sold. Past 65 percent someone can pay off up to half the loan and take stock worth that plus a five percent bonus."
     >
       <Regs points={[[40, 30], [820, 230]]} />
 
@@ -629,24 +629,24 @@ export function LtvFigure({ ltvPct, healthFactor }: { ltvPct: number; healthFact
       <rect x={at(65)} y={y} width={at(100) - at(65)} height="28" fill="url(#doc-hatch)" stroke={RED} opacity="0.9" />
 
       <Label x={at(0)} y={y - 30} color={CYAN}>
-        BORROWABLE
+        YOU CAN BORROW HERE
       </Label>
       <Label x={at(0)} y={y - 16} size={9.5}>
-        DRAW UP TO 40% OF COLLATERAL VALUE
+        UP TO 40% OF WHAT YOUR STOCK IS WORTH
       </Label>
 
       <Label x={at(40) + 8} y={y - 30} color={INK}>
-        BUFFER
+        SAFETY GAP
       </Label>
       <Label x={at(40) + 8} y={y - 16} size={9.5}>
-        NO NEW DRAWS · NO LIQUIDATION
+        NO NEW BORROWING · NOTHING SOLD
       </Label>
 
       <Label x={at(65) + 8} y={y - 30} color={RED}>
-        LIQUIDATION
+        DANGER
       </Label>
       <Label x={at(65) + 8} y={y - 16} size={9.5}>
-        REPAY ≤ 50% · SEIZE + 5% BONUS
+        SOME STOCK IS SOLD TO PAY THE LOAN DOWN
       </Label>
 
       {[0, 40, 65, 100].map((p) => (
@@ -663,17 +663,17 @@ export function LtvFigure({ ltvPct, healthFactor }: { ltvPct: number; healthFact
           <line x1={at(ltvPct)} y1={y - 6} x2={at(ltvPct)} y2={y + 34} stroke={CYAN} strokeWidth="2" />
           <circle cx={at(ltvPct)} cy={y - 8} r="3.5" fill={CYAN} />
           <text x={at(ltvPct)} y={y + 86} fill={CYAN} fontSize="11.5" fontFamily={MONO} fontWeight="500" textAnchor={ltvPct > 80 ? "end" : "start"}>
-            THIS PORTFOLIO · {ltvPct.toFixed(1)}% DRAWN · HEALTH FACTOR {Number.isFinite(healthFactor) ? healthFactor.toFixed(2) : "∞"}
+            THIS PORTFOLIO · {ltvPct.toFixed(1)}% BORROWED · SAFETY SCORE {Number.isFinite(healthFactor) ? healthFactor.toFixed(2) : "∞"}
           </text>
         </g>
       ) : (
         <Label x={x0} y={y + 86} size={9.5}>
-          NOTHING BORROWED · HEALTH FACTOR ∞
+          NOTHING BORROWED · SAFETY SCORE ∞
         </Label>
       )}
 
       <text x="60" y="226" fill={MUTED} fontSize="11.5" fontFamily={MONO}>
-        health factor = collateral value × 0.65 / debt   ·   below 1.00 the position is liquidatable
+        safety score = what your stock is worth × 0.65 ÷ what you owe   ·   below 1.00 is the danger zone
       </text>
     </Frame>
   );
@@ -691,7 +691,7 @@ export function SplitFigure() {
     >
       <Regs points={[[40, 40], [820, 370]]} />
 
-      <Box x={24} y={160} w={176} h={82} title="Stock token" sub="1.0000 · in your wallet" />
+      <Box x={24} y={160} w={176} h={82} title="One share" sub="1.0000 · in your wallet" />
 
       {/* Split node */}
       <Arrow d="M200,201 L262,201" cyan />
@@ -700,7 +700,7 @@ export function SplitFigure() {
         split
       </text>
       <Label x={320} y={214} anchor="middle" color={CYAN} size={9.5}>
-        FEE 10 BPS
+        FEE 0.1%
       </Label>
 
       {/* To PT and YT */}
@@ -713,49 +713,49 @@ export function SplitFigure() {
         0.9990
       </Label>
 
-      <Box x={440} y={54} w={200} h={84} title="Principal Token" sub="the share, minus the drip" sub2="1:1 for stock at maturity" accent />
-      <Box x={440} y={264} w={200} h={84} title="Yield Token" sub="the drip, on its own" sub2="checkpointed per transfer" accent />
+      <Box x={440} y={54} w={200} h={84} title="Share token" sub="the share, minus its dividends" sub2="swap it back for stock on the end date" accent />
+      <Box x={440} y={264} w={200} h={84} title="Dividend token" sub="the dividends, minus the share" sub2="remembers who held it each day" accent />
 
       {/* Outcomes */}
       <Arrow d="M640,96 L700,96" />
       <rect x="702" y="62" width="134" height="68" fill="transparent" stroke={LINE} strokeDasharray="4 4" />
       <Label x={714} y={86} color={INK}>
-        AT MATURITY
+        ON THE END DATE
       </Label>
       <Label x={714} y={102} size={9.5}>
-        REDEEMPRINCIPAL
+        HAND IT BACK
       </Label>
       <Label x={714} y={116} size={9.5}>
-        → 1.0000 STOCK
+        → 1.0000 SHARE
       </Label>
 
       <Arrow d="M640,306 L700,306" />
       <rect x="702" y="264" width="134" height="84" fill="transparent" stroke={LINE} strokeDasharray="4 4" />
       <Label x={714} y={288} color={INK}>
-        EVERY EX DATE
+        EVERY DIVIDEND
       </Label>
       <Label x={714} y={304} size={9.5}>
-        HARVEST → POOL
+        COLLECTED INTO A POT
       </Label>
       <Label x={714} y={318} size={9.5}>
-        CLAIM PRO RATA BY
+        SHARED OUT BY WHO
       </Label>
       <Label x={714} y={332} size={9.5}>
-        BALANCEOFAT(EX)
+        HELD IT THAT DAY
       </Label>
 
       {/* Merge, the return path */}
       <Arrow d="M540,348 L540,372 L112,372 L112,244" />
       <Label x={326} y={364} anchor="middle" color={INK}>
-        MERGE · EQUAL PT + YT → THE WHOLE TOKEN · FREE · ANY TIME
+        REJOIN · ONE OF EACH → THE WHOLE SHARE · FREE · ANY TIME
       </Label>
 
       {/* The custody note */}
       <Label x={24} y={30} size={9.5}>
-        THE STOCK SITS IN DRIPCORE UNDER SPLITVAULT&apos;S ADDRESS, IN CASH_EARLY MODE, UNTIL PT OR PT+YT IS REDEEMED
+        THE SHARE ITSELF SITS IN OSINKO, STILL EARNING, UNTIL SOMEONE HANDS THE TOKENS BACK
       </Label>
       <Label x={24} y={44} size={9.5} color="rgba(90,99,107,0.8)">
-        INVARIANT · DRIPCORE.BALANCEOF(SPLITVAULT, STOCK) == PT.TOTALSUPPLY() · ONE ACTIVE SERIES PER STOCK TOKEN
+        ALWAYS TRUE · SHARES HELD = SHARE TOKENS OUT THERE · ONE OPEN SPLIT PER STOCK AT A TIME
       </Label>
     </Frame>
   );
@@ -767,37 +767,37 @@ export function SplitFigure() {
 
 export function LifecycleFigure() {
   return (
-    <Frame h={200} label="Dividend lifecycle: declared by the oracle, then either settled when the issuer pays or voided, which triggers clawback.">
+    <Frame h={200} label="The three states of a dividend: announced, then either paid by the company, or cancelled, which takes the early cash back.">
       <Regs points={[[40, 30], [820, 170]]} />
-      <Box x={24} y={64} w={150} h={64} title="—" sub="nothing declared" />
+      <Box x={24} y={64} w={150} h={64} title="—" sub="nothing announced" />
       <Arrow d="M174,96 L250,96" />
       <Label x={212} y={86} anchor="middle" size={9.5}>
-        DECLAREDIVIDEND
+        ANNOUNCED
       </Label>
       <Label x={212} y={112} anchor="middle" size={9.5} color="rgba(90,99,107,0.8)">
-        ORACLE_ROLE
+        BY THE NEWS FEED
       </Label>
 
-      <Box x={252} y={64} w={190} h={64} title="DECLARED" sub="advances may be drawn" accent />
+      <Box x={252} y={64} w={190} h={64} title="COMING" sub="you can get paid early now" accent />
 
       <Arrow d="M442,84 L560,50" cyan />
       <Label x={500} y={54} anchor="middle" size={9.5} color={CYAN}>
-        SETTLEDIVIDEND · KEEPER PAYS USDG
+        THE COMPANY PAYS
       </Label>
-      <Box x={562} y={16} w={180} h={64} title="SETTLED" sub="vault repaid · claimSettled" />
+      <Box x={562} y={16} w={180} h={64} title="PAID" sub="the pool is paid back" />
 
       <Arrow d="M442,108 L560,142" dashed />
       <Label x={500} y={146} anchor="middle" size={9.5} color={RED}>
-        VOIDDIVIDEND · ORACLE_ROLE
+        THE COMPANY CANCELS
       </Label>
-      <Box x={562} y={112} w={180} h={64} title="VOIDED" sub="clawback per holder" dashed />
+      <Box x={562} y={112} w={180} h={64} title="CANCELLED" sub="early cash is taken back" dashed />
 
       <Arrow d="M742,144 L780,144" />
       <Label x={786} y={140} size={9.5} color={RED}>
-        SEIZE
+        FROM STOCK
       </Label>
       <Label x={786} y={153} size={9.5}>
-        WRITE OFF
+        OR LENDERS
       </Label>
     </Frame>
   );

@@ -10,28 +10,27 @@ const COLUMNS = [
       { href: "/app/deposit", label: "Deposit" },
       { href: "/app/borrow", label: "Borrow" },
       { href: "/app/split", label: "Split" },
-      { href: "/app/vault", label: "Advance vault" },
-      { href: "/app/calendar", label: "Ex date calendar" },
-      { href: "/app/agent", label: "Agent console" },
+      { href: "/app/vault", label: "The pool" },
+      { href: "/app/calendar", label: "Payout calendar" },
+      { href: "/app/agent", label: "Agent" },
     ],
   },
   {
-    title: "Protocol",
+    title: "Learn",
     links: [
-      { href: "/docs", label: "Documentation" },
-      { href: "/app/calendar", label: "Dividend registry" },
-      { href: "/app/vault", label: "Vault stats" },
-      { href: "/app", label: "Your streams" },
-      { href: "/app/borrow", label: "Credit line" },
-      { href: "/app/split", label: "Principal & yield" },
+      { href: "/docs", label: "How it works" },
+      { href: "/docs#early", label: "Getting paid early" },
+      { href: "/docs#borrow", label: "Borrowing" },
+      { href: "/docs#split", label: "Splitting a stock" },
+      { href: "/docs#risks", label: "Risks" },
     ],
   },
   {
     title: "Network",
     links: [
       { href: "/app", label: "Robinhood Chain" },
-      { href: "/app/vault", label: "USDG settlement" },
-      { href: "/app/agent", label: "MCP interface" },
+      { href: "/app/vault", label: "Paid in USDG" },
+      { href: "/app/agent", label: "Works with AI agents" },
     ],
   },
 ];
@@ -50,12 +49,13 @@ export function Footer() {
         <div className="reveal md:col-span-5 lg:col-span-4">
           <Mark size={30} className="text-ink" />
           <p className="mt-7 max-w-xs text-[15px] leading-relaxed text-muted">
-            The Aave of dividends. One deposit streams income per second, advances it at the ex
-            date, and secures a credit line the dividends themselves repay.
+            The Aave of stocks. Deposit your stock and get the dividend the day you earn it.
+            Sell the dividend on its own. Or borrow against the stock and let the dividends
+            pay the interest.
           </p>
           <div className="mt-7 flex flex-wrap gap-2">
             <span className="pill">Robinhood Chain</span>
-            <span className="pill">Self custody</span>
+            <span className="pill">You keep your keys</span>
             <span className="pill-live">Onchain</span>
           </div>
         </div>
@@ -90,7 +90,7 @@ export function Footer() {
           cared about; the engraving here is generated, and it says so. */}
       <div className="border-t border-line-soft">
         <div className="shell flex flex-wrap items-center justify-between gap-3 py-6 font-mono text-nano font-medium uppercase text-ghost">
-          <span>$OSINKO · Finnish for dividend · Robinhood Chain · USDG settlement</span>
+          <span>$OSINKO · Finnish for dividend · Robinhood Chain · Paid in USDG</span>
           <span className="text-faint">Let the dividends do the work</span>
         </div>
         <div className="shell flex flex-wrap items-center justify-between gap-3 border-t border-line-soft py-4 font-mono text-nano font-medium uppercase text-ghost">

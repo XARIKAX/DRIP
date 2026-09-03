@@ -65,7 +65,7 @@ export function parseIntent(input: string, symbols: string[]): Intent {
     if (symbols.includes(target) && source && source !== target) {
       return {
         kind: "unsupported",
-        reason: `Reinvestment buys back the token that paid the dividend. ${source} dividends buy ${source}, never ${target}. No hidden routing.`,
+        reason: `Reinvesting always buys more of the stock that paid the dividend. ${source} dividends buy ${source}, never ${target}. Nothing happens behind your back.`,
         suggestion: `Set ${source} to Cash early, then buy ${target} yourself. Two steps you can see.`,
       };
     }
@@ -75,8 +75,8 @@ export function parseIntent(input: string, symbols: string[]): Intent {
   if (/\bhalf\b[^]*\bhalf\b/i.test(text) || /\bsplit\b/i.test(text)) {
     return {
       kind: "unsupported",
-      reason: "Mode is a per token setting. One position cannot stream half and compound half at the same time.",
-      suggestion: "Set one token to Stream and another to Reinvest, or split the position across two wallets.",
+      reason: "Each stock has one rule for its dividends. One stock cannot do two things with them at the same time.",
+      suggestion: "Set one stock to Stream and another to Reinvest, or hold the stock in two wallets.",
     };
   }
 
@@ -85,8 +85,8 @@ export function parseIntent(input: string, symbols: string[]): Intent {
   if (/\b(protect|hedge|safe|de-?risk)\b/i.test(text)) {
     return {
       kind: "unsupported",
-      reason: "There is nothing to protect against here. Streams accrue every second regardless of market hours, positions are unleveraged, and the vault never touches your stock.",
-      suggestion: 'If you want cash instead of exposure, try "cash out everything early" or withdraw from the dashboard.',
+      reason: "There is nothing to protect here. Your dividends keep adding up whether markets are open or not, you are not borrowed unless you chose to be, and the pool never touches your stock.",
+      suggestion: 'If you want cash instead of stock, try "cash out everything early" or take stock out from the dashboard.',
     };
   }
 
@@ -95,7 +95,7 @@ export function parseIntent(input: string, symbols: string[]): Intent {
     if (amount) return { kind: "borrow", amount };
     return {
       kind: "unsupported",
-      reason: "A borrow needs an amount.",
+      reason: "Tell me how much to borrow.",
       suggestion: 'Try "borrow 5000 USDG".',
     };
   }
@@ -127,7 +127,7 @@ export function parseIntent(input: string, symbols: string[]): Intent {
     if (symbol && symbol !== "ALL" && amount) return { kind: "deposit", symbol, amount };
     return {
       kind: "unsupported",
-      reason: "A deposit needs both a ticker and an amount.",
+      reason: "Tell me which stock and how many shares.",
       suggestion: 'Try "deposit 25 AAPL".',
     };
   }
@@ -138,7 +138,7 @@ export function parseIntent(input: string, symbols: string[]): Intent {
     if (symbol && symbol !== "ALL" && amount) return { kind: "withdraw", symbol, amount };
     return {
       kind: "unsupported",
-      reason: "A withdrawal needs both a ticker and an amount.",
+      reason: "Tell me which stock and how many shares to take out.",
       suggestion: 'Try "withdraw 10 MSFT".',
     };
   }
@@ -157,7 +157,7 @@ export function parseIntent(input: string, symbols: string[]): Intent {
       if (symbol) return { kind: "set_mode", symbol, mode };
       return {
         kind: "unsupported",
-        reason: "That mode change needs a ticker, or the word all.",
+        reason: "Tell me which stock, or say “all”.",
         suggestion: 'Try "reinvest all my MSFT dividends" or "stream everything".',
       };
     }

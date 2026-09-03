@@ -6,10 +6,10 @@ import { DashboardPreview } from "@/components/DashboardPreview";
 import { Folio } from "@/components/site/Folio";
 
 const NUMBERS = [
-  { value: 80, unit: "%", label: "Maximum vault utilisation", note: "Contract enforced ceiling" },
-  { value: 40, unit: "%", label: "Maximum loan to value", note: "Liquidation sits at 65" },
-  { value: 1, unit: "%", label: "Advance fee to the vault", note: "The only fee in the system" },
-  { value: 0, unit: "", label: "Days between claim and reinvest", note: "Same transaction, same block" },
+  { value: 80, unit: "%", label: "Most of the pool that can ever be lent out", note: "Written into the code" },
+  { value: 40, unit: "%", label: "Most you can borrow against your stock", note: "A loan is closed out at 65" },
+  { value: 1, unit: "%", label: "The only fee, for getting paid early", note: "Goes to the pool" },
+  { value: 0, unit: "", label: "Days between getting paid and buying more", note: "Same transaction" },
 ];
 
 /**
@@ -28,24 +28,23 @@ export function Live() {
       <div className="pointer-events-none absolute inset-0 grid-bg grid-fade opacity-40" aria-hidden />
 
       <Reveal className="shell relative">
-        <Folio serial="The product, running" index={5} />
+        <Folio serial="The real thing, running" index={5} />
         <div className="mt-12 grid items-center gap-14 lg:grid-cols-12 lg:gap-14">
           <div className="min-w-0 lg:col-span-4">
             <h2 className="reveal reveal-1 display text-display">
-              Not a screenshot
+              This is not a picture
             </h2>
             <p className="reveal reveal-2 mt-7 max-w-md text-[16px] leading-[1.7] text-muted">
-              The panel beside this is the actual dashboard, bound to the same portfolio you
-              see when you open the app, accruing per second while you read. No wallet is
-              required to use any of it — connect one only when you want the numbers to be
-              yours.
+              The panel next to this is the live app, running on a sample portfolio. The
+              numbers are moving while you read. You do not need a wallet to try any of it.
+              Connect one only when you want the numbers to be yours.
             </p>
             <div className="reveal reveal-3 mt-9 flex flex-wrap gap-3">
               <Link href="/app" className="btn-primary">
-                Open the dashboard
+                Open the app
               </Link>
               <Link href="/app/calendar" className="btn-quiet">
-                Ex date calendar
+                Payout calendar
               </Link>
             </div>
           </div>
@@ -62,7 +61,7 @@ export function Live() {
             <div className="reveal min-w-0 lg:col-span-3">
               <div className="serial">The numbers</div>
               <p className="kicker mt-4 max-w-xs">
-                Every figure here is enforced by a contract, not by a policy anyone can revise.
+                Every number here is written into the code. Nobody can change it on a whim.
               </p>
             </div>
 

@@ -5,12 +5,12 @@ import { Reveal } from "@/components/motion";
 import { Folio } from "@/components/site/Folio";
 
 const COMPARISON = [
-  { term: "Reinvestment", them: "Trading day after the pay date", us: "The same transaction as the claim" },
-  { term: "Hours", them: "Market hours, midnight cutoff", us: "Every second of every day" },
-  { term: "Fractional shares", them: "Locked inside one app", us: "Self custodied ERC-20" },
-  { term: "Cash timing", them: "Pay date, weeks after ex", us: "Ex date, minus one percent" },
-  { term: "Cadence", them: "A quarterly lump", us: "A continuous stream" },
-  { term: "Borrowing", them: "Margin account, interest drag", us: "Dividends service the interest" },
+  { term: "Reinvesting", them: "The day after pay day, market hours only", us: "The same moment you get paid" },
+  { term: "Hours", them: "Weekdays, 9:30 to 4", us: "Every second of every day" },
+  { term: "Part of a share", them: "Stuck inside one app", us: "A token you hold yourself" },
+  { term: "When you get paid", them: "Three weeks after you qualify", us: "The day you qualify, minus 1%" },
+  { term: "How often", them: "One lump, four times a year", us: "A little every second" },
+  { term: "Borrowing", them: "A margin account, interest piles up", us: "The dividends pay the interest" },
 ];
 
 /**
@@ -18,13 +18,14 @@ const COMPARISON = [
  *
  * A long read is a status signal in itself: it says the product came from a thesis
  * rather than a template. Set at a 62-character measure with a drop cap and one pull
- * quote — the typography of something meant to be read, not skimmed.
+ * quote — the typography of something meant to be read, not skimmed. The words are
+ * kept plain on purpose: the case for the product should not need a finance degree.
  */
 export function Thesis() {
   return (
     <section id="thesis" className="relative py-band">
       <Reveal className="shell">
-        <Folio serial="The thesis" index={6} />
+        <Folio serial="Why this exists" index={6} />
 
         <div className="mt-12 grid gap-16 lg:grid-cols-12 lg:gap-14">
           <article className="min-w-0 lg:col-span-7">
@@ -35,59 +36,56 @@ export function Thesis() {
             </h2>
 
             <p className="reveal reveal-1 kicker mt-8 max-w-prose text-[19px] leading-relaxed md:text-[21px]">
-              A dividend is the oldest promise in finance. A company earns money and hands
-              some of it back. The promise still works. The plumbing does not.
+              A dividend is a simple promise. A company makes money and hands some of it
+              back to you. The promise still works. The way the money reaches you does not.
             </p>
 
             <div className="reveal reveal-2 mt-10 max-w-prose space-y-6 text-[16.5px] leading-[1.75] text-muted">
               <p className="first-letter:float-left first-letter:mr-2.5 first-letter:mt-1.5 first-letter:font-display first-letter:text-[68px] first-letter:font-semibold first-letter:leading-[0.72] first-letter:text-ink">
-                The shares go ex on a Monday. The company pays on a Friday three weeks later.
-                In between, the money exists, is owed to you, and does nothing at all. It sits
-                in a ledger at a transfer agent while you wait for it. That gap is not a law of
-                nature. It is a settlement convention inherited from an era of paper
-                certificates and postal mail.
+                Say a stock “goes ex” on a Monday. That is the day you must own it to get the
+                next payout. The company pays three weeks later, on a Friday. In between, the
+                money is yours and it does nothing. It sits at a middleman while you wait.
+                That wait is not a law of nature. It is a habit left over from paper
+                certificates and the post.
               </p>
               <p>
-                Then the money arrives as a lump. One payment, four times a year. Nothing about
-                your life is quarterly, but your income from a stock is, because that is how
-                often a board meets.
+                Then the money arrives as one lump, four times a year. Nothing else in your
+                life runs on a quarterly schedule. Your dividends do, because that is how
+                often a board of directors meets.
               </p>
               <p>
-                Reinvestment is worse. Robinhood documents its own terms plainly: reinvestment
-                happens on the trading day after the pay date, during market hours, subject to a
-                midnight cutoff, and the fractional share you receive cannot leave the app.
-                Every one of those limits comes from the same place — the dividend never touched
-                a system that could act on it immediately.
+                Reinvesting is worse. Your broker buys more stock the trading day after pay
+                day, only during market hours, and the fraction of a share you get cannot
+                leave their app. All of that happens for one reason: the dividend never
+                touched a system that could act on it right away.
               </p>
             </div>
 
             {/* The pull quote. Once per essay, and it has to earn it. */}
             <blockquote className="reveal reveal-3 my-12 border-l border-cyan py-2 pl-7">
               <p className="font-editorial text-[24px] italic leading-[1.35] text-ink md:text-[30px]">
-                Put the stock token onchain and every one of those limits becomes optional.
+                Put the stock on a blockchain, and every one of those limits goes away.
               </p>
             </blockquote>
 
             <div className="reveal reveal-3 max-w-prose space-y-6 text-[16.5px] leading-[1.75] text-muted">
               <p>
-                The ex date snapshot is a checkpoint. The three week wait is a credit problem,
-                and credit is exactly what a vault is for. The lump is an accounting choice, and
-                per second accrual is cheaper to compute than a quarterly batch. The
-                reinvestment delay is a market hours artefact, and a pool does not keep office
-                hours.
+                The ex date is just a record of who owned what. The three week wait is a loan
+                problem, and a pool of cash solves loan problems. The lump is a choice; a
+                computer can pay by the second just as easily. Reinvesting is slow because
+                markets close, and a pool of money does not.
               </p>
               <p>
-                And once the stock lives onchain it can finally do what collateral has always
-                done on Wall Street: back a loan. This is where the name comes from.{" "}
-                <span className="text-ink">Aave</span> is Finnish for ghost;{" "}
-                <span className="text-ink">osinko</span> is Finnish for dividend. Osinko is
-                the Aave of dividends — one deposit that streams income and secures credit at
-                once, where the dividends the collateral keeps earning are applied straight
-                against the interest. The oldest private banking product there is, minus the
+                And once the stock is on chain, it can do what stocks have always done for
+                the wealthy: back a loan. That is where the name comes from.{" "}
+                <span className="text-ink">Aave</span> is the biggest lending market in crypto.{" "}
+                <span className="text-ink">Osinko</span> is Finnish for dividend. Osinko is the
+                Aave of stocks: put your stock in, borrow against it, and let the dividends
+                pay the interest. The oldest private banking trick there is, without the
                 private banker.
               </p>
               <p className="text-[19px] font-semibold leading-relaxed text-ink">
-                Nothing here is a new financial instrument. It is the same dividend, finally put
+                Nothing here is a new financial product. It is the same dividend, finally put
                 to work.
               </p>
             </div>
@@ -98,7 +96,7 @@ export function Thesis() {
             <div className="reveal reveal-1 card card-pad lg:sticky lg:top-28">
               <div className="serial">Side by side</div>
               <h3 className="mt-4 display text-title">
-                The same name, a different machine
+                Your broker today, and Osinko
               </h3>
 
               {/* Column headings once, at the top. Repeating "Osinko" on all six rows
@@ -131,7 +129,7 @@ export function Thesis() {
 
               <div className="mt-8 grid grid-cols-2 gap-3 border-t border-line-soft pt-7">
                 <Link href="/app/vault" className="btn-quiet btn-sm justify-center">
-                  The vault
+                  The pool
                 </Link>
                 <Link href="/app/agent" className="btn-quiet btn-sm justify-center">
                   The agent
@@ -178,10 +176,10 @@ export function Closing() {
             Open the app
           </Link>
           <Link href="/docs" className="btn-ghost btn-lg">
-            Read the docs
+            Read how it works
           </Link>
           <span className="font-mono text-nano uppercase text-ghost">
-            No wallet required to look around
+            No wallet needed to look around
           </span>
         </div>
       </Reveal>

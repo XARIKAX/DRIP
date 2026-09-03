@@ -42,7 +42,7 @@ function Header() {
       <div className="min-w-0">
         <div className="serial">Dashboard</div>
         <h1 className="mt-4 display text-display">
-          Your dividends, live
+          Your dividends, right now
         </h1>
       </div>
       <Link href="/app/deposit" className="btn-primary">
@@ -68,7 +68,7 @@ function TopStrip() {
     const id = setInterval(tick, 1000);
     return () => {
       clearInterval(id);
-      document.title = "Osinko — Hold the share. Stream the drip.";
+      document.title = "Osinko — Split the stock. Trade the dividend. Borrow on both.";
     };
   }, [summary.valueUsd, summary.streamRatePerSec]);
 
@@ -79,21 +79,21 @@ function TopStrip() {
         <div className="mt-3 text-[clamp(26px,2.6vw,38px)] font-semibold tracking-tighter text-panel-text">
           <LiveCounter base={summary.valueUsd} ratePerSec={summary.streamRatePerSec} decimals={2} prefix="$" />
         </div>
-        <div className="mt-1 text-[12px] text-panel-muted">Deposits plus everything accrued</div>
+        <div className="mt-1 text-[12px] text-panel-muted">Your stock plus everything it has earned</div>
       </div>
       <div className="bg-panel p-6">
         <div className="panel-title">Earned this week</div>
         <div className="mt-3 text-[clamp(26px,2.6vw,38px)] font-semibold tracking-tighter text-cyan">
           <AnimatedNumber value={summary.earnedThisWeekUsd} decimals={2} prefix="$" flash="dark" />
         </div>
-        <div className="mt-1 text-[12px] text-panel-muted">Advances, claims and compounding</div>
+        <div className="mt-1 text-[12px] text-panel-muted">Paid early, collected, and reinvested</div>
       </div>
       <div className="bg-panel p-6">
-        <div className="panel-title">Active rules</div>
+        <div className="panel-title">Stocks on deposit</div>
         <div className="mt-3 text-[clamp(26px,2.6vw,38px)] font-semibold tracking-tighter text-panel-text">
           <AnimatedNumber value={summary.activeRules} decimals={0} flash="dark" />
         </div>
-        <div className="mt-1 text-[12px] text-panel-muted">Positions with a dividend mode set</div>
+        <div className="mt-1 text-[12px] text-panel-muted">Each one has a rule for its dividends</div>
       </div>
       <div className="bg-panel p-6">
         <div className="panel-title">Next dividend</div>
@@ -132,7 +132,7 @@ function PendingAdvances() {
                 {p.symbol} went ex {relativeTime(p.exDate)}
               </div>
               <div className="text-[13px] text-panel-muted">
-                <span className="num font-semibold">${fmt(p.grossUsd)}</span> is yours. Start it now and stop
+                <span className="num font-semibold">${fmt(p.grossUsd)}</span> is yours. Take it now instead of
                 waiting until {shortDate(p.payDate)}.
               </div>
             </div>
@@ -143,7 +143,7 @@ function PendingAdvances() {
             disabled={actions.busy}
             onClick={() => void actions.startPending(p.dividendId)}
           >
-            Start the advance
+            Get paid now
           </button>
         </div>
       ))}
@@ -160,9 +160,9 @@ function StreamsPanel() {
   return (
     <section className="panel" aria-label="Your streams">
       <div className="panel-head">
-        <span className="panel-title">Your streams</span>
+        <span className="panel-title">Dividends paying out</span>
         <span className="text-micro font-bold uppercase text-panel-faint">
-          Accruing per second · ex date to pay date
+          A little every second, until pay day
         </span>
       </div>
 
@@ -170,9 +170,9 @@ function StreamsPanel() {
 
       {!loading && open.length === 0 ? (
         <div className="px-5 py-10 text-center">
-          <p className="text-[15px] font-bold text-panel-text">No streams running</p>
+          <p className="text-[15px] font-bold text-panel-text">Nothing paying out yet</p>
           <p className="mx-auto mt-2 max-w-sm text-[13px] text-panel-muted">
-            Deposit a stock token and pick Stream or Reinvest. The next dividend arrives as a per second flow.
+            Deposit a stock and pick Stream or Reinvest. Its next dividend will show up here, paying a little every second.
           </p>
           <Link href="/app/deposit" className="btn-accent btn-sm mt-5">
             Deposit stock
@@ -217,7 +217,7 @@ function StreamRowView({ stream }: { stream: StreamRow }) {
         </div>
 
         <div className="min-w-[150px]">
-          <div className="panel-title">Accrued</div>
+          <div className="panel-title">Ready to collect</div>
           <div className={`mt-1 text-[22px] font-semibold tracking-tighter text-cyan ${justClaimed ? "flash-dark" : ""}`}>
             <StreamTicker stream={stream} />
           </div>
@@ -234,7 +234,7 @@ function StreamRowView({ stream }: { stream: StreamRow }) {
           disabled={actions.busy}
           onClick={() => void claim()}
         >
-          {stream.mode === "REINVEST" ? "Claim + reinvest" : "Claim"}
+          {stream.mode === "REINVEST" ? "Collect and buy more" : "Collect"}
         </button>
       </div>
 
@@ -274,9 +274,9 @@ function HoldingsPanel() {
   return (
     <section className="panel" aria-label="Holdings">
       <div className="panel-head">
-        <span className="panel-title">Holdings</span>
+        <span className="panel-title">Your stocks</span>
         <Link href="/app/deposit" className="text-micro font-bold uppercase text-cyan hover:text-panel-text">
-          Deposit or withdraw
+          Add or take out
         </Link>
       </div>
 
@@ -284,10 +284,10 @@ function HoldingsPanel() {
         <table className="panel-table min-w-[680px] text-[14px]">
           <thead>
             <tr>
-              <th>Token</th>
-              <th>Deposited</th>
+              <th>Stock</th>
+              <th>Shares</th>
               <th>Value</th>
-              <th>Mode</th>
+              <th>What its dividends do</th>
               <th className="text-right">Today</th>
             </tr>
           </thead>
@@ -357,12 +357,12 @@ const KIND_LABEL: Record<string, string> = {
   claim: "Claim",
   reinvest: "Reinvest",
   mode: "Rule",
-  vault: "Vault",
-  settle: "Settle",
+  vault: "Pool",
+  settle: "Paid",
   split: "Split",
   merge: "Merge",
-  harvest: "Harvest",
-  claim_yield: "Claim yield",
+  harvest: "Collected",
+  claim_yield: "Dividend",
 };
 
 function ActivityFeed() {
@@ -371,8 +371,8 @@ function ActivityFeed() {
   return (
     <section className="panel min-w-0 self-start" aria-label="Activity">
       <div className="flex items-center justify-between border-b border-panel-line px-5 py-4">
-        <span className="serial">Activity</span>
-        <span className="text-micro font-bold uppercase text-panel-muted">From events</span>
+        <span className="serial">History</span>
+        <span className="text-micro font-bold uppercase text-panel-muted">Everything so far</span>
       </div>
 
       {loading ? (
@@ -384,7 +384,7 @@ function ActivityFeed() {
       ) : null}
 
       {!loading && rows.length === 0 ? (
-        <p className="px-5 py-8 text-[13px] text-panel-muted">Deposits, claims and reinvestments land here.</p>
+        <p className="px-5 py-8 text-[13px] text-panel-muted">Deposits, payouts and purchases show up here.</p>
       ) : null}
 
       <ul>

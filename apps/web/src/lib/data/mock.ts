@@ -207,10 +207,10 @@ class MockStore {
       a(6, "deposit", 18.7, "Deposited 160.0000 NVDA", 160 * 176.67),
       a(7, "deposit", 16.2, "Deposited 30.0000 META", 30 * 748.6),
       a(8, "deposit", 15.8, "Deposited 40.0000 ORCL", 40 * 241.2),
-      a(9, "advance", 13.0, "AAPL dividend advanced at the ex date", aaplNet),
-      a(10, "reinvest", 11.0, "Compounded 20.22 USDG into 0.0879 AAPL", 20.22),
-      a(11, "advance", 6.0, "MSFT dividend advanced at the ex date", msftNet),
-      a(12, "claim", 2.0, "Claimed 34.43 USDG from the MSFT stream", 34.43),
+      a(9, "advance", 13.0, "AAPL dividend paid early, on its ex date", aaplNet),
+      a(10, "reinvest", 11.0, "Bought 0.0879 AAPL with 20.22 USDG of dividends", 20.22),
+      a(11, "advance", 6.0, "MSFT dividend paid early, on its ex date", msftNet),
+      a(12, "claim", 2.0, "Collected 34.43 USDG of MSFT dividends", 34.43),
       a(13, "mode", 1.4, "NVDA set to Cash early", null),
     ];
 
@@ -396,7 +396,7 @@ class MockStore {
     this.state.credit.borrowedUsd += amount;
     this.state.credit.sinceMs = Date.now();
     this.state.wallet.usdg += amount;
-    this.log("borrow", `Borrowed ${amount.toFixed(2)} USDG against the portfolio`, amount);
+    this.log("borrow", `Borrowed ${amount.toFixed(2)} USDG against your stock`, amount);
     this.emit();
   }
 
@@ -406,7 +406,7 @@ class MockStore {
     this.state.credit.borrowedUsd -= amount;
     this.state.credit.sinceMs = Date.now();
     this.state.wallet.usdg -= amount;
-    this.log("repay", `Repaid ${amount.toFixed(2)} USDG of the credit line`, amount);
+    this.log("repay", `Repaid ${amount.toFixed(2)} USDG of the loan`, amount);
     this.emit();
   }
 
@@ -491,7 +491,7 @@ class MockStore {
     series.ptSupply += minted;
     series.ytSupply += minted;
 
-    this.log("split", `Split ${draw.toFixed(4)} ${series.symbol} into ${minted.toFixed(4)} PT and ${minted.toFixed(4)} YT`, null);
+    this.log("split", `Split ${draw.toFixed(4)} ${series.symbol} into ${minted.toFixed(4)} share tokens and ${minted.toFixed(4)} dividend tokens`, null);
     this.emit();
   }
 
@@ -508,7 +508,7 @@ class MockStore {
     series.ytSupply -= draw;
     this.state.wallet.stocks[series.symbol] = (this.state.wallet.stocks[series.symbol] ?? 0) + draw;
 
-    this.log("merge", `Merged ${draw.toFixed(4)} PT and YT back into ${draw.toFixed(4)} ${series.symbol}`, null);
+    this.log("merge", `Rejoined ${draw.toFixed(4)} pairs of tokens into ${draw.toFixed(4)} ${series.symbol}`, null);
     this.emit();
   }
 
@@ -524,7 +524,7 @@ class MockStore {
     series.ptSupply -= draw;
     this.state.wallet.stocks[series.symbol] = (this.state.wallet.stocks[series.symbol] ?? 0) + draw;
 
-    this.log("withdraw", `Redeemed ${draw.toFixed(4)} PT for ${draw.toFixed(4)} ${series.symbol}`, null);
+    this.log("withdraw", `Cashed in ${draw.toFixed(4)} share tokens for ${draw.toFixed(4)} ${series.symbol}`, null);
     this.emit();
   }
 
@@ -543,7 +543,7 @@ class MockStore {
     const poolUsd = gross * 0.99;
 
     this.state.splitDividends.set(key, { seriesId, dividendId, harvested: true, poolUsd, claimed: false });
-    this.log("harvest", `Harvested the ${series.symbol} dividend into the split pool: ${poolUsd.toFixed(2)} USDG`, poolUsd);
+    this.log("harvest", `Collected the ${series.symbol} dividend for dividend token holders: ${poolUsd.toFixed(2)} USDG`, poolUsd);
     this.emit();
   }
 
@@ -557,7 +557,7 @@ class MockStore {
     h.claimed = true;
     this.state.wallet.usdg += row.claimableUsd;
 
-    this.log("claim_yield", `Claimed ${row.claimableUsd.toFixed(2)} USDG of ${row.symbol} yield`, row.claimableUsd);
+    this.log("claim_yield", `Took ${row.claimableUsd.toFixed(2)} USDG of ${row.symbol} dividends`, row.claimableUsd);
     this.emit();
   }
 
@@ -624,13 +624,13 @@ class MockStore {
       const h = this.state.holdings.get(s.symbol) ?? { amount: 0, mode: "REINVEST" as ModeName };
       h.amount += shares;
       this.state.holdings.set(s.symbol, h);
-      this.log("reinvest", `Compounded ${amount.toFixed(2)} USDG into ${shares.toFixed(4)} ${s.symbol}`, amount);
+      this.log("reinvest", `Bought ${shares.toFixed(4)} ${s.symbol} with ${amount.toFixed(2)} USDG of dividends`, amount);
       this.emit();
       return { claimedUsd: amount, reinvested: true, shares };
     }
 
     this.state.wallet.usdg += amount;
-    this.log("claim", `Claimed ${amount.toFixed(2)} USDG from the ${s.symbol} stream`, amount);
+    this.log("claim", `Collected ${amount.toFixed(2)} USDG of ${s.symbol} dividends`, amount);
     this.emit();
     return { claimedUsd: amount, reinvested: false, shares: 0 };
   }
@@ -643,7 +643,7 @@ class MockStore {
 
     const mode = this.state.holdings.get(p.symbol)?.mode ?? "STREAM";
     const net = p.grossUsd * 0.99;
-    this.log("advance", `${p.symbol} dividend advanced at the ex date`, net);
+    this.log("advance", `${p.symbol} dividend paid early, on its ex date`, net);
 
     if (mode === "CASH_EARLY") {
       this.state.wallet.usdg += net;
@@ -703,7 +703,7 @@ class MockStore {
     this.state.wallet.usdg -= amount;
     this.state.vault.tvlUsd += amount;
     this.state.vault.yourShares += amount / this.state.vault.sharePrice;
-    this.log("vault", `Deposited ${amount.toFixed(2)} USDG into the advance vault`, amount);
+    this.log("vault", `Put ${amount.toFixed(2)} USDG into the pool`, amount);
     this.emit();
   }
 
@@ -715,7 +715,7 @@ class MockStore {
     v.yourShares -= amount / v.sharePrice;
     v.tvlUsd -= amount;
     this.state.wallet.usdg += amount;
-    this.log("vault", `Withdrew ${amount.toFixed(2)} USDG from the advance vault`, amount);
+    this.log("vault", `Took ${amount.toFixed(2)} USDG out of the pool`, amount);
     this.emit();
   }
 }

@@ -42,11 +42,12 @@ export default function DepositPage() {
   return (
     <div className="rise-group space-y-10">
       <header className="max-w-2xl border-b border-line pb-8">
-        <div className="serial">Custody</div>
-        <h1 className="mt-4 display text-display">Deposit stock</h1>
+        <div className="serial">Step one</div>
+        <h1 className="mt-4 display text-display">Deposit a stock</h1>
         <p className="mt-5 text-[16px] leading-relaxed text-muted">
-          Only tokens held in Osinko before an ex date are eligible. Deposit once, pick a mode,
-          and every dividend after that arrives early, per second, or as more stock.
+          Your stock has to be in Osinko before a dividend&apos;s ex date for that dividend to count.
+          Deposit once and pick a rule. Every dividend after that arrives early, a little every
+          second, or as more stock.
         </p>
       </header>
 
@@ -54,7 +55,7 @@ export default function DepositPage() {
         <div className="border border-cyan/30 bg-cyan-soft px-5 py-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-[14px]">
-              <span className="font-extrabold">{fmt(placed.shares, 4)} {placed.symbol}</span> deposited and set to{" "}
+              <span className="font-extrabold">{fmt(placed.shares, 4)} {placed.symbol}</span> is in, set to{" "}
               <span className="font-extrabold">{MODE_LABEL[placed.mode]}</span>. It is already on your dashboard.
             </p>
             <Link href="/app" className="btn-primary btn-sm">
@@ -69,8 +70,8 @@ export default function DepositPage() {
           {/* Step 1: the token */}
           <section className="panel" aria-label="Pick a token">
             <div className="flex items-baseline justify-between border-b border-panel-line px-5 py-4">
-              <span className="eyebrow text-cyan">01 — Token</span>
-              <span className="text-micro font-bold uppercase text-panel-muted">Price · yield · next ex</span>
+              <span className="eyebrow text-cyan">01 — Pick a stock</span>
+              <span className="text-micro font-bold uppercase text-panel-muted">Price · yield · next ex date</span>
             </div>
             <div className="grid grid-cols-1 gap-px bg-panel-line sm:grid-cols-2">
               {tokens.map((t, i) => {
@@ -98,7 +99,7 @@ export default function DepositPage() {
                       </span>
                       <span className={`mt-0.5 flex items-baseline justify-between gap-2 text-micro font-bold uppercase ${active ? "text-panel-text/60" : "text-panel-muted"}`}>
                         <span>{t.yieldPct.toFixed(2)}% yield</span>
-                        <span>{t.nextExDate ? `Ex ${shortDate(t.nextExDate)}` : t.payingNow ? "Paying now" : "Next TBA"}</span>
+                        <span>{t.nextExDate ? `Ex ${shortDate(t.nextExDate)}` : t.payingNow ? "Paying now" : "None set"}</span>
                       </span>
                     </span>
                   </button>
@@ -110,7 +111,7 @@ export default function DepositPage() {
           {/* Step 2: the amount */}
           <section className="panel card-pad" aria-label="Amount">
             <div className="flex items-baseline justify-between">
-              <span className="eyebrow text-cyan">02 — Amount</span>
+              <span className="eyebrow text-cyan">02 — How many shares</span>
               <span className="num text-micro font-bold uppercase text-panel-muted">
                 Wallet {fmt(walletShares, 4)} {token?.symbol}
               </span>
@@ -147,7 +148,7 @@ export default function DepositPage() {
           {/* Step 3: the mode */}
           <section className="panel" aria-label="Pick a mode">
             <div className="border-b border-panel-line px-5 py-4">
-              <span className="eyebrow text-cyan">03 — What happens to the dividends</span>
+              <span className="eyebrow text-cyan">03 — What should its dividends do</span>
             </div>
             <div className="grid grid-cols-1 gap-px bg-panel-line md:grid-cols-3">
               {MODES.map((m) => {
@@ -182,17 +183,17 @@ export default function DepositPage() {
         <div className="space-y-8 lg:col-span-5">
           <section className="panel" aria-label="Summary">
             <div className="panel-head">
-              <span className="panel-title">Order summary</span>
-              <span className="text-micro font-bold uppercase text-panel-faint">Review before it lands</span>
+              <span className="panel-title">Check it over</span>
+              <span className="text-micro font-bold uppercase text-panel-faint">Before you confirm</span>
             </div>
             <dl className="px-5 py-4 text-[14px]">
               {[
-                ["Token", token ? `${token.symbol} — ${token.name}` : "—"],
-                ["Deposit", `${fmt(shares, 4)} shares`],
-                ["Value", `$${fmt(shares * (token?.priceUsd ?? 0))}`],
-                ["Mode", MODE_LABEL[mode]],
-                ["Next ex date", token?.nextExDate ? `${shortDate(token.nextExDate)} (${relativeTime(token.nextExDate)})` : "None scheduled"],
-                ["Est. next dividend", token ? `$${fmt(shares * token.perShare)}` : "—"],
+                ["Stock", token ? `${token.symbol} — ${token.name}` : "—"],
+                ["Shares", `${fmt(shares, 4)}`],
+                ["Worth", `$${fmt(shares * (token?.priceUsd ?? 0))}`],
+                ["Dividends will", MODE_LABEL[mode]],
+                ["Next ex date", token?.nextExDate ? `${shortDate(token.nextExDate)} (${relativeTime(token.nextExDate)})` : "None set"],
+                ["Next payout, about", token ? `$${fmt(shares * token.perShare)}` : "—"],
               ].map(([k, v]) => (
                 <div key={k} className="flex items-baseline justify-between border-b border-panel-line py-2.5 last:border-b-0">
                   <dt className="text-micro font-bold uppercase text-panel-muted">{k}</dt>
@@ -205,7 +206,7 @@ export default function DepositPage() {
                 Confirm deposit
               </button>
               <p className="mt-3 text-[12px] text-panel-faint">
-                Eligibility is checkpointed the second the deposit lands. The next ex date after that is yours.
+                Your deposit is on the record the second it lands. Any dividend with an ex date after that is yours.
               </p>
             </div>
           </section>
@@ -227,7 +228,7 @@ function WithdrawPanel() {
   return (
     <section className="panel" aria-label="Withdraw">
       <div className="border-b border-panel-line px-5 py-4">
-        <span className="serial">Withdraw</span>
+        <span className="serial">Take stock out</span>
       </div>
       <div className="px-5 py-4">
         {holdings.rows.map((h) => {
@@ -238,7 +239,7 @@ function WithdrawPanel() {
             <div key={h.symbol} className="hairline-b py-3 last:border-b-0">
               <div className="flex items-baseline justify-between">
                 <span className="text-[14px] font-extrabold tracking-tight">{h.symbol}</span>
-                <span className="num text-[12px] text-panel-muted">{fmt(h.amount, 4)} on deposit</span>
+                <span className="num text-[12px] text-panel-muted">{fmt(h.amount, 4)} in Osinko</span>
               </div>
               <div className="mt-2 flex gap-2">
                 <input

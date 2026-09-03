@@ -13,17 +13,17 @@ type SortKey = "symbol" | "priceUsd" | "perShare" | "yieldPct" | "nextExDate";
 type Filter = "all" | "paying" | "declared" | "none";
 
 const COLUMNS: { key: SortKey; label: string; align: "left" | "right" }[] = [
-  { key: "symbol", label: "Token", align: "left" },
+  { key: "symbol", label: "Stock", align: "left" },
   { key: "priceUsd", label: "Price", align: "right" },
-  { key: "perShare", label: "Dividend", align: "right" },
+  { key: "perShare", label: "Dividend / share", align: "right" },
   { key: "yieldPct", label: "Yield", align: "right" },
-  { key: "nextExDate", label: "Next ex", align: "right" },
+  { key: "nextExDate", label: "Next ex date", align: "right" },
 ];
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "All" },
-  { key: "paying", label: "Streaming" },
-  { key: "declared", label: "Declared" },
+  { key: "paying", label: "Paying now" },
+  { key: "declared", label: "Announced" },
   { key: "none", label: "No dividend" },
 ];
 
@@ -77,16 +77,16 @@ export function Universe() {
   return (
     <section id="universe" className="relative py-band">
       <Reveal className="shell">
-        <Folio serial="The universe" index={4} />
+        <Folio serial="The stocks" index={4} />
         <div className="mt-12 flex flex-wrap items-end justify-between gap-6">
           <div className="min-w-0">
             <h2 className="reveal reveal-1 display text-display">
-              {tokens.length} names, priced by Chainlink
+              {tokens.length} stocks, priced live
             </h2>
           </div>
           <p className="reveal reveal-2 max-w-sm text-[15px] leading-relaxed text-muted">
-            Every listed token carries its own price feed and its own route. A name without a
-            feed is not listed — there is no manual price anywhere in this system.
+            Every stock here has its own live price feed from Chainlink. If a stock has no
+            feed, it is not listed. Nobody types a price in by hand.
           </p>
         </div>
 
@@ -106,7 +106,7 @@ export function Universe() {
             </div>
             <span className="flex items-center gap-2 font-mono text-nano uppercase text-cyan">
               <span className="beacon" aria-hidden />
-              {paying} streaming now
+              {paying} paying right now
             </span>
           </div>
 
@@ -179,7 +179,7 @@ export function Universe() {
                               : "text-panel-faint"
                         }`}
                       >
-                        {t.payingNow ? "Streaming" : t.perShare > 0 ? "Declared" : "No dividend"}
+                        {t.payingNow ? "Paying now" : t.perShare > 0 ? "Announced" : "No dividend"}
                       </span>
                     </td>
                   </tr>
@@ -200,16 +200,16 @@ export function Universe() {
         <div className="reveal reveal-3 mt-6 grid gap-px border border-line bg-line md:grid-cols-3">
           {[
             {
-              rule: "No feed, no listing",
-              body: "A token without a Chainlink price feed on this chain is never added to the universe, whatever its volume.",
+              rule: "No price feed, no listing",
+              body: "If a stock has no live Chainlink price on this chain, it is not listed. It does not matter how popular it is.",
             },
             {
-              rule: "Fail closed on stale",
-              body: "A feed older than its one hour heartbeat, or reporting a zero, halts pricing for that name rather than guessing.",
+              rule: "Old prices stop trades",
+              body: "If a price is more than an hour old, or reads zero, trading in that stock pauses. The system never guesses.",
             },
             {
-              rule: "Bounded by the oracle",
-              body: "Every swap quotes on chain and every minimum output is bounded against the feed, so a bad route reverts.",
+              rule: "Every trade is checked",
+              body: "Each swap is checked against the live price before it goes through. If the deal is bad, the trade is cancelled.",
             },
           ].map((r) => (
             <div key={r.rule} className="bg-paper p-6">
@@ -221,7 +221,7 @@ export function Universe() {
 
         <div className="reveal reveal-4 mt-10">
           <Link href="/app/calendar" className="btn-quiet">
-            Open the full calendar
+            See every payout date
           </Link>
         </div>
       </Reveal>

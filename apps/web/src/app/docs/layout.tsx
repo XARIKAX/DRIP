@@ -6,14 +6,14 @@ import { SiteNav } from "@/components/SiteNav";
 import { Footer } from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Documentation — Osinko, the Aave of stocks",
+  title: "How it works — Osinko, the Aave of stocks",
   description:
-    "How Osinko works, in full: the ex date checkpoint, the advance vault, per second streams, same transaction reinvestment, the dividend serviced credit line, principal and yield tokens, settlement, roles, risks, and every number a contract enforces.",
+    "How Osinko works, in plain words: get your dividends the day you earn them, a little every second, or as more stock. Borrow against your stock and let the dividends pay the interest. Split a stock and sell the dividend on its own. Every number the code enforces, and every risk.",
   alternates: { canonical: "/docs" },
   openGraph: {
-    title: "Osinko documentation — the Aave of stocks",
+    title: "How Osinko works — the Aave of stocks",
     description:
-      "The complete description of the protocol: mechanism, parameters, trust assumptions, contracts, agent tools and how to use the app.",
+      "The whole thing explained: how you get paid, how the pool works, borrowing, splitting, who controls what, the risks, and how to use the app.",
     url: "https://dripmarkets.net/docs",
     siteName: "Osinko",
     type: "article",

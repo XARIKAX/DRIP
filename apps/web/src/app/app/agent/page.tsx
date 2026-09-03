@@ -56,14 +56,14 @@ export default function AgentPage() {
     {
       id: nextMessageId++,
       role: "agent",
-      text: "Console ready. Tell me what to do with your dividends — set modes, claim streams, deposit, or ask what is running. I will show you the exact plan before anything moves.",
+      text: "Ready. Tell me what to do with your dividends in plain words. Change a rule, collect what has built up, deposit, borrow, or ask what is going on. I will show you the exact plan before anything moves.",
     },
     { id: nextMessageId++, role: "user", text: "show my streams" },
     {
       id: nextMessageId++,
       role: "agent",
       toolLines: ["parse_intent → show", "get_streams → 2 open"],
-      text: "MSFT: $180.77 streaming for 15 more days · Stream mode, pays your wallet.\nAAPL: $38.61 streaming for 8 more days · Reinvest mode, every claim buys more AAPL.\nBoth accrue every second. Claim whenever you like, or tell me to claim for you.",
+      text: "MSFT: $180.77 paying out over the next 15 days · goes to your wallet.\nAAPL: $38.61 paying out over the next 8 days · buys more AAPL each time you collect.\nBoth add up every second. Collect whenever you like, or tell me to do it for you.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -98,10 +98,10 @@ export default function AgentPage() {
             }),
             effect:
               intent.mode === "REINVEST"
-                ? "Every future claim swaps straight back into the same stock. The next dividend is computed on a bigger balance."
+                ? "From now on, every payout buys more of the same stock. Your next dividend is bigger because you own more."
                 : intent.mode === "STREAM"
-                  ? "Future dividends accrue per second to your wallet from ex date to pay date."
-                  : "Future dividends pay in full at the ex date, minus the one percent advance fee.",
+                  ? "From now on, dividends drip into your wallet a little every second until pay day."
+                  : "From now on, you get the whole dividend the day you qualify, minus the 1% fee.",
             confirmLabel: `Set ${existing.length} rule${existing.length > 1 ? "s" : ""}`,
             execute: async () => {
               for (const s of existing) await actions.setMode(s, intent.mode);
@@ -120,22 +120,22 @@ export default function AgentPage() {
           .filter((x) => x.amt > 0.0001);
         tools.push(`get_streams → ${open.length} open`);
         if (claimable.length === 0) {
-          return { toolLines: tools, text: "Nothing claimable right now. Streams are still accruing — give them a moment." };
+          return { toolLines: tools, text: "Nothing to collect yet. The dividends are still adding up. Give them a moment." };
         }
         const total = claimable.reduce((sum, x) => sum + x.amt, 0);
         return {
           toolLines: tools,
           plan: {
-            title: `Claim ${claimable.length} stream${claimable.length > 1 ? "s" : ""}`,
+            title: `Collect from ${claimable.length} stock${claimable.length > 1 ? "s" : ""}`,
             rows: claimable.map((x) => ({
               label: `${x.s.symbol} · ${MODE_LABEL[x.s.mode]}`,
-              value: `$${fmt(x.amt)}${x.s.mode === "REINVEST" ? ` → buys ${x.s.symbol}` : " → wallet"}`,
+              value: `$${fmt(x.amt)}${x.s.mode === "REINVEST" ? ` → buys ${x.s.symbol}` : " → your wallet"}`,
             })),
-            effect: `About $${fmt(total)} moves now. Reinvest streams compound; stream mode pays your wallet.`,
-            confirmLabel: `Claim $${fmt(total)}`,
+            effect: `About $${fmt(total)} moves now. Reinvest stocks buy more shares; the rest goes to your wallet.`,
+            confirmLabel: `Collect $${fmt(total)}`,
             execute: async () => {
               for (const x of claimable) await actions.claimStream(x.s.id);
-              return `Claimed $${fmt(total)} across ${claimable.length} stream${claimable.length > 1 ? "s" : ""}.`;
+              return `Collected $${fmt(total)} from ${claimable.length} stock${claimable.length > 1 ? "s" : ""}.`;
             },
           },
         };
@@ -145,19 +145,19 @@ export default function AgentPage() {
         const targets = pending.filter((p) => intent.symbol === "ALL" || p.symbol === intent.symbol);
         tools.push(`get_pending → ${pending.length} waiting`);
         if (targets.length === 0) {
-          return { toolLines: tools, text: "No dividends are waiting to start. The calendar shows what is coming." };
+          return { toolLines: tools, text: "No dividends are waiting to be paid. The calendar shows what is coming." };
         }
         const total = targets.reduce((sum, p) => sum + p.grossUsd * 0.99, 0);
         return {
           toolLines: tools,
           plan: {
-            title: `Start ${targets.length} advance${targets.length > 1 ? "s" : ""}`,
-            rows: targets.map((p) => ({ label: p.symbol, value: `$${fmt(p.grossUsd)} gross · ex ${shortDate(p.exDate)}` })),
-            effect: `About $${fmt(total)} net of the one percent fee starts moving now instead of at the pay date.`,
-            confirmLabel: "Start now",
+            title: `Get paid early on ${targets.length} dividend${targets.length > 1 ? "s" : ""}`,
+            rows: targets.map((p) => ({ label: p.symbol, value: `$${fmt(p.grossUsd)} · ex date ${shortDate(p.exDate)}` })),
+            effect: `About $${fmt(total)}, after the 1% fee, starts coming to you now instead of on pay day.`,
+            confirmLabel: "Pay me now",
             execute: async () => {
               for (const p of targets) await actions.startPending(p.dividendId);
-              return `Started. $${fmt(total)} is on its way, weeks early.`;
+              return `Done. $${fmt(total)} is on its way, weeks early.`;
             },
           },
         };
@@ -173,9 +173,9 @@ export default function AgentPage() {
             rows: [
               { label: "Token", value: intent.symbol },
               { label: "Amount", value: `${fmt(shares, 4)} shares` },
-              { label: "Mode", value: holdings.rows.find((h) => h.symbol === intent.symbol) ? "Keeps current rule" : "Stream (default)" },
+              { label: "Dividends will", value: holdings.rows.find((h) => h.symbol === intent.symbol) ? "Keep the current rule" : "Stream (the default)" },
             ],
-            effect: "Eligibility is checkpointed the moment it lands. The next ex date after that is yours.",
+            effect: "The deposit is on the record the moment it lands. Any dividend with an ex date after that is yours.",
             confirmLabel: "Deposit",
             execute: async () => {
               await actions.deposit(intent.symbol, shares);
@@ -197,7 +197,7 @@ export default function AgentPage() {
           plan: {
             title: `Withdraw ${fmt(shares, 4)} ${intent.symbol}`,
             rows: [{ label: intent.symbol, value: `${fmt(h.amount, 4)} → ${fmt(h.amount - shares, 4)} deposited` }],
-            effect: "Dividends already declared stay yours. Future ex dates see the smaller balance.",
+            effect: "Dividends you already qualified for stay yours. Future ones count the smaller amount.",
             confirmLabel: "Withdraw",
             execute: async () => {
               await actions.withdraw(intent.symbol, shares);
@@ -211,7 +211,7 @@ export default function AgentPage() {
         const usd = Number.parseFloat(intent.amount);
         tools.push(`get_credit → $${fmt(credit.availableUsd, 0)} available`);
         if (usd > credit.availableUsd) {
-          return { toolLines: tools, text: `Only $${fmt(credit.availableUsd)} is available at ${credit.maxLtvPct.toFixed(0)}% LTV. Deposit more collateral or borrow less.` };
+          return { toolLines: tools, text: `You can borrow up to $${fmt(credit.availableUsd)} right now, which is ${credit.maxLtvPct.toFixed(0)}% of your stock. Deposit more stock or borrow less.` };
         }
         const newDebt = credit.borrowedUsd + usd;
         const hf = newDebt > 0 ? (credit.collateralValueUsd * (credit.liqThresholdPct / 100)) / newDebt : Infinity;
@@ -221,15 +221,15 @@ export default function AgentPage() {
           plan: {
             title: `Borrow $${fmt(usd)} USDG`,
             rows: [
-              { label: "Debt after", value: `$${fmt(newDebt)}` },
-              { label: "Health factor after", value: hf.toFixed(2) },
-              { label: "Interest / year", value: `$${fmt(interest)} at ${credit.borrowAprPct.toFixed(1)}%` },
-              { label: "Dividends / year", value: `$${fmt(credit.dividendsPerYearUsd)}` },
+              { label: "You would owe", value: `$${fmt(newDebt)}` },
+              { label: "Safety score after", value: hf.toFixed(2) },
+              { label: "Interest per year", value: `$${fmt(interest)} at ${credit.borrowAprPct.toFixed(1)}%` },
+              { label: "Dividends per year", value: `$${fmt(credit.dividendsPerYearUsd)}` },
             ],
             effect:
               credit.dividendsPerYearUsd >= interest
-                ? "Your dividends still out-earn the interest. The loan carries itself."
-                : "Interest would exceed your dividend income. The gap accrues to the debt.",
+                ? "Your dividends still earn more than the interest costs. The loan pays for itself."
+                : "The interest would cost more than your dividends earn. The difference gets added to the loan.",
             confirmLabel: `Borrow $${fmt(usd)}`,
             execute: async () => {
               await actions.borrow(usd);
@@ -242,18 +242,18 @@ export default function AgentPage() {
       case "repay": {
         const usd = intent.amount === "ALL" ? credit.borrowedUsd : Number.parseFloat(intent.amount);
         tools.push(`get_credit → $${fmt(credit.borrowedUsd, 0)} outstanding`);
-        if (credit.borrowedUsd <= 0) return { toolLines: tools, text: "Nothing is borrowed. Your credit line is clean." };
+        if (credit.borrowedUsd <= 0) return { toolLines: tools, text: "You have not borrowed anything. Nothing to repay." };
         const amount = Math.min(usd, credit.borrowedUsd);
         return {
           toolLines: tools,
           plan: {
             title: `Repay $${fmt(amount)} USDG`,
-            rows: [{ label: "Debt after", value: `$${fmt(credit.borrowedUsd - amount)}` }],
-            effect: amount >= credit.borrowedUsd ? "Clears the line entirely. Collateral keeps earning either way." : "Health factor improves; interest cost drops immediately.",
+            rows: [{ label: "You would owe", value: `$${fmt(credit.borrowedUsd - amount)}` }],
+            effect: amount >= credit.borrowedUsd ? "Pays the loan off completely. Your stock keeps earning either way." : "Your safety score goes up and the interest drops right away.",
             confirmLabel: `Repay $${fmt(amount)}`,
             execute: async () => {
               await actions.repay(amount);
-              return `Repaid $${fmt(amount)}. Debt now $${fmt(credit.borrowedUsd - amount)}.`;
+              return `Repaid $${fmt(amount)}. You now owe $${fmt(credit.borrowedUsd - amount)}.`;
             },
           },
         };
@@ -263,11 +263,11 @@ export default function AgentPage() {
         return {
           toolLines: tools,
           plan: {
-            title: `Set reinvest slippage to ${(intent.bps / 100).toFixed(2)}%`,
-            rows: [{ label: "Applies to", value: "Every reinvest swap on your account" }],
-            effect: "A swap that would fill worse than this reverts instead of filling badly.",
-            confirmLabel: "Set slippage",
-            execute: async () => `Slippage tolerance set to ${(intent.bps / 100).toFixed(2)}%.`,
+            title: `Allow up to ${(intent.bps / 100).toFixed(2)}% worse price when buying`,
+            rows: [{ label: "Applies to", value: "Every time a dividend buys more stock for you" }],
+            effect: "If the price would be worse than this, the purchase is cancelled instead of going through badly.",
+            confirmLabel: "Set the limit",
+            execute: async () => `Limit set to ${(intent.bps / 100).toFixed(2)}%.`,
           },
         };
 
@@ -279,11 +279,11 @@ export default function AgentPage() {
             toolLines: tools,
             text:
               open.length === 0
-                ? "No streams running."
+                ? "Nothing is paying out right now."
                 : open
                     .map(
                       (s) =>
-                        `${s.symbol}: $${fmt(streamClaimable(s, Date.now()))} claimable of $${fmt(s.totalUsd)} · ${MODE_LABEL[s.mode]} · pays until ${shortDate(s.end)}`
+                        `${s.symbol}: $${fmt(streamClaimable(s, Date.now()))} ready to collect, of $${fmt(s.totalUsd)} total · ${MODE_LABEL[s.mode]} · pays until ${shortDate(s.end)}`
                     )
                     .join("\n"),
           };
@@ -292,27 +292,27 @@ export default function AgentPage() {
           const next = calendar.rows.filter((d) => d.status === "DECLARED" && d.exDate * 1000 > Date.now()).slice(0, 4);
           return {
             toolLines: tools,
-            text: next.length === 0 ? "Nothing declared." : next.map((d) => `${d.symbol}: $${fmt(d.perShare)}/share, ex ${shortDate(d.exDate)}, paid ${d.daysEarly} days early`).join("\n"),
+            text: next.length === 0 ? "No dividends announced yet." : next.map((d) => `${d.symbol}: $${fmt(d.perShare)} a share, ex date ${shortDate(d.exDate)}, paid ${d.daysEarly} days early`).join("\n"),
           };
         }
         if (intent.what === "credit") {
           return {
             toolLines: tools,
-            text: `Collateral $${fmt(credit.collateralValueUsd, 0)} · borrowed $${fmt(credit.borrowedUsd, 0)} of $${fmt(credit.maxBorrowUsd, 0)} · health factor ${Number.isFinite(credit.healthFactor) ? credit.healthFactor.toFixed(2) : "∞"}.\nDividends $${fmt(credit.dividendsPerYearUsd)}/yr vs interest $${fmt(credit.interestPerYearUsd)}/yr → net carry ${credit.netCarryPerYearUsd >= 0 ? "+" : "-"}$${fmt(Math.abs(credit.netCarryPerYearUsd))}/yr.`,
+            text: `Your stock is worth $${fmt(credit.collateralValueUsd, 0)} · you borrowed $${fmt(credit.borrowedUsd, 0)} of a possible $${fmt(credit.maxBorrowUsd, 0)} · safety score ${Number.isFinite(credit.healthFactor) ? credit.healthFactor.toFixed(2) : "∞"}.\nDividends earn $${fmt(credit.dividendsPerYearUsd)} a year, interest costs $${fmt(credit.interestPerYearUsd)} a year. You come out ${credit.netCarryPerYearUsd >= 0 ? "ahead" : "behind"} by $${fmt(Math.abs(credit.netCarryPerYearUsd))} a year.`,
           };
         }
         if (intent.what === "vault") {
           return {
             toolLines: tools,
-            text: `Vault: $${fmt(vault.vault.tvlUsd, 0)} TVL · ${vault.vault.apyPct.toFixed(2)}% APY · ${vault.vault.utilizationPct.toFixed(1)}% utilised of an ${vault.vault.capPct.toFixed(0)}% cap.`,
+            text: `The pool holds $${fmt(vault.vault.tvlUsd, 0)} · earns ${vault.vault.apyPct.toFixed(2)}% a year · ${vault.vault.utilizationPct.toFixed(1)}% of it is lent out, out of an ${vault.vault.capPct.toFixed(0)}% limit.`,
           };
         }
         return {
           toolLines: tools,
           text:
             holdings.rows.length === 0
-              ? "Nothing on deposit."
-              : holdings.rows.map((h) => `${h.symbol}: ${fmt(h.amount, 4)} shares · $${fmt(h.valueUsd)} · ${MODE_LABEL[h.mode]}`).join("\n"),
+              ? "You have no stock in Osinko yet."
+              : holdings.rows.map((h) => `${h.symbol}: ${fmt(h.amount, 4)} shares · $${fmt(h.valueUsd)} · dividends set to ${MODE_LABEL[h.mode]}`).join("\n"),
         };
       }
 
@@ -320,7 +320,7 @@ export default function AgentPage() {
         return {
           toolLines: tools,
           plan: {
-            title: "Cannot do that, and here is why",
+            title: "I can't do that. Here is why",
             rows: [{ label: "Reason", value: intent.reason }],
             effect: intent.suggestion,
             confirmLabel: null,
@@ -331,7 +331,7 @@ export default function AgentPage() {
       default:
         return {
           toolLines: tools,
-          text: 'Not recognised. I can set modes ("reinvest all my MSFT dividends"), claim ("claim everything"), move stock ("deposit 25 AAPL"), or report ("show my streams").',
+          text: 'I did not catch that. I can change a rule ("reinvest all my MSFT dividends"), collect ("claim everything"), move stock ("deposit 25 AAPL"), borrow ("borrow 5000 USDG"), or report ("show my streams").',
         };
     }
   }
@@ -366,11 +366,11 @@ export default function AgentPage() {
     <div className="rise-group space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-6 border-b border-line pb-8">
         <div className="min-w-0">
-          <div className="serial">Module 05</div>
-          <h1 className="mt-4 display text-display">Agent console</h1>
+          <div className="serial">Say it in plain words</div>
+          <h1 className="mt-4 display text-display">Agent</h1>
         </div>
         <p className="max-w-sm text-[13px] text-panel-muted">
-          The same six tools are exposed over MCP, so an external agent drives exactly what this console drives.
+          An outside AI agent can use these same six commands through MCP. It can plan. Only you can sign.
         </p>
       </header>
 
@@ -445,7 +445,7 @@ export default function AgentPage() {
             </button>
           </form>
           <p className="mt-3 text-[11px] text-panel-faint">
-            Agent actions always require your confirmation, and on chain your signature. Nothing auto executes.
+            Nothing happens until you click confirm, and on chain until you sign. The agent cannot move your money on its own.
           </p>
         </div>
       </section>

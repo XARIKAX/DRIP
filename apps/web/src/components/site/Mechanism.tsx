@@ -5,35 +5,35 @@ import { remap, useScrollProgress } from "@/components/motion";
 const STAGES = [
   {
     index: "01",
-    title: "You hold the share.",
-    body: "A position in a stock token, deposited once and held in your own custody. Nothing in this product asks you to give it up, lock it away, or sell a fraction of it to raise cash.",
-    note: "Custody unchanged",
+    title: "You deposit a stock.",
+    body: "It stays yours. You can take it out any time. Nobody sells it, locks it up or lends it out unless you ask. Depositing is how you tell Osinko you want your dividends handled the new way.",
+    note: "Your stock, still yours",
   },
   {
     index: "02",
-    title: "The dividend detaches.",
-    body: "At the ex date the entitlement separates from the share. The share is untouched. The claim on the cash is now a separate object the protocol can act on — weeks before a transfer agent would have moved anything.",
+    title: "The dividend splits off.",
+    body: "The ex date is the day you must own a stock to get its next payout. On that day, Osinko treats the payout as its own thing. The stock does not move. The money is now something the protocol can act on, weeks before the company would send it.",
     note: "Ex date, not pay date",
   },
   {
     index: "03",
-    title: "It becomes a flow.",
-    body: "That claim stops being a quarterly lump and starts accruing every second. Take it early against the vault for one percent, or let it run and pull it whenever you want.",
-    note: "One second resolution",
+    title: "You get it now.",
+    body: "No three week wait. Take the whole payout today for a 1% fee. Or let it drip into your wallet a little every second, and collect it whenever you like.",
+    note: "Weeks early",
   },
   {
     index: "04",
-    title: "It goes to work, four ways.",
-    body: "Cash in hand now. A live stream you draw at will. Straight back into more of the same stock. Or against the interest on a credit line the share itself secures. One deposit, four outcomes.",
-    note: "Income and credit, together",
+    title: "It goes to work.",
+    body: "Cash today. A steady drip you collect at will. More of the same stock, bought for you as the money lands. Or a loan against your stock that the dividends pay down. One deposit, four choices.",
+    note: "Income and credit",
   },
 ];
 
 const ENDPOINTS = [
-  { y: 104, label: "EARLY", detail: "Cash at ex, minus 1%" },
-  { y: 234, label: "STREAM", detail: "Per second, drawn at will" },
-  { y: 364, label: "REINVEST", detail: "Back into the position" },
-  { y: 494, label: "BORROW", detail: "Services the interest" },
+  { y: 104, label: "EARLY", detail: "Cash today, minus 1%" },
+  { y: 234, label: "STREAM", detail: "A little every second" },
+  { y: 364, label: "REINVEST", detail: "Buys more of the stock" },
+  { y: 494, label: "BORROW", detail: "Pays your loan interest" },
 ];
 
 /**
@@ -125,8 +125,8 @@ export function Mechanism() {
       <div className="lg:hidden">
         <div className="shell">
           <div className="panel-frame p-6 md:p-10">
-            <div className="serial">The mechanism</div>
-            <h2 className="mt-4 display text-display text-panel-text">A share that never moves</h2>
+            <div className="serial">How it works</div>
+            <h2 className="mt-4 display text-display text-panel-text">Your stock never moves. Only the dividend does.</h2>
             <div className="mt-10 -mx-2">
               <Scene progress={1} />
             </div>
@@ -156,7 +156,7 @@ function StageText({ progress }: { progress: number }) {
 
   return (
     <div>
-      <div className="serial">The mechanism</div>
+      <div className="serial">How it works</div>
 
       {/* Chapter marker and the track itself. */}
       <div className="mt-5 flex items-center gap-4">
@@ -215,7 +215,7 @@ function Scene({ progress: p }: { progress: number }) {
       viewBox="0 0 1040 600"
       className="h-auto w-full overflow-visible"
       role="img"
-      aria-label="A share stays in place while its dividend detaches, becomes a per-second stream, and splits four ways into early cash, a stream, reinvestment, and credit."
+      aria-label="A stock stays in place while its dividend splits off, pays out every second, and goes one of four ways: cash today, a steady drip, more stock, or paying down a loan."
     >
       <defs>
         <filter id="osk-glow" x="-80%" y="-80%" width="260%" height="260%">
@@ -345,7 +345,7 @@ function Scene({ progress: p }: { progress: number }) {
         letterSpacing="2"
         textAnchor="middle"
       >
-        {p > 0.42 ? "$0.26 A SHARE, ACCRUING PER SECOND" : "THE DIVIDEND"}
+        {p > 0.42 ? "$0.26 A SHARE, PAID OUT EVERY SECOND" : "THE DIVIDEND"}
       </text>
 
       {/* The fork. */}

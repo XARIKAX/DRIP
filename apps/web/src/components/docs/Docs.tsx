@@ -23,44 +23,44 @@ const REPO = "https://github.com/XARIKAX/DRIP";
 
 const TOC: TocGroup[] = [
   {
-    label: "Introduction",
+    label: "Start here",
     entries: [
-      { id: "overview", index: "1", title: "Overview" },
+      { id: "overview", index: "1", title: "What Osinko is" },
       { id: "aave-of-stocks", index: "1.1", title: "The Aave of stocks", sub: true },
-      { id: "what-it-is-not", index: "1.2", title: "What Osinko is not", sub: true },
+      { id: "what-it-is-not", index: "1.2", title: "What it is not", sub: true },
     ],
   },
   {
-    label: "Mechanics",
+    label: "How it works",
     entries: [
-      { id: "custody", index: "2", title: "Custody and eligibility" },
+      { id: "custody", index: "2", title: "Putting stock in" },
       { id: "deposit", index: "2.1", title: "Deposit", sub: true },
-      { id: "checkpoint", index: "2.2", title: "The ex date checkpoint", sub: true },
-      { id: "modes", index: "2.3", title: "Modes", sub: true },
-      { id: "activation", index: "2.4", title: "Activation", sub: true },
-      { id: "early", index: "3", title: "Early — the advance vault" },
-      { id: "stream", index: "4", title: "Stream" },
-      { id: "reinvest", index: "5", title: "Reinvest" },
-      { id: "borrow", index: "6", title: "Borrow" },
-      { id: "split", index: "7", title: "Split — principal and yield" },
+      { id: "checkpoint", index: "2.2", title: "The ex date rule", sub: true },
+      { id: "modes", index: "2.3", title: "Three choices", sub: true },
+      { id: "activation", index: "2.4", title: "Starting a payout", sub: true },
+      { id: "early", index: "3", title: "Getting paid early" },
+      { id: "stream", index: "4", title: "Paid every second" },
+      { id: "reinvest", index: "5", title: "Buying more stock" },
+      { id: "borrow", index: "6", title: "Borrowing" },
+      { id: "split", index: "7", title: "Splitting a stock" },
     ],
   },
   {
-    label: "Settlement & risk",
+    label: "Safety",
     entries: [
-      { id: "settlement", index: "8", title: "Settlement and clawback" },
-      { id: "roles", index: "9", title: "Roles and trust" },
+      { id: "settlement", index: "8", title: "When the company pays, or doesn't" },
+      { id: "roles", index: "9", title: "Who controls what" },
       { id: "risks", index: "10", title: "Risks" },
     ],
   },
   {
-    label: "Reference",
+    label: "Details",
     entries: [
-      { id: "architecture", index: "11", title: "Architecture and contracts" },
-      { id: "universe", index: "12", title: "Universe and oracles" },
-      { id: "agent", index: "13", title: "Agent and SDK" },
+      { id: "architecture", index: "11", title: "The contracts" },
+      { id: "universe", index: "12", title: "The stocks and their prices" },
+      { id: "agent", index: "13", title: "The agent and the code kit" },
       { id: "using", index: "14", title: "Using the app" },
-      { id: "glossary", index: "15", title: "Glossary" },
+      { id: "glossary", index: "15", title: "Words we use" },
     ],
   },
 ];
@@ -70,20 +70,20 @@ const LINKS: QuickLink[] = [
   { label: "Deposit", href: "/app/deposit" },
   { label: "Borrow", href: "/app/borrow" },
   { label: "Split", href: "/app/split" },
-  { label: "Advance vault", href: "/app/vault" },
-  { label: "Ex date calendar", href: "/app/calendar" },
-  { label: "Agent console", href: "/app/agent" },
-  { label: "Source on GitHub", href: REPO, external: true },
-  { label: "Developer handoff", href: `${REPO}/blob/HEAD/HANDOFF.md`, external: true },
+  { label: "The pool", href: "/app/vault" },
+  { label: "Payout calendar", href: "/app/calendar" },
+  { label: "Agent", href: "/app/agent" },
+  { label: "Source code on GitHub", href: REPO, external: true },
+  { label: "Notes for developers", href: `${REPO}/blob/HEAD/HANDOFF.md`, external: true },
 ];
 
 /**
  * The documentation, in full.
  *
- * Written the way the product is built: the mechanism first, the numbers a contract
- * enforces beside every claim, and the risks stated rather than implied. Every live
- * figure on this page is bound to the same data source as the app, so a number quoted
- * here is the number the dashboard shows, not a number someone typed into a doc.
+ * Written to be read by anyone who owns a stock, not only by people who write
+ * contracts: short sentences, everyday words, and a term explained the first time it
+ * appears. Every live number on this page comes from the same data source as the app,
+ * so a figure quoted here is the figure the dashboard shows.
  */
 export function Docs() {
   const source = useDataSource();
@@ -96,20 +96,21 @@ export function Docs() {
   const universe = listings[4663]?.tokens.filter((t) => t.enabled) ?? [];
 
   const glance: GlanceRow[] = [
-    { label: "Underlyings", value: `${universe.length} Robinhood stock tokens` },
-    { label: "Settlement asset", value: "USDG · 6 dp" },
-    { label: "Chain", value: "Robinhood Chain · Orbit L2" },
-    { label: "Price oracle", value: "Chainlink · 1h heartbeat" },
-    { label: "Eligibility", value: "Deposited before ex date" },
-    { label: "Advance fee", value: "1% · ceiling 5%" },
-    { label: "Utilisation cap", value: "80% · ceiling 95%" },
-    { label: "Stream resolution", value: "1 second" },
-    { label: "Max LTV · liquidation", value: "40% · 65%" },
-    { label: "Split fee", value: "10 bps · ceiling 100" },
-    { label: "Settlement window", value: "≤ 90 days" },
-    { label: "Contracts · tests", value: "10 · 96 green" },
+    { label: "Stocks you can use", value: `${universe.length} Robinhood stock tokens` },
+    { label: "You get paid in", value: "USDG, a dollar stablecoin" },
+    { label: "Runs on", value: "Robinhood Chain" },
+    { label: "Prices come from", value: "Chainlink, under 1 hour old" },
+    { label: "Who gets a dividend", value: "Anyone deposited before the ex date" },
+    { label: "Fee to get paid early", value: "1% · can never pass 5%" },
+    { label: "Most of the pool lent out", value: "80% · can never pass 95%" },
+    { label: "How often you are paid", value: "Every second" },
+    { label: "Most you can borrow", value: "40% of your stock" },
+    { label: "Danger line for a loan", value: "65% of your stock" },
+    { label: "Fee to split a stock", value: "0.1% · can never pass 1%" },
+    { label: "Longest wait for pay day", value: "90 days" },
+    { label: "Contracts · tests", value: "10 · 96 passing" },
     {
-      label: "Accrued while you read",
+      label: "Earned while you read",
       value: <LiveCounter base={0} ratePerSec={summary.streamRatePerSec} decimals={6} prefix="$" className="text-cyan-deep" />,
     },
   ];
@@ -121,32 +122,29 @@ export function Docs() {
       <div className="pointer-events-none absolute -right-10 -top-16 text-ink/[0.07] lg:-right-24" aria-hidden>
         <Rosette size={380} rings={30} R={100} r={28} a={68} drift={0.8} />
       </div>
-      <div className="serial">Read me first</div>
+      <div className="serial">Start here</div>
       <h1 className="display relative mt-5 text-[clamp(40px,5.4vw,70px)] leading-[0.98] tracking-[-0.02em]">
         The Aave of stocks,
         <br />
-        <span className="italic text-cyan-deep">in writing.</span>
+        <span className="italic text-cyan-deep">explained.</span>
       </h1>
       <p className="mt-8 max-w-[62ch] text-[17.5px] leading-[1.65] text-ink">
-        Osinko is a money market for tokenized stocks on Robinhood Chain. Aave turned crypto
-        collateral into a balance sheet anyone could borrow from; Osinko does the same for
-        equities and the income they pay. Deposit a stock token once and its dividends stream
-        per second, arrive at the ex date instead of the pay date, compound in the same
-        transaction, and service a USDG credit line — or, if you opt in, trade as a token of
-        their own.
+        Stocks pay dividends. Today the cash shows up weeks after you earned it, then sits
+        there doing nothing. Osinko fixes that. Put your stock in and the dividend pays out
+        the day you earn it. Split the stock and sell the dividend on its own. Or borrow
+        against the stock and let the dividends pay the interest.
       </p>
       <p className="mt-4 max-w-[62ch] text-[15.5px] leading-[1.7] text-muted">
-        This is the complete description of how, and of every number a contract enforces.
-        Sections are numbered so they can be cited; the sheet on the right is the same set
-        of parameters the contracts hold.
+        This page explains all of it, and every number the code enforces. The sheet on the
+        right is the short version. Sections are numbered so you can point someone to one.
       </p>
       <div className="mt-8 flex flex-wrap gap-2">
         <span className="pill">Robinhood Chain</span>
-        <span className="pill">Self custody</span>
-        <span className="pill">Interfaces frozen</span>
+        <span className="pill">You keep your keys</span>
+        <span className="pill">Rules live in code</span>
         <span className="pill-live">
           <span className="beacon" aria-hidden />
-          {source === "demo" ? "Live against the reference portfolio" : "Live against your wallet"}
+          {source === "demo" ? "Numbers below are live, from the sample portfolio" : "Numbers below are live, from your wallet"}
         </span>
       </div>
     </header>
@@ -155,765 +153,731 @@ export function Docs() {
   return (
     <DocsShell toc={TOC} glance={glance} links={LINKS} hero={hero}>
       {/* ------------------------------------------------------------------ */}
-      {/* 1. Overview                                                         */}
+      {/* 1. What Osinko is                                                   */}
       {/* ------------------------------------------------------------------ */}
       <Section
         id="overview"
         index="1"
-        title="Overview"
-        kicker="A dividend is the oldest promise in finance. Osinko is the plumbing that promise never had."
+        title="What Osinko is"
+        kicker="A dividend is a simple promise. Osinko is the plumbing that promise never had."
       >
         <p>
-          <strong>Osinko</strong> — Finnish for <em>dividend</em>, ticker <code>$OSINKO</code> — treats a
-          dividend as what it is once the stock lives onchain: a claim that can be proved, priced,
-          advanced, streamed, reinvested, borrowed against and traded. The protocol holds stock
-          tokens in custody, proves who was entitled to each dividend at its ex date, and routes
-          the value according to one setting per position. Nothing about the share itself
-          changes. The default product never wraps, rebases or re-issues it.
+          <strong>Osinko</strong> is Finnish for <em>dividend</em>. It is a place to put stock that pays
+          dividends, so that the dividends work harder. You deposit a stock. Osinko keeps a
+          record of who owned what, and when. Each time a dividend is announced, Osinko works
+          out your share and sends it where you told it to. Your stock never changes. It is
+          not wrapped, swapped, or lent out behind your back.
         </p>
         <p>
-          Six modules share one balance sheet. <strong>Early</strong> pays a dividend at the ex date
-          instead of the pay date, fronted by a USDG vault that earns a one percent fee.{" "}
-          <strong>Stream</strong> turns the same entitlement into a per second flow. <strong>Reinvest</strong>{" "}
-          swaps every claim straight back into the stock. <strong>Borrow</strong> draws USDG against the
-          deposited stock, with the dividends applied to the interest first. <strong>Split</strong>{" "}
-          separates a share into a principal token and a yield token, for holders who want the
-          dividend itself to be a liquid position. And every action is exposed to an{" "}
-          <strong>Agent</strong> over MCP, which can plan but never sign.
+          There are six things you can do. <strong>Early</strong>: get the dividend the day you qualify,
+          not three weeks later, for a 1% fee. <strong>Stream</strong>: get it a little every second
+          instead of one lump. <strong>Reinvest</strong>: have it buy more of the same stock the moment
+          it lands. <strong>Borrow</strong>: take a loan against your stock and let the dividends pay the
+          interest. <strong>Split</strong>: turn one share into a share token and a dividend token, and
+          sell either one. <strong>Agent</strong>: say what you want in plain words and approve the plan.
         </p>
 
         <Terms
           rows={[
-            { term: "Stock token", def: <>An ERC-20 issued by Robinhood that tracks one listed share. 18 decimals. Osinko only ever calls <code>transfer</code>, <code>transferFrom</code>, <code>balanceOf</code> and <code>decimals</code> on it.</> },
-            { term: "Ex date", def: "The second at which ownership is snapshotted. Whoever is on deposit in DripCore at this timestamp is entitled to the dividend, whatever happens afterwards." },
-            { term: "Pay date", def: "When the issuer actually pays. Streams end here, and the vault is repaid here. Typically three weeks after the ex date." },
-            { term: "Entitlement", def: <>What a holder is owed on one dividend: <code>balanceOfAt(ex) × amountPerToken</code>. Gross before the advance fee, net after it.</> },
-            { term: "Mode", def: "A per position setting that decides what happens to each dividend: CASH_EARLY, STREAM or REINVEST. Captured at activation; changing it later never rewrites history." },
-            { term: "Advance", def: "The vault paying a dividend before the issuer does. Booked as a receivable owed by the issuer and an obligation owed to the holder." },
-            { term: "Stream", def: "A dividend paid out continuously from the ex date to the pay date. Claimable at any second; accounted lazily, so it costs one write to open and one per claim." },
-            { term: "USDG", def: "The settlement asset. Every dividend, fee, advance and loan is denominated in it. Six decimals, and the code assumes so." },
-            { term: "Series", def: "In Split: one (stock token, maturity) pair with its own principal and yield token, e.g. PT-MU / YT-MU maturing in ninety days." },
-            { term: "Health factor", def: "In Borrow: collateral value × liquidation threshold ÷ debt. Above 1.00 the position is safe; ∞ when nothing is borrowed." },
+            { term: "Stock token", def: "A token from Robinhood that stands for one share of a real stock. It lives in your crypto wallet like any other token." },
+            { term: "Dividend", def: "Cash a company pays to the people who own its stock, usually four times a year." },
+            { term: "Ex date", def: "The day you must own a stock to get its next dividend. Own it on that day and the money is yours, even if you sell the day after." },
+            { term: "Pay date", def: "The day the company actually sends the money. Usually about three weeks after the ex date." },
+            { term: "USDG", def: "A dollar stablecoin. One USDG is worth one dollar. Every payment in Osinko is made in it." },
+            { term: "The pool", def: "A pot of USDG put in by lenders. It pays dividends out early and lends against stock, and earns fees and interest for doing it." },
+            { term: "Rule", def: "Your choice for what happens to a stock's dividends: cash early, a steady drip, or buying more stock. One rule per stock." },
+            { term: "Share token · dividend token", def: "The two halves of a split share. The share token becomes the whole share on an end date. The dividend token collects every dividend until then." },
+            { term: "Safety score", def: "For a loan: what your stock is worth × 0.65, divided by what you owe. Above 1.00 you are fine. Below it, some stock gets sold to pay the loan down." },
           ]}
         />
 
         <Shot
           name="dashboard"
           n={1}
-          alt="The Osinko dashboard: portfolio value, earned this week, active rules and the next ex date, above a META dividend awaiting its advance and two live streams."
-          caption="The dashboard: two streams accruing per second, and a META dividend that went ex yesterday, waiting to be advanced. Every page in the app renders from the same data source, with or without a wallet."
+          alt="The Osinko dashboard: portfolio value, earned this week, stocks on deposit and the next ex date, above a META dividend ready to be paid early and two dividends paying out every second."
+          caption="The dashboard. Two dividends are paying out a little every second, and a META dividend that qualified yesterday is waiting for you to take it early. Everything works with or without a wallet connected."
         />
 
         <Sub id="aave-of-stocks" index="1.1" title="The Aave of stocks">
           <p>
-            Aave is a money market. Anyone supplies an asset, anyone borrows against it, the
-            interest rate is a function of how much of the pool is in use, and a health factor
-            decides when a position is unwound. <strong>Osinko is the Aave of stocks</strong>: the same
-            shape, built for tokenized equities and — specifically — for the income they pay.
-            The comparison holds exactly where it matters and differs exactly where a stock is
-            different from a token.
+            Aave is the biggest lending market in crypto. Anyone can put a token in, anyone
+            can borrow against it, and the code decides the interest rate and when a loan is
+            in trouble. <strong>Osinko is the Aave of stocks.</strong> Same idea, built for real stocks
+            and the dividends they pay. Here is where the two match, and where a stock is
+            different from a crypto token.
           </p>
           <Table
             head={["", "Aave", "Osinko"]}
             rows={[
-              ["What you supply", "Crypto tokens", "Robinhood stock tokens, deposited into DripCore"],
-              ["What funds the balance sheet", "The supplied assets themselves", "USDG from liquidity providers in the advance vault (ERC-4626)"],
-              ["Where LP yield comes from", "Borrow interest", "The 1% advance fee first, borrow interest second"],
-              ["The receivable", "Debt owed by borrowers", "Dividends owed by issuers at the pay date, plus loans once Borrow ships"],
-              ["Collateral", "The supplied tokens", "The same deposited stock — which keeps earning while pledged"],
-              ["Who pays the interest", "The borrower", "The collateral's own dividends, first; the borrower for any remainder"],
-              ["Liquidation", "Health factor below 1", "Health factor below 1 at a 65% threshold; close factor 50%, bonus 5%"],
-              ["Price source", "Chainlink", "Chainlink, 8 decimal USD feeds, 1 hour heartbeat, fails closed on stale"],
-              ["Utilisation limit", "Rate curve discourages it", "A hard 80% cap on advances, contract enforced"],
+              ["What you put in", "Crypto tokens", "Robinhood stock tokens"],
+              ["Where the cash comes from", "The tokens people put in", "A pool of USDG put in by lenders"],
+              ["How lenders earn", "Interest from borrowers", "A 1% fee for paying dividends early, plus interest from borrowers"],
+              ["Who owes the pool money", "Borrowers", "Companies that owe a dividend on pay day, and borrowers"],
+              ["What backs a loan", "The tokens you put in", "The stock you put in, which keeps earning dividends the whole time"],
+              ["Who pays the interest", "You", "Your dividends first. You only cover what they don't"],
+              ["When a loan is in trouble", "Safety score below 1", "Safety score below 1, at 65% of your stock's value"],
+              ["Where prices come from", "Chainlink", "Chainlink, never more than an hour old"],
+              ["A hard limit on lending", "Rates go up to slow it", "The pool never lends out more than 80%. Full stop."],
             ]}
           />
           <p>
-            The one thing without an Aave analogue is <em>time</em>. A dividend is owed for
-            roughly three weeks between the ex date and the pay date, and that gap — a
-            receivable from a known counterparty for a known amount on a known date — is the raw
-            material for everything in sections 3 to 5. Aave lends against price. Osinko also
-            lends against a calendar.
+            The one thing Aave has no version of is <em>time</em>. A dividend is owed for about
+            three weeks between the ex date and the pay date. That is a known amount, from a
+            known company, due on a known day. Sections 3 to 5 are all about what you can do
+            with that gap. Aave lends against a price. Osinko also lends against a calendar.
           </p>
-          <Callout label="Two names, one claim">
-            Elsewhere you will see Osinko called <em>the Aave of dividends</em>. It is the same claim
-            seen from the other side: the stock is what you supply, and the dividend is what the
-            market is built around. Aave is Finnish for ghost; osinko is Finnish for dividend.
+          <Callout label="Two names, one idea">
+            You may also see Osinko called <em>the Aave of dividends</em>. Same thing, seen from the
+            other side. The stock is what you put in. The dividend is what everything is built
+            around. Aave is Finnish for ghost. Osinko is Finnish for dividend.
           </Callout>
         </Sub>
 
-        <Sub id="what-it-is-not" index="1.2" title="What Osinko is not">
+        <Sub id="what-it-is-not" index="1.2" title="What it is not">
           <ul>
             <li>
-              <strong>Not a wrapper.</strong> Depositing does not mint a receipt token, an LP token or a
-              rebasing derivative. Your position is a balance in DripCore, withdrawable at any
-              time. Split (§7) is the single, opt in exception, and it says so on the tin.
+              <strong>Not a wrapper.</strong> Putting stock in does not give you some other token in
+              return. Your stock sits in Osinko as your stock, and you can take it out any
+              time. Split (§7) is the one exception, and you have to choose it.
             </li>
             <li>
-              <strong>Not a snapshot of your wallet.</strong> Only stock deposited in DripCore before the
-              ex date is eligible (§2.2). The protocol never reads external balances and never
-              needs the token issuer to change anything.
+              <strong>Not something that reads your wallet.</strong> Only stock inside Osinko before the
+              ex date counts (§2.2). Osinko never looks at other wallets and never needs
+              Robinhood to change anything.
             </li>
             <li>
-              <strong>Not a new instrument.</strong> No synthetic dividend, no promise beyond the issuer's
-              own. The same dividend, routed differently: early, continuously, into more stock,
-              against interest, or as a token.
+              <strong>Not a new kind of investment.</strong> No made-up yield, no promise beyond what
+              the company already owes. It is the same dividend, sent early, sent steadily,
+              turned into more stock, used to pay a loan, or sold on its own.
             </li>
             <li>
-              <strong>Not leveraged by default.</strong> Borrow is a choice, capped at 40% loan to value,
-              and a holder who never opens a line carries no debt and no liquidation risk.
+              <strong>Not leverage unless you ask for it.</strong> Borrowing is a choice. If you never
+              take a loan you owe nothing and nothing can ever be sold.
             </li>
             <li>
-              <strong>Not a custodian of keys.</strong> The web app builds transactions for your wallet.
-              The MCP server and the agent console return unsigned calldata and cannot broadcast
-              anything (§13).
+              <strong>Not in charge of your keys.</strong> The app builds transactions for your wallet
+              to sign. The agent can only plan. Nothing here can move your money without you
+              (§13).
             </li>
           </ul>
           <Shot
             name="certificate"
             n={2}
-            alt="An engraved Osinko share certificate for one hundred and fifty shares of Apple Inc, with a dividend coupon of $39.00 attached along a perforation and an ex date stamp."
-            caption="The object the product replaces: a share certificate with a dividend coupon along a perforation. Osinko keeps the certificate whole and acts on the coupon — the perforation is the ex date."
+            alt="An engraved Osinko share certificate for one hundred and fifty shares of Apple Inc, with a $39.00 dividend coupon attached along a tear-off line and an ex date stamp."
+            caption="The thing Osinko replaces: a paper share certificate with a dividend coupon you tore off along the dotted line. Osinko keeps the certificate whole and does the work on the coupon."
           />
         </Sub>
       </Section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 2. Custody and eligibility                                          */}
+      {/* 2. Putting stock in                                                 */}
       {/* ------------------------------------------------------------------ */}
       <Section
         id="custody"
         index="2"
-        title="Custody and eligibility"
-        kicker="Every flow starts in DripCore. It holds the stock, proves who was owed what, and routes the money."
+        title="Putting stock in"
+        kicker="Everything starts with one deposit. Osinko holds the stock, keeps the record, and sends the money."
       >
         <p>
-          <code>DripCore</code> is the one contract a holder interacts with directly. It takes
-          custody of stock tokens, keeps a timestamped history of every balance, computes
-          entitlements from that history when a dividend is activated, and hands the value to
-          the module the holder's mode selects. The life of one dividend runs left to right
-          below; the rest of this section is the detail of each stage.
+          One contract, called <code>DripCore</code>, is the one you deal with. It holds your stock.
+          It writes down every change to your balance with the exact second it happened. When
+          a dividend comes, it uses that record to work out your share and sends it the way
+          your rule says. Here is the life of one dividend, left to right.
         </p>
         <Figure
           n={3}
-          caption="The life of one dividend. Deposits before the ex date are eligible. Between the ex date and the pay date the entitlement is either paid at once (Early) or accrues as a stream. At the pay date the issuer settles and the vault is repaid; a voided dividend branches into clawback instead."
+          caption="The life of one dividend. Stock deposited before the ex date counts. Between the ex date and pay day, you either get it all at once (Early) or a little every second. On pay day the company pays and the pool is paid back. If the company cancels, the early cash is taken back instead."
         >
           <TimelineFigure />
         </Figure>
 
         <Sub id="deposit" index="2.1" title="Deposit">
           <p>
-            Approve <code>DripCore</code> to spend the stock token, then call{" "}
-            <code>deposit(stockToken, amount)</code>. The contract pulls the tokens, credits your
-            position, and writes a checkpoint at the current timestamp. The first deposit of a
-            token also writes the mode explicitly — <code>STREAM</code> by default, with a{" "}
-            <code>ModeSet</code> event, so the default is on the record rather than implied.
+            Pick a stock and an amount. Your wallet signs two things: permission for Osinko to
+            take the tokens, then the deposit itself. Osinko writes your new balance to the
+            record with a timestamp. Your first deposit of a stock also sets its rule to
+            Stream, and says so out loud, so the default is on the record too.
           </p>
           <p>
-            <code>withdraw(stockToken, amount)</code> returns tokens at any time. It reduces
-            eligibility for dividends whose ex date has not yet passed; a dividend that already
-            went ex while the tokens were on deposit stays yours, because the entitlement is read
-            from the checkpoint at the ex date, not from the balance today.
+            You can take stock out at any time. Taking it out only affects dividends whose ex
+            date has not come yet. If a dividend already had its ex date while your stock was
+            in, that dividend is still yours. Osinko reads the record from that day, not your
+            balance today.
           </p>
           <Code title="The two transactions a deposit takes" lang="typescript">{`import { buildApprove, buildDeposit, parseStock } from "@drip-markets/sdk";
 
-const amount = parseStock("25");            // 25 AAPL, 18 decimals
+const amount = parseStock("25");            // 25 AAPL
 const approve = buildApprove(AAPL, deployment.dripCore, amount, "AAPL");
 const deposit = buildDeposit(deployment, AAPL, amount, "AAPL");
-// Both are { to, data, value, description } — unsigned, for the holder's wallet.`}</Code>
+// Each one is { to, data, value, description }. Your wallet signs it. Nothing else can.`}</Code>
           <Params
             rows={[
-              { name: "Supported tokens", value: "Plain ERC-20, 18 dp", note: "Fee on transfer and rebasing tokens are not supported: DripCore credits the amount requested, not the amount received." },
-              { name: "Position record", value: "{ amount, mode, initialized }", note: "One per holder per token. tokensOf(holder) lists every token a holder has ever deposited, which is what drives the portfolio view." },
-              { name: "Pause", value: "DEFAULT_ADMIN_ROLE", note: "Pausing stops deposits, withdrawals, activations and settled claims. Streams already open keep accruing." },
+              { name: "Which tokens work", value: "Normal stock tokens", note: "Tokens that change your balance on their own, or take a cut on every transfer, do not work here. Osinko records what you sent, so those would break the record." },
+              { name: "What Osinko stores", value: "Your balance, your rule", note: "One entry per stock per person. The app lists every stock you have ever put in from this." },
+              { name: "Pause switch", value: "Held by the admin", note: "In an emergency, deposits, withdrawals and new payouts can be paused. Dividends already paying out keep going." },
             ]}
           />
         </Sub>
 
-        <Sub id="checkpoint" index="2.2" title="The ex date checkpoint">
+        <Sub id="checkpoint" index="2.2" title="The ex date rule">
           <p>
-            <strong>Only tokens deposited in DripCore before the ex date are eligible.</strong> This is the
-            decision that shapes the whole protocol, and it is stated in capitals in the
-            developer handoff for that reason.
+            <strong>Only stock that is inside Osinko before the ex date gets that dividend.</strong> This
+            one rule shapes everything else, so it is worth being clear about it.
           </p>
           <p>
-            Every deposit, withdrawal, reinvest credit and clawback seizure writes a checkpoint
-            (OpenZeppelin <code>Checkpoints.Trace208</code>, keyed by block timestamp) for the holder
-            and for the token's protocol wide total. <code>balanceOfAt(holder, token, exDate)</code>{" "}
-            is therefore a provable, onchain answer to “how much did this holder have at that
-            second”, and it is the only input to the entitlement:
+            Every deposit, withdrawal and purchase is written down with the exact second it
+            happened. So Osinko can always answer one question exactly: how much did this
+            person have at that second? That answer, times the dividend per share, is what
+            you are owed. Nothing else goes into it.
           </p>
-          <Formula note="amountPerToken is USDG (6 decimals) per one whole token (1e18). A deposit landing in the same second as the ex date counts; a withdrawal one second later does not matter.">
-            gross = balanceOfAt(holder, token, exDate) × amountPerToken ÷ 1e18{"\n"}
-            net   = gross − gross × advanceFeeBps ÷ 10 000
+          <Formula note="A deposit that lands in the same second as the ex date counts. A withdrawal one second later changes nothing.">
+            what you are owed = your shares on record at the ex date × dividend per share{"\n"}
+            what you get early = that, minus the 1% fee
           </Formula>
           <Figure
             n={4}
-            caption="A balance stepping through two deposits and a withdrawal. The ex date falls while the balance is 150, so the entitlement is 150 × $0.26 = $39.00 gross, $38.61 net — exactly the AAPL stream in Fig. 1. The withdrawal afterwards changes nothing."
+            caption="A balance that steps up with two deposits and down with a withdrawal. The ex date falls while the balance is 150 shares, so the dividend is 150 × $0.26 = $39.00, or $38.61 if taken early. That is the AAPL payout in Fig. 1. The withdrawal afterwards changes nothing."
           >
             <CheckpointFigure />
           </Figure>
           <p>
-            Why: the protocol then works with any plain ERC-20 stock token, needs no change to a
-            token it does not control, no <code>ERC20Snapshot</code>, no merkle drop from an offchain
-            indexer, and no trust in anything but its own storage. Cost: holders opt in by
-            depositing, and the app says so everywhere it can.
+            Why do it this way? Because then Osinko works with any normal stock token. It does
+            not need Robinhood to change anything, it does not need to look at other wallets,
+            and it does not need to trust anyone else's list. The trade-off is that you have
+            to deposit first. The app says so everywhere it can.
           </p>
-          <Callout label="Do not improve this">
-            Wallet snapshotting would require redesigning eligibility, settlement and clawback
-            together. Everything downstream — the vault's receivable, the stream's total, the
-            settlement pull — is computed from these checkpoints and nothing else.
+          <Callout label="Not going to change">
+            Reading balances from outside wallets instead would mean redoing how dividends,
+            pay day and cancellations all work. Everything downstream is built on this record
+            and nothing else.
           </Callout>
         </Sub>
 
-        <Sub id="modes" index="2.3" title="Modes">
+        <Sub id="modes" index="2.3" title="Three choices for your dividends">
           <p>
-            One setting per position decides what a dividend becomes. It is read at activation
-            and captured into the entitlement, so a mode change affects the next dividend, never
-            one already in flight.
+            Each stock gets one rule. Osinko reads the rule when a dividend is started, and
+            that dividend keeps it. If you change the rule later, the change applies to the
+            next dividend, never to one already paying out.
           </p>
           <Table
-            head={["Mode", "What happens", "When the cash moves", "Fee"]}
+            head={["Rule", "What happens", "When you get the cash", "Cost"]}
             rows={[
-              ["CASH_EARLY", "The whole net entitlement is paid to the wallet at activation", "At the ex date, in one transfer", "1% advance fee"],
-              ["STREAM", "A stream opens for the net entitlement", "Every second from ex date to pay date, pulled on claim", "1% advance fee"],
-              ["REINVEST", "The same stream, but every claim is swapped into the stock and credited back", "Every second; each claim lands as stock, not cash", "1% advance fee plus swap slippage"],
+              ["Cash early", "The whole dividend, minus 1%, goes to your wallet", "On the ex date, all at once", "1% fee"],
+              ["Stream", "The dividend pays out a little every second", "From the ex date to pay day, whenever you collect", "1% fee"],
+              ["Reinvest", "Same as Stream, but each time you collect it buys more of the stock", "Every second, as stock instead of cash", "1% fee, plus the price you pay for the stock"],
             ]}
-            mono={[0]}
           />
           <p>
-            A holder who never activates at all can still take a dividend the slow way after
-            settlement, at face value and with no fee (§8). The fee is the price of time, and a
-            holder who does not want the time does not pay it.
+            You can also do nothing. If you never start a dividend, you can still collect it
+            after the company pays, at full value, with no fee at all (§8). The fee is the
+            price of getting it early. If you do not want it early, you do not pay it.
           </p>
           <Shot
             name="deposit-modes"
             n={5}
-            alt="The mode picker on the deposit page: Cash early, Stream and Reinvest, each with a one line description."
-            caption="Step three of the deposit flow. Mode is set per token, not per dividend — the same rule applies to every dividend that stock pays until the holder changes it."
+            alt="The three rules on the deposit page: Cash early, Stream and Reinvest, each with a one line description."
+            caption="Step three of a deposit. The rule is per stock, not per dividend. It applies to every dividend that stock pays until you change it."
           />
         </Sub>
 
-        <Sub id="activation" index="2.4" title="Activation">
+        <Sub id="activation" index="2.4" title="Starting a payout">
           <p>
-            <code>activate(dividendId, holder)</code> routes a declared dividend for one holder. It is{" "}
-            <strong>permissionless on purpose</strong>: a keeper, the holder, the UI or an agent can all
-            call it, because the money can only ever go to the holder or to the reinvestor acting
-            for them. <code>activateBatch</code> does the same for a list of holders and skips the
-            impossible instead of reverting.
+            Once a dividend's ex date has passed, someone has to press start. <strong>Anyone can.</strong>{" "}
+            You can, the app can, an agent can, or a helper bot can. That is safe, because the
+            money can only ever go to the person who owns the stock. There is a batch version
+            too, which starts many people at once and skips anyone it cannot.
           </p>
           <ol>
-            <li>The dividend must be <code>DECLARED</code>, and the clock must read at or after its ex date and before its pay date.</li>
-            <li>The entitlement is computed from the checkpoint at the ex date. Zero reverts as <code>NothingEligible</code>.</li>
-            <li>The vault books the gross as a receivable and recognises the fee (§3). The holder is now owed the net.</li>
-            <li>In <code>CASH_EARLY</code> the vault releases the whole net amount to the wallet now. In <code>STREAM</code> and <code>REINVEST</code> a stream opens for the net, from the ex date to the pay date (§4).</li>
+            <li>The dividend must be announced, its ex date must have passed, and pay day must not have arrived yet.</li>
+            <li>Osinko reads your shares from the record on the ex date. If it is zero, nothing happens.</li>
+            <li>The pool writes down what the company will owe it, and takes its 1% fee (§3). You are now owed the rest.</li>
+            <li>Cash early: the pool sends you the whole amount now. Stream or Reinvest: a payout opens that runs from the ex date to pay day (§4).</li>
           </ol>
           <Params
             rows={[
-              { name: "Window", value: "exDate ≤ now < payDate", note: "BeforeExDate and AfterPayDate revert. After the pay date the settled path (§8) takes over." },
-              { name: "Once per holder per dividend", value: "AlreadyActivated", note: "The entitlement record carries activated, claimed and clawedBack flags; each path checks the others." },
-              { name: "Events", value: "EntitlementCreated · EntitlementActivated", note: "Indexed by holder and dividend id. The activity feed in the app is built from these." },
+              { name: "When you can start", value: "After the ex date, before pay day", note: "Too early or too late and the transaction is refused. After pay day, the full-value path in §8 takes over." },
+              { name: "How many times", value: "Once per person per dividend", note: "Osinko remembers whether each dividend has been started, collected, or cancelled for each person." },
+              { name: "What gets recorded", value: "Two events", note: "One when the dividend is worked out, one when it is started. The history on the dashboard is built from these." },
             ]}
           />
         </Sub>
       </Section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 3. Early                                                            */}
+      {/* 3. Getting paid early                                               */}
       {/* ------------------------------------------------------------------ */}
       <Section
         id="early"
         index="3"
-        title="Early — the advance vault"
-        kicker="A dividend is a receivable from a known counterparty for a known amount on a known date. That is what a vault is for."
+        title="Getting paid early — the pool"
+        kicker="A company owes you a known amount on a known day. A pool of cash can pay you today and collect from them later."
       >
         <p>
-          When a holder activates, the <code>AdvanceVault</code> has fronted money the issuer will
-          pay weeks later — all of it at once for <code>CASH_EARLY</code>, or as fast as a stream is
-          claimed for the other two modes. The one percent fee is the price of that time, and it
-          is the yield the vault's liquidity providers earn. The vault is an ERC-4626 vault of
-          USDG, and everything about it reduces to one identity:
+          When you start a dividend, the pool (a contract called <code>AdvanceVault</code>) is
+          fronting money the company will pay weeks later. All of it at once if you chose Cash
+          early, or bit by bit as you collect if you chose Stream or Reinvest. The 1% fee is
+          the price of that time, and it is what the lenders who fund the pool earn. The whole
+          pool boils down to one line of arithmetic:
         </p>
-        <Formula note="cash is USDG in the vault. receivables is gross dividend the issuers still owe at settlement. obligations is net dividend the vault still owes to holders who advanced.">
-          totalAssets = cash + receivables − obligations
+        <Formula note="Cash is USDG sitting in the pool. Owed to the pool is what companies will pay on pay day. Owed by the pool is what it still has to hand to people it paid early.">
+          what the pool is worth = cash + owed to the pool − owed by the pool
         </Formula>
         <Figure
           n={6}
-          caption="The balance sheet as four bars, with stylised numbers. Booking an advance adds gross to receivables and net to obligations, so assets rise by exactly the fee the moment the risk is taken. Every later step is assets neutral; only fees and losses move the share price."
+          caption="The pool as four bars, with made-up round numbers. When it pays someone early, the amount owed to the pool and the amount owed by the pool both go up, and the pool is worth exactly 1% more, the fee. Everything after that is a wash. Only fees and losses ever move a lender's share price."
         >
           <VaultFigure />
         </Figure>
         <Table
-          head={["Operation", "Cash", "Receivables", "Obligations", "Assets"]}
+          head={["When", "Cash", "Owed to the pool", "Owed by the pool", "Pool is worth"]}
           rows={[
-            ["bookAdvance(gross)", "—", "+ gross", "+ gross − fee", "+ fee"],
-            ["releaseAdvance(amount)", "− amount", "—", "− amount", "neutral"],
-            ["repayAdvance(amount)", "+ amount", "− amount", "—", "neutral"],
-            ["recordLoss(amount)", "—", "− amount", "—", "− amount, LPs absorb it"],
-            ["cancelObligation(amount)", "—", "—", "− amount", "+ amount"],
+            ["Someone is paid early", "—", "goes up", "goes up, minus the fee", "up by the fee"],
+            ["Cash is sent to them", "goes down", "—", "goes down", "no change"],
+            ["The company pays on pay day", "goes up", "goes down", "—", "no change"],
+            ["A dividend is cancelled and can't be recovered", "—", "goes down", "—", "down. Lenders take the loss"],
           ]}
-          mono={[0, 1, 2, 3]}
         />
-        <p>Two admission checks run on every booking, and either failing reverts the activation:</p>
+        <p>Two rules are checked every single time the pool pays someone early. If either fails, it refuses:</p>
         <ul>
           <li>
-            <strong>Cash floor.</strong> <code>cash ≥ obligations</code> after booking. Every holder the vault
-            has promised money to is payable today, so a claim mid stream can never fail for lack
-            of funds.
+            <strong>Cash covers every promise.</strong> The pool must always hold at least as much cash as
+            it owes to people it paid early. So collecting a payout can never fail for lack of
+            money.
           </li>
           <li>
-            <strong>Utilisation cap.</strong> <code>receivables ≤ 80%</code> of assets after booking. The vault
-            is never fully lent out; the admin ceiling on this parameter is 95%.
+            <strong>Never more than 80% lent out.</strong> The pool is never fully lent out. Whoever runs
+            it can lower this limit but can never set it above 95%.
           </li>
         </ul>
         <Params
           rows={[
-            { name: "Advance fee", value: "100 bps · ceiling 500", note: "Recognised at booking, not at repayment. The only fee in the income side of the protocol." },
-            { name: "Utilisation cap", value: "8 000 bps · ceiling 9 500", note: "Bounds the worst case a dishonest oracle can extract to 80% of vault assets (§9)." },
-            { name: "Settlement window", value: "≤ 90 days", note: "MAX_SETTLEMENT_WINDOW in the registry caps how long a receivable can be outstanding." },
-            { name: "Share inflation guard", value: "_decimalsOffset = 3", note: "A virtual share offset on top of OpenZeppelin's ERC-4626 kills the first depositor attack." },
-            { name: "LP withdrawal", value: "bounded by freeCash", note: "freeCash = cash − obligations. Capital fronting a dividend is illiquid until the issuer settles; everything else leaves on request." },
-            { name: "Pause", value: "blocks deposits and withdrawals", note: "Including LP exit. That is the intended emergency posture, flagged for audit." },
+            { name: "Fee to get paid early", value: "1% · can never pass 5%", note: "Taken the moment someone is paid early, not when the company pays. The only fee on the dividend side." },
+            { name: "Most of the pool lent out", value: "80% · can never pass 95%", note: "Also caps how much a bad dividend announcement could ever cost (§9)." },
+            { name: "Longest wait for pay day", value: "90 days", note: "A dividend whose pay day is more than 90 days after its ex date cannot be announced." },
+            { name: "First lender protection", value: "Built in", note: "A well known trick against the first depositor cheating later ones is closed off." },
+            { name: "Taking money out as a lender", value: "Whatever is not out paying dividends", note: "Cash that is out fronting a dividend is locked until the company pays. Everything else leaves when you ask." },
+            { name: "Pause switch", value: "Stops deposits and withdrawals", note: "Including lenders taking money out. That is on purpose for an emergency, and flagged for review." },
           ]}
         />
         <Shot
           name="vault"
           n={7}
-          alt="Vault statistics: total value locked, current APY, utilisation against an 80 percent cap, and advances outstanding."
-          caption="The vault page. Utilisation is drawn against its cap; the APY is the fee income annualised on assets. Once Borrow ships, borrow interest joins the fee as LP yield (§6)."
+          alt="The pool page: money in the pool, yearly return, how much is lent out against an 80 percent limit, and how much has been paid out early."
+          caption="The pool page. The lent-out bar shows the 80% limit. The yearly return is the fee income spread over a year. Once Borrowing is live, loan interest is added to it (§6)."
         />
       </Section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 4. Stream                                                           */}
+      {/* 4. Paid every second                                                */}
       {/* ------------------------------------------------------------------ */}
       <Section
         id="stream"
         index="4"
-        title="Stream"
-        kicker="A quarterly lump is an accounting choice. Per second accrual is cheaper to compute than the batch."
+        title="Paid every second"
+        kicker="A lump once a quarter is a habit, not a law. A computer can pay by the second just as easily."
       >
         <p>
-          The <code>StreamEngine</code> turns a net entitlement into a flow from the ex date to the pay
-          date. The accounting is lazy: nothing is pushed per block, and what is claimable is a
-          pure function of elapsed time, so a stream costs one storage write to open and one per
-          claim. Superfluid style constant flow math, without the dependency.
+          The <code>StreamEngine</code> turns your dividend into a steady payout from the ex date to
+          pay day. It does not actually send money every second. It just knows the total and
+          the two dates, so at any moment it can work out how much has built up. Opening a
+          payout costs one write to the chain, and so does each time you collect.
         </p>
-        <Formula note="Integer math over 6 decimal USDG. The rate is exposed scaled by 1e18 (ratePerSecondScaled) so a UI can interpolate between blocks without rounding to zero.">
-          accrued(t)  = total × (t − start) ÷ (end − start), capped at total{"\n"}
-          claimable   = accrued(now) − claimed
+        <Formula note="Whole dollars are split into millionths, so tiny amounts still count. The app shows the rate per second so the number on screen can tick.">
+          built up so far = total × (time passed ÷ total time){"\n"}
+          ready to collect = built up so far − already collected
         </Formula>
         <Figure
           n={8}
-          caption="The MSFT stream from Fig. 1: 220 shares × $0.83 × 0.99 = $180.77 over 21 days. Accrued rises in a straight line; claimed is a staircase beneath it; the gap is what a claim pays right now. Nothing is lost by waiting and nothing is gained by claiming often."
+          caption="The MSFT payout from Fig. 1: 220 shares × $0.83 × 0.99 = $180.77 over 21 days. The straight line is what has built up. The staircase is what has been collected. The gap between them is what you get if you collect right now. Waiting loses nothing, and collecting often gains nothing."
         >
           <StreamFigure />
         </Figure>
         <ul>
           <li>
-            <code>claim(streamId)</code> pays everything accrued to the stream's owner. Only the owner may
-            call it.
+            <strong>Collect</strong> whenever you like. Only you can collect your own payout.
           </li>
           <li>
-            <code>claimFor</code> and <code>claimBatch</code> let a <code>KEEPER_ROLE</code> push money on a
-            holder's behalf — always to the holder, or to the reinvestor acting for them, never to
-            the keeper. Batches skip streams with nothing accrued instead of reverting.
+            A helper bot can collect <strong>for</strong> you, but the money still goes to you, or to buying
+            your stock. Never to the bot.
           </li>
           <li>
-            Each claim pulls its cash from the vault through <code>releaseAdvance</code>, which is why the
-            cash floor in §3 matters: the vault must be able to honour every open stream today.
+            Each time you collect, the cash comes from the pool. That is why the pool always
+            keeps enough cash on hand to cover every open payout (§3).
           </li>
           <li>
-            A stream closes when it is fully drawn after the pay date, or when the dividend is
-            voided and DripCore cancels it (§8). <code>StreamClosed</code> says which.
+            A payout closes when it has all been collected after pay day, or if the dividend is
+            cancelled (§8).
           </li>
         </ul>
       </Section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 5. Reinvest                                                         */}
+      {/* 5. Buying more stock                                                */}
       {/* ------------------------------------------------------------------ */}
       <Section
         id="reinvest"
         index="5"
-        title="Reinvest"
-        kicker="Robinhood reinvests the trading day after the pay date, during market hours, into a fraction that cannot leave the app. A pool does not keep office hours."
+        title="Buying more stock"
+        kicker="Your broker buys more stock the day after pay day, during market hours, and keeps the fraction inside their app. A pool of money does not keep office hours."
       >
         <p>
-          In <code>REINVEST</code> mode a claim does not stop at the wallet. The stream engine sends the
-          USDG to the <code>Reinvestor</code>, which swaps it for the stock token that paid the dividend
-          and credits the result back into the holder's DripCore position through{" "}
-          <code>creditReinvest</code> — the one path allowed to grow a position without a deposit. The
-          credit writes a checkpoint, so the next ex date sees a larger balance. The loop closes in
-          the same transaction as the claim.
+          With the Reinvest rule, collecting does not stop at your wallet. The cash goes to a
+          contract called the <code>Reinvestor</code>, which buys more of the same stock that paid the
+          dividend and adds it to your balance in Osinko. Your balance goes up, the record is
+          updated, and your next dividend is bigger because you own more. It all happens in
+          one transaction.
         </p>
         <ol>
-          <li>The holder (or a keeper) claims a REINVEST stream. The vault releases the accrued USDG to the Reinvestor.</li>
-          <li>The Reinvestor quotes the swap against the price oracle, not the pool, and sets a minimum output from the holder's slippage tolerance.</li>
-          <li>The swap adapter executes USDG → stock. A fill worse than the bound reverts the whole claim rather than filling badly.</li>
-          <li>DripCore credits the stock to the position and checkpoints it. <code>Reinvested</code> is emitted with tokens out and the new balance.</li>
+          <li>You, or a helper bot, collect a Reinvest payout. The pool sends the cash to the Reinvestor.</li>
+          <li>The Reinvestor checks the live Chainlink price and sets the worst price it will accept, based on your limit.</li>
+          <li>It buys the stock. If the price it would get is worse than your limit, the whole thing is cancelled instead of going through badly.</li>
+          <li>Osinko adds the new stock to your balance and writes it to the record.</li>
         </ol>
         <Params
           rows={[
-            { name: "Slippage tolerance", value: "100 bps default · ceiling 1 000", note: "Per holder, via setMaxSlippage. Zero is rejected; so is anything over ten percent." },
-            { name: "Quote source", value: "IPriceOracle, never the pool", note: "The reference price must come from a feed the trade itself cannot move inside one block. On mainnet that is ChainlinkPriceOracle (§12)." },
-            { name: "Swap venue", value: "ISwapAdapter", note: "UniswapV3SwapAdapter in production: SwapRouter02 semantics, USDG → token leg only, minimum output bounded against the feed. A mock adapter stands in for local development." },
-            { name: "Cross token reinvestment", value: "Not supported, by design", note: "AAPL dividends buy AAPL. A holder who wants something else sets CASH_EARLY and buys it themselves — two steps they can see." },
+            { name: "How much worse a price you will accept", value: "1% by default · at most 10%", note: "You can change this for your own account. Zero is not allowed and neither is anything over 10%." },
+            { name: "Where the price check comes from", value: "Chainlink, never the exchange itself", note: "A price the trade itself could push around inside one block is not a safe price to check against." },
+            { name: "Where the stock is bought", value: "Uniswap on Robinhood Chain", note: "In development a stand-in is used instead." },
+            { name: "Buying a different stock", value: "Not possible, on purpose", note: "AAPL dividends buy AAPL. If you want something else, choose Cash early and buy it yourself. Two steps you can see." },
           ]}
         />
         <Table
-          head={["", "Brokerage DRIP today", "Osinko"]}
+          head={["", "Your broker today", "Osinko"]}
           rows={[
-            ["Reinvestment", "Trading day after the pay date", "The same transaction as the claim"],
-            ["Hours", "Market hours, midnight cutoff", "Every second of every day"],
-            ["Fractional shares", "Locked inside one app", "Self custodied ERC-20, credited to your position"],
-            ["Cash timing", "Pay date, weeks after ex", "Ex date, minus one percent"],
-            ["Cadence", "A quarterly lump", "A continuous stream"],
+            ["Reinvesting", "The day after pay day", "The same moment you collect"],
+            ["Hours", "Weekdays, 9:30 to 4", "Every second of every day"],
+            ["Part of a share", "Stuck inside one app", "A token you hold yourself"],
+            ["When you get the cash", "Pay day, three weeks after you qualify", "The ex date, minus 1%"],
+            ["How often", "One lump, four times a year", "A little every second"],
           ]}
         />
       </Section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 6. Borrow                                                           */}
+      {/* 6. Borrowing                                                        */}
       {/* ------------------------------------------------------------------ */}
       <Section
         id="borrow"
         index="6"
-        title="Borrow"
-        kicker="Once the stock lives onchain it can do what collateral has always done on Wall Street: back a loan. This is where the name comes from."
+        title="Borrowing"
+        kicker="Once the stock is on chain, it can do what stocks have always done for the wealthy: back a loan. This is where the name comes from."
       >
-        <Callout label="Status">
-          Borrow is live in the app against the reference portfolio, backed by the same data
-          source as every other page. The onchain market — a <code>LendingPool</code> alongside DripCore and the vault — is
-          specified in the developer handoff and is the credit side's build item. The parameters
-          below are that specification; the interface the app already uses is frozen around them.
+        <Callout label="Where this stands">
+          Borrowing works in the app today, on the same data as every other page. The contract
+          that will run it on chain is fully designed but not deployed yet. The numbers below
+          are that design. The app is built around them, so nothing changes for you when the
+          contract goes live.
         </Callout>
         <p>
-          A holder draws USDG against stock already on deposit. Pledged collateral stays in
-          DripCore, keeps its mode, and keeps earning; it is simply locked against withdrawal
-          while it backs debt. The USDG comes from the same vault balance sheet that fronts
-          dividends, so its accounting identity gains one term — <code>loansOutstanding</code>, a
-          receivable from borrowers that mirrors the receivable from issuers — and liquidity
-          providers earn borrow interest on top of advance fees.
+          You borrow USDG against stock you already put in. The stock stays in Osinko, keeps
+          its rule, and keeps earning dividends. It is just locked so you cannot take it out
+          while it backs a loan. The USDG comes from the same pool that pays dividends early, so
+          lenders earn loan interest on top of the 1% fee.
         </p>
         <p>
-          The Osinko twist is in the order money is applied. When the protocol realises dividend
-          value for a borrower — an advance, a stream claim, a settlement — it is routed{" "}
-          <strong>debt first</strong>: interest, then principal if the holder opted in, then whatever the
-          position's mode says. At a conservative loan the collateral's own yield covers the
-          whole rate, and the position carries itself.
+          Here is the part that makes Osinko different. Whenever your stock earns a dividend,
+          that money goes to your loan <strong>first</strong>. Interest first, then the loan itself if
+          you want, and only then wherever your rule says. Borrow a modest amount and your
+          dividends cover the whole interest bill. The loan pays for itself.
         </p>
         <Figure
           n={9}
-          caption="The loan to value scale. Up to 40% can be drawn. Between 40% and 65% nothing new can be borrowed and nothing is liquidated. Past 65% a liquidator may repay up to half the debt and take collateral plus a 5% bonus. The marker is this portfolio, live."
+          caption="How much you can borrow. Up to 40% of what your stock is worth. Between 40% and 65%, you cannot borrow more, but nothing is sold either. Past 65%, someone can pay off up to half your loan and take stock worth that plus a 5% bonus. The marker is this portfolio, live."
         >
           <LtvFigure ltvPct={ltvPct} healthFactor={credit.healthFactor} />
         </Figure>
         <Params
           rows={[
-            { name: "Maximum loan to value", value: "40%", note: "The hard borrow cap. Far below the liquidation line on purpose: the buffer is what lets a dividend serviced loan ride out a drawdown." },
-            { name: "Liquidation threshold", value: "65%", note: "health factor = collateral × 0.65 ÷ debt. Below 1.00 the position is liquidatable." },
-            { name: "Close factor · bonus", value: "50% · 5%", note: "A liquidator repays up to half the debt and takes collateral worth that plus five percent, sold through the swap adapter with an oracle bounded minimum." },
-            { name: "Borrow rate", value: "kinked, 2% base → 8% at 80%", note: "A utilisation curve in the Aave shape: slope one to the kink, steep past it. The market shows 5.8% today." },
-            { name: "Servicing order", value: "interest → principal → mode", note: "One hook in DripCore's entitlement flow. A stale price freezes new borrows and blocks liquidations; nothing is ever liquidated on a stale feed." },
-            { name: "Invariants to test", value: "4", note: "debt ≤ collateral × threshold at action time; cash + receivables + loans ≥ obligations; servicing never takes principal below zero; a stale oracle can never mint debt." },
+            { name: "Most you can borrow", value: "40% of what your stock is worth", note: "Kept well below the danger line on purpose. The gap is what lets a loan ride out a bad month." },
+            { name: "Danger line", value: "65%", note: "Safety score = your stock's value × 0.65 ÷ what you owe. Below 1.00, some stock can be sold to pay the loan down." },
+            { name: "How much can be sold at once", value: "Up to half the loan, plus a 5% bonus", note: "Whoever pays down your loan gets stock worth that amount plus 5%. It is sold at a price checked against Chainlink." },
+            { name: "Interest rate", value: "2% when the pool is quiet, 8% when 80% is lent out", note: "The busier the pool, the higher the rate, the same way Aave does it. It is 5.8% today." },
+            { name: "Where dividends go first", value: "Interest → loan → your rule", note: "If the price feed is stale, no new loans are given and nothing is sold. Stock is never sold on an old price." },
           ]}
         />
-        <p>The portfolio in the app, as it stands right now, in the same terms:</p>
+        <p>Here is the portfolio in the app, right now, in those terms:</p>
         <Params
           rows={[
-            { name: "Collateral at Chainlink prices", value: `$${fmt(credit.collateralValueUsd, 0)}` },
-            { name: "Borrowed", value: `$${fmt(credit.borrowedUsd, 0)} of $${fmt(credit.maxBorrowUsd, 0)} available` },
-            { name: "Loan to value · health factor", value: `${ltvPct.toFixed(1)}% · ${Number.isFinite(credit.healthFactor) ? credit.healthFactor.toFixed(2) : "∞"}` },
-            { name: "Dividends the collateral earns", value: `+$${fmt(credit.dividendsPerYearUsd)} / year` },
-            { name: "Interest the debt costs", value: `−$${fmt(credit.interestPerYearUsd)} / year at ${credit.borrowAprPct.toFixed(1)}%` },
+            { name: "Your stock is worth", value: `$${fmt(credit.collateralValueUsd, 0)}` },
+            { name: "You borrowed", value: `$${fmt(credit.borrowedUsd, 0)} of a possible $${fmt(credit.maxBorrowUsd, 0)}` },
+            { name: "Borrowed as a share of your stock · safety score", value: `${ltvPct.toFixed(1)}% · ${Number.isFinite(credit.healthFactor) ? credit.healthFactor.toFixed(2) : "∞"}` },
+            { name: "Dividends your stock earns", value: `+$${fmt(credit.dividendsPerYearUsd)} a year` },
+            { name: "Interest the loan costs", value: `−$${fmt(credit.interestPerYearUsd)} a year at ${credit.borrowAprPct.toFixed(1)}%` },
             {
-              name: "Net carry",
-              value: `${credit.netCarryPerYearUsd >= 0 ? "+" : "−"}$${fmt(Math.abs(credit.netCarryPerYearUsd))} / year`,
-              note: credit.netCarryPerYearUsd >= 0 ? "The dividends out earn the interest. The loan carries itself." : "Interest exceeds dividend income; the gap accrues to the debt.",
+              name: "You come out",
+              value: `${credit.netCarryPerYearUsd >= 0 ? "ahead" : "behind"} by $${fmt(Math.abs(credit.netCarryPerYearUsd))} a year`,
+              note: credit.netCarryPerYearUsd >= 0 ? "The dividends earn more than the interest costs. The loan pays for itself." : "The interest costs more than the dividends earn. The difference is added to the loan.",
             },
           ]}
         />
         <Shot
           name="borrow"
           n={10}
-          alt="The borrow page: collateral, borrowed, health factor with a meter to the 65 percent liquidation line, net carry per year, and a live counter of interest serviced by dividends."
-          caption="The credit side. The page leads with net carry — what the collateral's dividends earn against what the debt costs — and the counter of interest already serviced by dividends ticks per second."
+          alt="The borrow page: what your stock is worth, what you borrowed, a safety score with a meter to the 65 percent danger line, how much you come out ahead each year, and a live counter of interest your dividends have paid."
+          caption="The borrow page. It leads with the one number that matters: do your dividends earn more than the loan costs? The counter of interest already paid by dividends ticks every second."
         />
       </Section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 7. Split                                                            */}
+      {/* 7. Splitting a stock                                                */}
       {/* ------------------------------------------------------------------ */}
       <Section
         id="split"
         index="7"
-        title="Split — principal and yield"
-        kicker="Early, Stream, Reinvest and Borrow never wrap the share. Split is the exception, and it is opt in."
+        title="Splitting a stock"
+        kicker="Everything else leaves your share whole. Split is the one thing that does not, and you have to choose it."
       >
         <p>
-          <code>SplitVault</code> separates a stock token into two ERC-20s. The{" "}
-          <strong>Principal Token</strong> is the share minus the drip: it redeems one for one for the
-          stock at maturity and nothing else. The <strong>Yield Token</strong> is the drip on its own: a
-          claim on every dividend the stock pays before maturity, and nothing else. Sold apart,
-          the two price the dividend stream separately from the share — the Pendle shape, for
-          equities. Held together, they can always be merged back into the whole token, free, at
-          any time.
+          The <code>SplitVault</code> turns one share into two tokens. The <strong>share token</strong> is the
+          stock without its dividends. On the end date, you hand it back and get the whole
+          share. The <strong>dividend token</strong> is the dividends without the stock. It collects every
+          dividend the stock pays until the end date, and nothing else. Sell one and keep the
+          other, or sell both. Hold one of each and you can always put them back together into
+          the whole share, for free, any time.
         </p>
         <Figure
           n={11}
-          caption="One stock token becomes 0.9990 PT and 0.9990 YT after the 10 basis point split fee. PT redeems for stock at maturity. YT collects each harvested dividend pro rata to whoever held it at that dividend's ex date. Equal PT and YT merge back to the whole token, free, before or after maturity."
+          caption="One share goes in. Out come 0.999 share tokens and 0.999 dividend tokens, after the 0.1% fee. The share token turns back into stock on the end date. The dividend token collects each dividend, shared out by who held it on that dividend's ex date. One of each rejoins into the whole share for free, before or after the end date."
         >
           <SplitFigure />
         </Figure>
         <p>
-          The mechanism in one line: <code>SplitVault</code> deposits into <code>DripCore</code> under its own
-          address, in <code>CASH_EARLY</code> mode, and becomes an ordinary holder like anyone else. A
-          harvest is a normal activation from DripCore's point of view — subject to the vault's
-          cash floor and utilisation cap exactly like any other holder's advance, with no special
-          casing — and the USDG it produces can only ever land in the split vault's own pool.
+          Under the hood it is simple. The SplitVault puts the stock into Osinko under its own
+          name, set to Cash early, exactly like any other person would. When a dividend comes,
+          the vault takes it early like anyone else, pays the same 1% fee, and follows the same
+          two pool rules. The cash lands in a pot that only dividend token holders can draw
+          from.
         </p>
         <Table
-          head={["Function", "Who", "What it does"]}
+          head={["Action", "Who", "What happens"]}
           rows={[
-            ["createSeries(stock, maturity)", "KEEPER_ROLE", "Opens a series and deploys its PT and YT. Reverts while the prior series on the same stock still has PT outstanding."],
-            ["split(seriesId, amount)", "Anyone", "Deposits stock, keeps the fee, deposits the rest into DripCore, mints equal PT and YT. Blocked after maturity."],
-            ["merge(seriesId, amount)", "Anyone", "Burns equal PT and YT, withdraws the stock from DripCore, returns it. No fee, before or after maturity."],
-            ["redeemPrincipal(seriesId, amount)", "Anyone, after maturity", "Burns PT alone for the underlying stock."],
-            ["harvestDividend(seriesId, dividendId)", "Anyone", "Activates the series' entitlement on a dividend that has gone ex and books the net USDG into the pool, recording YT supply at the ex date."],
-            ["claimYield(seriesId, dividendId)", "YT holder", "Pays pool × balanceOfAt(holder, exDate) ÷ totalSupplyAt(exDate). Once per holder per dividend."],
-            ["setSplitFeeBps(bps)", "DEFAULT_ADMIN_ROLE", "Sets the fee, capped at MAX_SPLIT_FEE_BPS = 100."],
+            ["Open a split for a stock", "A helper with permission", "Sets a stock and an end date and creates its two tokens. Only one split per stock can be open at a time."],
+            ["Split", "Anyone", "Put stock in, get one share token and one dividend token per share, minus the 0.1% fee. Not allowed after the end date."],
+            ["Rejoin", "Anyone", "Hand back one of each, get the whole share. Free. Works before or after the end date."],
+            ["Cash in", "Anyone, after the end date", "Hand back share tokens alone, get the stock."],
+            ["Collect a dividend", "Anyone", "Once a dividend's ex date has passed, pull it into the pot. Osinko notes who held dividend tokens that day."],
+            ["Take your share", "Dividend token holders", "Your part of the pot, based on how many dividend tokens you held on that ex date. Once per dividend."],
+            ["Change the fee", "The admin", "Between 0% and 1%. Never higher."],
           ]}
-          mono={[0]}
         />
-        <Callout label="The load bearing simplification">
-          One active series per stock token. A new series cannot open until the prior one's
-          principal supply is redeemed to zero. That keeps{" "}
-          <code>dripCore.balanceOf(splitVault, stock) == PT.totalSupply()</code> true at every moment,
-          which is what makes the accounting provable without a second layer of cross series
-          proration. Concurrent maturities on one stock — Pendle runs several expiries per asset —
-          need a per series sub account that itself deposits into DripCore. It is the first thing
-          the handoff tells the next developer to build.
+        <Callout label="One at a time, on purpose">
+          Only one split can be open per stock. A new one cannot start until every share token
+          from the old one has been handed back. That keeps one simple fact true at all times:
+          the stock the vault holds equals the share tokens out there. It is what makes the
+          accounting easy to check. Running several end dates for one stock at once, the way
+          some crypto projects do, would need more machinery, and it is the first thing on the
+          list for a future version.
         </Callout>
         <ul>
           <li>
-            <strong>Yield is paid to the right holder.</strong> <code>YieldToken</code> checkpoints every
-            transfer the same way DripCore checkpoints deposits, so a dividend harvested after a YT
-            changed hands still pays whoever held it at that dividend's ex date. A transfer after
-            the ex date cannot change what a dividend pays — tested, and worth an invariant.
+            <strong>The right person gets paid.</strong> The dividend token writes down who held it and
+            when, the same way Osinko records deposits. So a dividend collected after you sold
+            your tokens still pays you, if you held them on the ex date.
           </li>
           <li>
-            <strong>The fee never enters DripCore.</strong> Fee stock is held in the vault rather than
-            deposited, so principal supply never has to account for stock that is not backing a PT.
+            <strong>The fee stays out of the count.</strong> The 0.1% of stock taken as a fee is kept
+            aside, not put into Osinko, so it never muddies the one-to-one match above.
           </li>
           <li>
-            <strong>YT decays to zero at maturity, not before.</strong> Splitting after maturity is blocked
-            (<code>AlreadyMatured</code>) since it would mint a yield token with nothing left to accrue;
-            merging is always allowed, because burning PT and YT for stock is harmless whenever it
-            happens.
+            <strong>Dividend tokens run out on the end date, not before.</strong> You cannot split after the
+            end date, because the dividend token would have nothing left to collect. You can
+            always rejoin, because that is harmless.
           </li>
           <li>
-            <strong>There is no AMM yet.</strong> The “implied yield” the app shows is the stock's
-            annualised dividend yield, not a market price. A real PT/YT market is the trade half
-            of the pitch and the highest leverage thing to build next.
+            <strong>There is no market for the tokens yet.</strong> The “dividend yield” the app shows is
+            just the stock's normal yearly dividend divided by its price. It is not a market
+            price. A place to trade share tokens and dividend tokens is the next big thing to
+            build.
           </li>
         </ul>
         <Shot
           name="split"
           n={12}
-          alt="The split page: principal held, yield held, a countdown to maturity, implied yield, a harvested MU dividend with claimable yield, and a split, merge, redeem panel."
-          caption="The MU series, ninety days from maturity, with a dividend that went ex four days ago sitting harvestable. Harvest is permissionless; claim pays pro rata by the yield token's own transfer history."
+          alt="The split page: share tokens held, dividend tokens held, a countdown to the end date, the dividend yield, a MU dividend ready to collect, and a panel to split, rejoin or cash in."
+          caption="A split on MU, ninety days from its end date, with a dividend that qualified four days ago waiting to be collected. Anyone can press collect. The money goes to whoever held dividend tokens that day."
         />
       </Section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 8. Settlement and clawback                                          */}
+      {/* 8. When the company pays, or doesn't                                */}
       {/* ------------------------------------------------------------------ */}
       <Section
         id="settlement"
         index="8"
-        title="Settlement and clawback"
-        kicker="The vault's receivable is only as good as the issuer's payment. Here is what happens when it arrives, and when it does not."
+        title="When the company pays, or doesn't"
+        kicker="The pool is only as good as the company's payment. Here is what happens when it arrives, and when it does not."
       >
         <Figure
           n={13}
-          caption="The registry's state machine. An oracle declares; the settlement keeper pays and the dividend is settled; or the oracle voids it and every activated holder is clawed back."
+          caption="The three states of a dividend. A trusted news feed announces it. Then either the company pays and the pool is made whole, or the company cancels and the early cash is taken back from each person who took it."
         >
           <LifecycleFigure />
         </Figure>
         <p>
-          <strong>Settlement.</strong> At the pay date, <code>DripCore.settleDividend(dividendId)</code> — callable
-          by <code>KEEPER_ROLE</code>, the settlement pipe on production — pulls the full eligible amount
-          from the caller in one transfer:
+          <strong>The company pays.</strong> On pay day, the money comes into Osinko in one transfer. The
+          amount is worked out from the record on the ex date, so it covers everyone who
+          qualified, whether or not they pressed start:
         </p>
-        <Formula note="Computed from the protocol wide checkpoint at the ex date, so it covers every eligible holder whether or not they activated. This is the only place real dividend cash enters the protocol.">
-          totalEntitlement = totalDepositedAt(stock, exDate) × amountPerToken ÷ 1e18
+        <Formula note="This is the only place real dividend cash enters Osinko. On Robinhood Chain, the company's side of this is Robinhood itself.">
+          total owed = all shares in Osinko on the ex date × dividend per share
         </Formula>
         <p>
-          Of that, the vault's receivable on the dividend is repaid first (<code>repayAdvance</code>). The
-          remainder is parked in DripCore for holders who never activated, who may take it with{" "}
-          <code>claimSettled</code> at face value and with no fee. DripCore holds <code>SETTLER_ROLE</code> on
-          the registry and marks the dividend <code>SETTLED</code>.
+          The pool is paid back first for whatever it fronted. The rest is held for people who
+          never pressed start. They can collect it at full value, with no fee, whenever they
+          like. The dividend is then marked as paid.
         </p>
         <p>
-          <strong>Void.</strong> If the issuer cancels, the oracle calls <code>voidDividend(id, reason)</code> and a
-          keeper runs <code>clawback(dividendId, holder)</code> for each holder who activated:
+          <strong>The company cancels.</strong> It is rare, but it happens. The news feed marks the
+          dividend cancelled, and a helper bot goes through everyone who took it early:
         </p>
         <ol>
-          <li>Cancel the undrawn part of the stream and the matching vault obligation. Money not yet paid is simply never paid.</li>
-          <li>Seize deposited stock worth the cash actually paid out, priced by the price oracle, and hand it to the vault (<code>receiveClawback</code>) for admin liquidation.</li>
-          <li>Write off whatever could not be recovered as a loss (<code>recordLoss</code>). Liquidity providers absorb it; the fee is what they are paid for.</li>
+          <li>Any part of the payout not yet collected is simply never paid. That part costs nobody anything.</li>
+          <li>Stock worth the cash that was already paid out is taken from that person's deposit and handed to the pool, priced off Chainlink.</li>
+          <li>If that does not cover it, the pool takes the loss. Lenders' shares are worth a little less. That risk is what the 1% fee pays them for.</li>
         </ol>
-        <Callout label="Production hardening, listed in the handoff">
-          Price the seizure from the oracle rather than the venue; decide how to treat a holder who
-          withdrew between activation and the void (a short withdrawal delay on positions with a
-          live advance, or an insurance sliver of the fee, before anything heavier); automate or
-          timelock collateral liquidation; and fuzz a void landing mid claim. The sequence is safe
-          today — cancel before seize — and deserves its own campaign.
+        <Callout label="Still being hardened">
+          Before real money: price the stock taken back off the Chainlink feed rather than the
+          exchange; decide what to do about someone who took a dividend early and then withdrew
+          all their stock before the cancellation landed; and test the case where a cancellation
+          lands in the middle of someone collecting. The order of steps is already safe.
         </Callout>
       </Section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 9. Roles and trust                                                  */}
+      {/* 9. Who controls what                                                */}
       {/* ------------------------------------------------------------------ */}
       <Section
         id="roles"
         index="9"
-        title="Roles and trust"
-        kicker="Only protocol contracts move protocol money. Human held roles feed data, pay money in, or push it to its rightful owner."
+        title="Who controls what"
+        kicker="Only the contracts move money. People can add information, pay money in, or send money to its owner. Nothing else."
       >
         <Table
-          head={["Role", "Where", "Holder today", "Holder in production"]}
+          head={["Who", "What they can do", "Today", "When live for real"]}
           rows={[
-            ["DEFAULT_ADMIN_ROLE", "everywhere", "deploy key", "multisig behind a timelock"],
-            ["ORACLE_ROLE", "DividendRegistry", "deploy key", "dividend oracle reading issuer corporate action data"],
-            ["SETTLER_ROLE", "DividendRegistry", "DripCore (contract)", "DripCore, unchanged"],
-            ["KEEPER_ROLE", "DripCore", "deploy key", "settlement pipe and ops bot: settleDividend, clawback"],
-            ["KEEPER_ROLE", "StreamEngine", "deploy key", "batch claim bot; can only push money to holders"],
-            ["KEEPER_ROLE", "SplitVault", "deploy key", "series opener and pause switch"],
-            ["CORE_ROLE", "AdvanceVault · StreamEngine · Reinvestor", "protocol contracts", "unchanged, contracts only"],
-            ["REINVESTOR_ROLE", "DripCore", "Reinvestor (contract)", "unchanged"],
+            ["Admin", "Pause, set fees and limits within their caps, point at a new exchange", "The deploy key", "A group wallet with a time delay on every change"],
+            ["Dividend news feed", "Announce a dividend, or cancel one", "The deploy key", "A service reading official company announcements"],
+            ["Pay day helper", "Bring in the company's payment, run cancellations", "The deploy key", "An automated service"],
+            ["Collect helper", "Collect payouts on people's behalf", "The deploy key", "An automated service. It can only send money to its owner"],
+            ["Split helper", "Open a split for a stock, pause splitting", "The deploy key", "An automated service"],
+            ["The contracts themselves", "Move money between each other", "The contracts", "Unchanged. No person ever holds this power"],
           ]}
-          mono={[0]}
         />
         <p>
-          No role can redirect a holder's funds to a third party. The wiring in{" "}
-          <code>script/Deploy.s.sol</code> is canonical and the test base mirrors it; the two are kept in
-          step. Trust assumptions, ranked by how much damage a failure could do:
+          No role can send your money to someone else. Not the admin, not a helper, not a bug
+          in the agent. Here are the things you do have to trust, biggest first:
         </p>
         <ol>
           <li>
-            <strong>The oracle.</strong> A dishonest <code>ORACLE_ROLE</code> can declare a dividend that will
-            never settle and drain advances up to the utilisation cap, or void a real dividend and
-            trigger clawbacks. Mitigations before launch: a multisig oracle, the delay between
-            declaration and ex date that is already structurally present, a bond, and the cap
-            itself, which bounds the worst case at 80% of vault assets.
+            <strong>The dividend news feed.</strong> If it lied, it could announce a dividend that will
+            never be paid and drain early payments from the pool, or cancel a real one and
+            trigger take-backs. This is the biggest risk. Before launch: several people must
+            agree before it speaks, there is already a delay between announcing and the ex
+            date, and the pool can never lend out more than 80%, which caps the worst case.
           </li>
           <li>
-            <strong>Issuer settlement.</strong> The receivable is only as good as the payment at the pay
-            date. On Robinhood Chain the issuer leg is Robinhood itself; the clawback path exists
-            for the residual.
+            <strong>The company paying.</strong> Early payments assume the company pays on pay day. On
+            Robinhood Chain that is Robinhood. If it does not, the take-back path exists.
           </li>
           <li>
-            <strong>Admin keys.</strong> Pause, fee (≤ 5%), cap (≤ 95%), swap adapter pointer, collateral
-            liquidation, split fee (≤ 1%). All belong behind a timelock in production.
+            <strong>The admin keys.</strong> They can pause, and move fees and limits within hard caps
+            (fee at most 5%, lending at most 95%, split fee at most 1%). All of it should sit
+            behind a time delay so people can see a change coming.
           </li>
           <li>
-            <strong>Price source.</strong> For reinvestment and clawback sizing, the slippage reference must
-            come from a feed the trade cannot move inside one block. Never quote the pool you are
-            about to trade against.
+            <strong>The price feed.</strong> Prices come from Chainlink, never from the exchange the
+            trade is about to use. If the feed is old, trading in that stock stops.
           </li>
         </ol>
-        <Callout label="Upgradeability">
-          Version one is immutable: no proxies. If something must change, a v2 is deployed, v1's
-          user entry points are paused, and holders withdraw and redeposit — positions are plain
-          balances, so migration is mechanical. Every contract is AccessControl based and could
-          convert to UUPS, at the cost of storage layout discipline and an upgrade key to protect.
-          The recommendation is immutable, with the migration path documented to users.
+        <Callout label="Can the code be changed?">
+          Version one cannot. There are no upgrade switches. If something has to change, a new
+          version is deployed, the old one is paused, and people move their stock over. Your
+          stock is a plain balance, so moving is one deposit. Boring on purpose.
         </Callout>
       </Section>
 
       {/* ------------------------------------------------------------------ */}
       {/* 10. Risks                                                           */}
       {/* ------------------------------------------------------------------ */}
-      <Section id="risks" index="10" title="Risks" kicker="Stated rather than implied. A product that hides its failure modes has not thought about them.">
+      <Section id="risks" index="10" title="Risks" kicker="Said plainly. A product that hides how it can go wrong has not thought about it.">
         <ul>
           <li>
-            <strong>Oracle risk.</strong> The registry is the source of truth for what is owed. A wrong or
-            malicious declaration is the largest single exposure in the system (§9).
+            <strong>The news feed could be wrong.</strong> It is the source of truth for what is owed. A
+            wrong or dishonest announcement is the biggest single risk (§9).
           </li>
           <li>
-            <strong>Counterparty risk.</strong> An advance is a bet that the issuer pays at the pay date. If
-            it does not, clawback recovers what it can from the advanced holders' collateral and
-            liquidity providers absorb the rest.
+            <strong>The company might not pay.</strong> Paying early is a bet that the company pays on pay
+            day. If it does not, stock is taken back from people who were paid early, and
+            lenders cover the rest.
           </li>
           <li>
-            <strong>Liquidity risk for LPs.</strong> Capital fronting a dividend is locked until settlement.
-            Withdrawals are bounded by free cash, and a pause blocks LP exit.
+            <strong>Lenders' cash can be locked.</strong> Money that is out paying a dividend early is
+            stuck until the company pays. A pause stops lenders taking money out.
           </li>
           <li>
-            <strong>Market risk in Borrow.</strong> Collateral is priced by Chainlink. A fall past the 65%
-            threshold makes the position liquidatable; the 40% borrow cap is the buffer.
+            <strong>A loan can be closed out.</strong> If your stock falls in price until your loan is
+            past 65% of its value, some stock is sold to pay it down. The 40% borrowing limit
+            is the cushion.
           </li>
           <li>
-            <strong>Market risk in Split.</strong> PT and YT are volatile, market priced tokens once a
-            market exists, and there is no market in this repository yet. A yield token is worth
-            exactly the dividends still ahead of it and decays to zero at maturity.
+            <strong>Split tokens can lose value.</strong> Once there is a market for them, share tokens
+            and dividend tokens will move in price. A dividend token is worth only the dividends
+            still to come, and is worth nothing after the end date.
           </li>
           <li>
-            <strong>Smart contract risk.</strong> 96 tests, including handler driven invariants, and an audit
-            checklist in the handoff — but no audit yet.
+            <strong>The code could have a bug.</strong> There are 96 tests, including tests that hammer
+            the system at random, and a review checklist. There has been no outside audit yet.
           </li>
           <li>
-            <strong>Chain and token risk.</strong> Robinhood Chain is an Arbitrum Orbit L2, public since
-            February 2026. The stock tokens are Robinhood issued trackers; the listing rules require
-            a live receive, hold and transfer test from a contract before real capital touches one.
+            <strong>The chain and the tokens are new.</strong> Robinhood Chain went public in February
+            2026. The stock tokens are issued by Robinhood. The listing rules require a real
+            test of each token before real money touches it.
           </li>
         </ul>
-        <p>Three invariants are enforced by the test suite and must survive any change:</p>
-        <Formula note="Plus a test that fails loudly if the invariant handler ever stops reaching deep states — a green suite that tests nothing is the failure mode to fear.">
-          1. cash ≥ obligations, and utilisation ≤ cap, always{"\n"}
-          2. claimed ≤ total per stream; stream totals equal the booked net entitlements{"\n"}
-          3. Σ positions == token.balanceOf(DripCore) == totalDeposited, per token
+        <p>Three things are checked by the tests to be true at all times, no matter what:</p>
+        <Formula note="Plus a test that fails loudly if the random testing ever stops reaching the deep cases. A green test suite that tests nothing is the thing to fear.">
+          1. The pool always holds enough cash to cover every promise, and never lends past the limit{"\n"}
+          2. No payout ever pays more than its total, and totals match what was owed{"\n"}
+          3. The stock Osinko holds always equals the sum of everyone's balances
         </Formula>
       </Section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 11. Architecture                                                    */}
+      {/* 11. The contracts                                                   */}
       {/* ------------------------------------------------------------------ */}
       <Section
         id="architecture"
         index="11"
-        title="Architecture and contracts"
-        kicker="Ten contracts, one balance sheet. The frontend, SDK and agent read state only through the interfaces and events listed here."
+        title="The contracts"
+        kicker="Ten pieces of code, one pool of money. The app and the agent only ever read from these."
       >
         <Figure
           n={14}
-          caption="Where the money goes. An oracle declares into the registry; a holder deposits stock into DripCore; DripCore books advances with the vault and opens streams; streams pay the wallet or the reinvestor, which buys stock and credits it back. SplitVault sits on the same balance sheet as an ordinary holder; LendingPool is specified but not yet deployed."
+          caption="Where the money goes. A news feed announces dividends. You deposit stock. Osinko asks the pool to pay early, or opens a payout. Payouts go to your wallet, or buy more stock that goes back into your balance. The split vault deposits stock like anyone else. The lending contract is designed but not live yet."
         >
           <ArchitectureFigure />
         </Figure>
         <Table
-          head={["Contract", "Purpose", "Notes"]}
+          head={["Contract", "Plain job", "Notes"]}
           rows={[
-            ["DividendRegistry", "Calendar and lifecycle: DECLARED → SETTLED | VOIDED", "ORACLE_ROLE declares and voids; SETTLER_ROLE (DripCore) marks settled. 90 day settlement window."],
-            ["DripCore", "Custody, checkpoints, entitlements, routing, settlement, clawback", "The one contract holders call. Pausable. Reentrancy guarded on every token moving entry point."],
-            ["AdvanceVault", "ERC-4626 USDG vault that fronts dividends and earns the fee", "Cash floor, 80% utilisation cap, virtual share offset of 3."],
-            ["StreamEngine", "Lazy per second streams over the ex → pay window", "One write to open, one per claim. Keeper batch claims push money only to holders."],
-            ["Reinvestor", "Claim → swap → credit back, per holder slippage guard", "Oracle quoted, venue executed. Cross token routing deliberately absent."],
-            ["SplitVault", "Series lifecycle, PT/YT issuance, harvest and claim", "A DripCore holder under its own address. One active series per stock token."],
-            ["PrincipalToken · YieldToken", "Per series ERC-20s, mint and burn gated to the vault", "YieldToken checkpoints every transfer for ex date accurate yield."],
-            ["ChainlinkPriceOracle", "8 decimal USD feeds scaled to the 6 decimal USDG quote", "1 hour heartbeat. Fails closed on stale, zero, negative or incomplete rounds."],
-            ["UniswapV3SwapAdapter", "SwapRouter02 execution of the USDG → token leg", "Minimum output bounded against the feed, never the mid leg. Production only."],
-            ["Mocks", "MockStockToken, MockUSDG, MockSwapAdapter, MockPriceOracle", "Local development only, with faucets. Deleted from the production deployment."],
+            ["DividendRegistry", "The list of announced dividends", "The news feed announces and cancels. Pay day can be at most 90 days after the ex date."],
+            ["DripCore", "Holds your stock, keeps the record, works out who is owed what", "The one contract you deal with. Can be paused. Guarded against re-entry tricks."],
+            ["AdvanceVault", "The pool. Pays dividends early and earns the fee", "Always keeps enough cash for every promise. Never lends past 80%."],
+            ["StreamEngine", "Pays dividends out a little every second", "One write to open, one per collect. Helpers can only send money to its owner."],
+            ["Reinvestor", "Buys more stock with a dividend", "Checks the price against Chainlink first. Only ever buys the stock that paid."],
+            ["SplitVault", "Splits a share into a share token and a dividend token", "Deposits stock like any other person. One open split per stock."],
+            ["PrincipalToken · YieldToken", "The share token and the dividend token", "Only the vault can create or destroy them. The dividend token remembers who held it each day."],
+            ["ChainlinkPriceOracle", "Reads live prices", "Refuses prices more than an hour old, or that read zero."],
+            ["UniswapV3SwapAdapter", "Does the actual buying on Uniswap", "The worst price it accepts is set from Chainlink, not from Uniswap."],
+            ["Test stand-ins", "Fake stock, fake USDG, fake exchange, fake prices", "For development only. Not part of the real deployment."],
           ]}
-          mono={[0]}
         />
         <p>
-          The event surface below is what the app, SDK and MCP server index. Signatures are frozen:
-          additive changes are fine, breaking ones are not. The SDK's ABIs and address books are
-          regenerated from the compiled contracts by <code>scripts/sync-abis.mjs</code>.
+          Everything the app shows comes from events the contracts announce. The list below is
+          fixed. New events can be added, but these never change shape, so the app keeps
+          working when the contracts are updated.
         </p>
-        <Code title="Events the frontend depends on" lang="solidity">{`DividendRegistry  DividendDeclared · DividendSettled · DividendVoided · SupportedTokenAdded
+        <Code title="Events the app listens for" lang="solidity">{`DividendRegistry  DividendDeclared · DividendSettled · DividendVoided · SupportedTokenAdded
 DripCore          Deposited · Withdrawn · ModeSet · EntitlementCreated · EntitlementActivated
                   SettledDividendFunded · SettledEntitlementClaimed · Reinvested · ClawedBack
 AdvanceVault      AdvancePaid · AdvanceReleased · AdvanceRepaid · FeeAccrued · LossRecorded
@@ -922,44 +886,42 @@ StreamEngine      StreamStarted · StreamClaimed · StreamClosed
 Reinvestor        Reinvested · SlippageSet · SwapAdapterSet
 SplitVault        SeriesCreated · Split · Merged · PrincipalRedeemed · DividendHarvested
                   YieldClaimed · SplitFeeSet`}</Code>
-        <Code title="Repository map" lang="text">{`contracts/src/            ten protocol contracts + interfaces + mocks + adapters
-contracts/test/           unit + integration suites, one per contract
-contracts/test/invariant/ handler driven invariant suite
-contracts/script/         Deploy.s.sol (writes deployments/<chainid>.json), Seed.s.sol, VerifyUniverse.s.sol
-contracts/listings/       4663.json — the mainnet listing universe, verified onchain before wiring
-scripts/                  deploy-local.sh, sync-abis.mjs
-packages/sdk/             viem SDK: typed reads (DripReader), unsigned write builders, listings
-packages/mcp/             MCP server: 4 read tools, 3 write tools, no keys, stdio
-apps/web/                 Next.js app — landing, dashboard, deposit, borrow, split, vault, calendar, agent, docs
-HANDOFF.md                for the Solidity developer taking this to mainnet`}</Code>
+        <Code title="Where things live in the code" lang="text">{`contracts/src/            the ten contracts, plus test stand-ins
+contracts/test/           tests, one file per contract, plus random "invariant" tests
+contracts/script/         deploy, seed with sample dividends, verify the stock list
+contracts/listings/       4663.json — the list of stocks and their price feeds
+packages/sdk/             a TypeScript kit to read the contracts and build transactions
+packages/mcp/             the agent server: 4 read commands, 3 write commands, no keys
+apps/web/                 this website and app
+HANDOFF.md                notes for the developer taking this live`}</Code>
       </Section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 12. Universe and oracles                                            */}
+      {/* 12. The stocks                                                      */}
       {/* ------------------------------------------------------------------ */}
       <Section
         id="universe"
         index="12"
-        title="Universe and oracles"
-        kicker="A name without a feed is not listed. There is no manual price anywhere in this system."
+        title="The stocks and their prices"
+        kicker="If a stock has no live price feed, it is not listed. Nobody types a price in by hand."
       >
         <p>
-          The listing universe is maintained by hand in <code>contracts/listings/4663.json</code>, verified
-          onchain by <code>VerifyUniverse.s.sol</code> before every wiring change, and exported typed from
-          the SDK as <code>listings</code> so every consumer reads the same table. Sixteen Robinhood stock
-          tokens are recorded; fifteen are enabled. SPCX is present but disabled — never traded, a
-          private company feed — and so never appears anywhere in the app.
+          The list of stocks lives in one file, <code>contracts/listings/4663.json</code>. A script checks
+          every entry against the chain before it is used. Sixteen Robinhood stock tokens are
+          on the list. Fifteen are switched on. The sixteenth, SPCX, is switched off because it
+          has never traded and its price feed is for a private company. You will never see it
+          in the app.
         </p>
         <ol>
-          <li><strong>No feed, no listing.</strong> A token without a Chainlink USD feed on this chain is never added, whatever its volume.</li>
-          <li><strong>Verify onchain before wiring.</strong> Token <code>symbol()</code> and <code>decimals()</code>, feed <code>description()</code>, feed liveness. Hard fail on any mismatch.</li>
-          <li><strong>Quote every route</strong> through QuoterV2 before enabling it; re-check the 3000 fee tier per pool.</li>
-          <li><strong>Path encoding</strong> is <code>WETH → USDG → token</code> at 3000 tiers; the minimum output bounds the final token against the Chainlink price, never the mid leg.</li>
-          <li><strong>Fail closed on stale.</strong> All feeds are 8 decimal USD via <code>latestRoundData()</code>. A round older than the one hour heartbeat, or reporting zero, halts pricing for that name rather than guessing.</li>
-          <li><strong>Test the token itself.</strong> Stock tokens are Robinhood issued trackers: run a live small receive, hold and transfer test from a contract before real capital.</li>
+          <li><strong>No price feed, no listing.</strong> A stock without a live Chainlink price on this chain is never added, no matter how popular it is.</li>
+          <li><strong>Check before adding.</strong> The token's name and decimals, and the feed's name and freshness, are all checked on chain. Any mismatch stops the process.</li>
+          <li><strong>Test the trading route.</strong> Every route to buy a stock is quoted before it is switched on.</li>
+          <li><strong>Check the final price, not a step in the middle.</strong> A buy goes through two hops. The worst acceptable price is set on the stock at the end, against Chainlink.</li>
+          <li><strong>Old prices stop trades.</strong> If a price is more than an hour old, or reads zero, trading in that stock pauses. The system never guesses.</li>
+          <li><strong>Test the token itself.</strong> Before real money, each token is sent, held and moved by a contract once, to make sure it behaves.</li>
         </ol>
         <Table
-          head={["Token", "Name", "Price", "Yield", "Next ex", "Route status"]}
+          head={["Stock", "Company", "Price", "Yield", "Next ex date", "Trading route"]}
           align={[2, 3, 4]}
           rows={universe.map((t) => {
             const view = tokens.find((v) => v.symbol === t.symbol);
@@ -972,73 +934,73 @@ HANDOFF.md                for the Solidity developer taking this to mainnet`}</C
               <span key="p" className="num">{view ? `$${fmt(view.priceUsd)}` : "—"}</span>,
               <span key="y" className="num text-cyan-deep">{view && view.yieldPct > 0 ? `${view.yieldPct.toFixed(2)}%` : "—"}</span>,
               <span key="e" className="num">{view?.nextExDate ? shortDate(view.nextExDate) : view?.payingNow ? "paying now" : "—"}</span>,
-              <span key="l" className="font-mono text-nano uppercase text-faint">{t.liquidity === "live" ? "live" : "quote first"}</span>,
+              <span key="l" className="font-mono text-nano uppercase text-faint">{t.liquidity === "live" ? "proven" : "quote first"}</span>,
             ];
           })}
         />
         <p>
-          <em>live</em> means real protocol buys have executed through the route; <em>quote first</em>{" "}
-          means the route quotes in the right tiers but no buy has been observed, so the adapter
-          quotes through QuoterV2 before every trade. Prices and yields above come from the same
-          source the app is on right now — the reference portfolio, or Chainlink when a wallet is connected.
+          <em>Proven</em> means real purchases have gone through this route. <em>Quote first</em> means
+          the route looks right but no purchase has been made yet, so the price is checked
+          again before every buy. The prices and yields above come from the same place the app
+          is reading right now.
         </p>
         <Shot
           name="universe"
           n={15}
-          alt="The universe table on the landing page: fifteen tokens with price, dividend, yield, next ex date and streaming status, above the three listing rules."
-          caption="The universe, sortable and filterable, on the landing page. Density is the point: a table of every listed name, priced, is the proof that the data exists."
+          alt="The stock table on the landing page: fifteen stocks with price, dividend, yield, next ex date and status, above the three listing rules."
+          caption="The stock table on the landing page. You can sort and filter it. A table of every stock, priced live, is the proof that the data is real."
         />
         <Table
-          head={["Network", "Chain id", "RPC", "Role"]}
+          head={["Network", "Chain id", "Address", "What it is for"]}
           rows={[
-            ["Robinhood Chain", "4663", "https://rpc.mainnet.chain.robinhood.com", "The product's home. The listing universe and the production adapters are written against it."],
-            ["Anvil", "31337", "http://127.0.0.1:8545", "Local development. deploy-local.sh deploys, seeds, fast forwards and syncs ABIs."],
+            ["Robinhood Chain", "4663", "https://rpc.mainnet.chain.robinhood.com", "The real thing. The stock list and price feeds are set up for it."],
+            ["Anvil", "31337", "http://127.0.0.1:8545", "A chain on your own computer, for development."],
           ]}
           mono={[1, 2]}
         />
       </Section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 13. Agent and SDK                                                   */}
+      {/* 13. The agent                                                       */}
       {/* ------------------------------------------------------------------ */}
       <Section
         id="agent"
         index="13"
-        title="Agent and SDK"
-        kicker="One protocol, many clients, identical semantics. The agent can plan anything and sign nothing."
+        title="The agent and the code kit"
+        kicker="Say it in plain words. The agent can plan anything and sign nothing."
       >
         <p>
-          The MCP server exposes the protocol to agents over stdio. Read tools call view functions
-          and answer directly. Write tools <strong>never execute</strong>: they return an unsigned
-          transaction payload for the user's own wallet to review and sign. The server holds no
-          private key, takes no key configuration, and has no code path that could broadcast a
-          transaction. The agent console in the app drives exactly the same intents, with a plan
-          card that states what will change before anything moves.
+          Osinko comes with a small server that AI agents can talk to (it uses a standard called
+          MCP). The agent can ask questions and get answers straight from the chain. When it
+          wants to <em>do</em> something, it does not do it. It hands you a ready-made transaction
+          for your wallet to look at and sign. The server has no keys, takes no keys, and has no
+          code that could send anything on its own. The agent box in the app works the same
+          way, with a plan card you approve before anything moves.
         </p>
         <Table
-          head={["Tool", "Kind", "What it returns"]}
+          head={["Command", "Kind", "What you get back"]}
           rows={[
-            ["get_positions", "read", "Deposited positions for a holder: amount, USDG value, mode."],
-            ["get_streams", "read", "Every stream for a holder: claimable now, total, claimed, window, mode, open or closed."],
-            ["get_calendar", "read", "Every declared dividend with amount per share, ex date, pay date, status, and days paid early."],
-            ["get_vault", "read", "Total assets, utilisation against the cap, advances outstanding, lifetime fees, share price."],
-            ["set_mode", "write", "The unsigned transaction that changes a position's mode. Calldata only."],
-            ["claim_stream", "write", "The unsigned transaction that claims everything a stream has accrued. Only the owner can execute it."],
-            ["deposit", "write", "The unsigned approve and deposit transactions, in order."],
+            ["get_positions", "read", "The stocks someone has in Osinko: how many, what they are worth, and their rule."],
+            ["get_streams", "read", "Every payout for someone: ready to collect, total, already collected, dates, and whether it is still open."],
+            ["get_calendar", "read", "Every announced dividend: per share, ex date, pay date, status, and how many days early Osinko pays."],
+            ["get_vault", "read", "The pool: how much is in it, how much is lent out, how much has been paid early, fees so far."],
+            ["set_mode", "write", "A ready-to-sign transaction that changes a stock's rule. Nothing is sent."],
+            ["claim_stream", "write", "A ready-to-sign transaction that collects a payout. Only its owner can sign it."],
+            ["deposit", "write", "Two ready-to-sign transactions: permission, then the deposit."],
           ]}
           mono={[0, 1]}
         />
         <Code title="Every write comes back in one shape" lang="json">{`{
   "action": "sign_and_send",
   "summary": "Deposit 25 AAPL into Osinko",
-  "note": "These transactions are unsigned. Present them to the user's wallet for review. This server cannot execute them.",
+  "note": "These transactions are unsigned. Show them to the user to review and sign. This server cannot send them.",
   "transactions": [
-    { "to": "0xAAPL…", "data": "0x095ea7b3…", "value": "0x0", "description": "Approve AAPL for the protocol" },
+    { "to": "0xAAPL…", "data": "0x095ea7b3…", "value": "0x0", "description": "Let Osinko take AAPL" },
     { "to": "0xDripCore…", "data": "0x47e7ef24…", "value": "0x0", "description": "Deposit AAPL into Osinko" }
   ]
 }`}</Code>
         <Pair>
-          <Code title="Point an MCP client at it" lang="json">{`{
+          <Code title="Point an agent at it" lang="json">{`{
   "mcpServers": {
     "osinko": {
       "command": "pnpm",
@@ -1050,34 +1012,34 @@ HANDOFF.md                for the Solidity developer taking this to mainnet`}</C
     }
   }
 }`}</Code>
-          <Code title="Read the chain with the SDK" lang="typescript">{`import { createPublicClient, http } from "viem";
+          <Code title="Read the chain from your own code" lang="typescript">{`import { createPublicClient, http } from "viem";
 import { DripReader } from "@drip-markets/sdk";
 
 const client = createPublicClient({ transport: http(RPC) });
-const reader = DripReader.forChain(client, 46630);
+const reader = DripReader.forChain(client, 4663);
 
 const positions = await reader.getPositions(holder);
 const streams   = await reader.getStreams(holder);
 const calendar  = await reader.getCalendar();
 const vault     = await reader.getVaultStats();
-// No backend, no indexer, no cached state. If the chain
-// says it, the app shows it.`}</Code>
+// No server in the middle. If the chain says it,
+// the app shows it.`}</Code>
         </Pair>
         <p>
-          The console's intent parser is deliberately small. It recognises a fixed set of phrasings
-          — set a mode, claim, start an advance, deposit, withdraw, borrow, repay, set slippage,
-          show something — and reports anything else as not recognised rather than guessing, because
-          guessing wrong here means building a transaction the user did not ask for. Three requests
-          are refused with a reason: reinvesting one stock's dividend into another (the protocol
-          buys back the token that paid), running two modes on one position (mode is per token),
-          and “protecting” a portfolio (streams accrue regardless of market hours and nothing is
-          leveraged by default).
+          The agent understands a fixed set of phrasings on purpose: change a rule, collect,
+          get paid early, deposit, take out, borrow, repay, set a price limit, or show
+          something. Anything else it says it did not understand, rather than guess. Guessing
+          wrong would mean building a transaction you did not ask for. Three requests get a
+          polite no with a reason: using one stock's dividend to buy a different stock (it
+          always buys the stock that paid), giving one stock two rules at once, and “protecting”
+          a portfolio (dividends add up whether markets are open or not, and nothing is
+          borrowed unless you chose to).
         </p>
         <Shot
           name="agent"
           n={16}
-          alt="The agent console: a conversation showing parsed intents, tool calls, and the agent's reply about two open streams, with example prompts and a command line."
-          caption="The agent console. Each command becomes visible tool calls, then a plan card. Nothing executes without Confirm; onchain, nothing executes without a signature."
+          alt="The agent box: a conversation showing what the agent understood, the commands it ran, and its reply about two payouts, with example prompts and a text field."
+          caption="The agent. Each command shows what was understood, then a plan card. Nothing happens until you click confirm, and on chain, until you sign."
         />
       </Section>
 
@@ -1088,96 +1050,91 @@ const vault     = await reader.getVaultStats();
         id="using"
         index="14"
         title="Using the app"
-        kicker="Every page renders and every interaction works with no wallet, ever. Connecting one swaps the data source; it never gates the UI."
+        kicker="Every page works with no wallet at all. Connecting one just swaps in your own numbers."
       >
         <p>
-          Before a wallet is connected the app shows a <strong>reference portfolio</strong>: live streams
-          accruing per second, three weeks of history, a funded vault, an open credit line, a split
-          series and a working agent console. Every action mutates one in memory store and every
-          page reads from it, so the numbers agree everywhere. Connecting a wallet against a
-          deployed chain swaps that store for chain reads through the SDK; components never know
-          which one they are on.
+          Before you connect a wallet, the app shows a <strong>sample portfolio</strong>: dividends paying
+          out every second, three weeks of history, a funded pool, an open loan, a split stock
+          and a working agent. Everything you do updates one shared set of numbers, so every
+          page agrees. Connect a wallet and the app reads your real balances from the chain
+          instead. The pages do not know the difference.
         </p>
         <ol>
-          <li><strong>Deposit</strong> (<Link href="/app/deposit">/app/deposit</Link>). Pick a token, type an amount, pick a mode, confirm against the receipt. Eligibility is checkpointed the second it lands; the next ex date after that is yours.</li>
-          <li><strong>Set or change a mode</strong> from the dashboard's holdings table. The change applies to the next dividend, never to one already streaming.</li>
-          <li><strong>Start an advance</strong> when a held stock goes ex. The dashboard surfaces it; one click activates and either pays the wallet or opens the stream.</li>
-          <li><strong>Claim</strong> a stream at any second. In Reinvest mode the button reads “Claim + reinvest” and the claim lands as stock.</li>
-          <li><strong>Provide liquidity</strong> (<Link href="/app/vault">/app/vault</Link>). Deposit USDG, earn the advance fee; withdraw anything not currently fronting a dividend.</li>
-          <li><strong>Borrow</strong> (<Link href="/app/borrow">/app/borrow</Link>). Draw up to 40% of collateral value; watch net carry and the health factor; repay whenever, or let the dividends chip away at it.</li>
-          <li><strong>Split</strong> (<Link href="/app/split">/app/split</Link>). Split spare stock into PT and YT, harvest a dividend that has gone ex, claim your share of the pool, merge back at par.</li>
-          <li><strong>Read the calendar</strong> (<Link href="/app/calendar">/app/calendar</Link>). One column is the product: the days you are paid early, in cyan.</li>
-          <li><strong>Tell the agent</strong> (<Link href="/app/agent">/app/agent</Link>) what to do in a sentence, read the plan, confirm.</li>
+          <li><strong>Deposit</strong> (<Link href="/app/deposit">/app/deposit</Link>). Pick a stock, type how many shares, pick a rule, check the summary, confirm. From that second on, the next ex date counts for you.</li>
+          <li><strong>Change a rule</strong> from the dashboard. It applies to the next dividend, not one already paying out.</li>
+          <li><strong>Get paid early</strong> when a stock you hold passes its ex date. The dashboard shows it. One click and the cash arrives, or the payout starts.</li>
+          <li><strong>Collect</strong> a payout any time. With the Reinvest rule the button says “Collect and buy more”, and you get stock instead of cash.</li>
+          <li><strong>Lend</strong> (<Link href="/app/vault">/app/vault</Link>). Put USDG in the pool and earn the 1% fee. Take out anything not currently out paying a dividend.</li>
+          <li><strong>Borrow</strong> (<Link href="/app/borrow">/app/borrow</Link>). Borrow up to 40% of what your stock is worth. Watch whether your dividends cover the interest. Repay whenever, or let the dividends do it.</li>
+          <li><strong>Split</strong> (<Link href="/app/split">/app/split</Link>). Split spare stock into share tokens and dividend tokens, collect a dividend that has passed its ex date, take your share, or rejoin them.</li>
+          <li><strong>See what is coming</strong> (<Link href="/app/calendar">/app/calendar</Link>). One column is the whole point: how many days early you get paid.</li>
+          <li><strong>Ask the agent</strong> (<Link href="/app/agent">/app/agent</Link>) in a sentence. Read the plan. Confirm.</li>
         </ol>
         <Pair>
           <Shot
             name="calendar"
             n={17}
-            alt="The ex date calendar: tokens, per share amount, ex date, pay date, and a cyan column of days paid early."
-            caption="The calendar. Wait for the issuer and you get the right hand date; use Osinko and you get the left hand one, minus one percent."
+            alt="The payout calendar: stocks, dividend per share, ex date, pay date, and a cyan column of days paid early."
+            caption="The payout calendar. Wait for the company and you are paid on the right-hand date. Use Osinko and you are paid on the left-hand one, minus 1%."
           />
           <Shot
             name="deposit-summary"
             n={18}
-            alt="The deposit order summary: token, deposit amount, value, mode, next ex date and the estimated next dividend, above a confirm button."
-            caption="The receipt a deposit is confirmed against. Nothing lands without the mode, the next ex date and the estimated dividend on the same card."
+            alt="The deposit summary: stock, shares, value, rule, next ex date and the size of the next payout, above a confirm button."
+            caption="The summary you confirm before a deposit. The rule, the next ex date and the size of the next payout are all on one card."
           />
         </Pair>
         <p>
-          <strong>Local run.</strong> Three terminals, or one if you background the first two: a chain, a
-          deploy and seed, the app. The seed funds the vault with two million USDG and declares
-          three dividends — one going ex in a minute, one tomorrow, one next week — so the product
-          is alive from the first click.
+          <strong>Running it yourself.</strong> Three terminals, or one if you background the first two: a
+          chain, a deploy, and the app. The deploy script funds the pool with two million USDG
+          and announces three dividends, so there is something to look at from the first click.
         </p>
-        <Code title="One command local run" lang="bash">{`pnpm install
-pnpm chain                      # anvil, chain id 31337, 2s blocks
-pnpm contracts:deploy:local     # deploys, declares 3 dividends, funds the vault, syncs ABIs
+        <Code title="Run it on your own computer" lang="bash">{`pnpm install
+pnpm chain                      # a local chain
+pnpm contracts:deploy:local     # deploy, announce 3 dividends, fund the pool
 pnpm dev                        # http://localhost:3000
 
-pnpm contracts:test             # 96 tests: unit, fuzz, integration, invariants
+pnpm contracts:test             # 96 tests
 pnpm typecheck                  # sdk + mcp + web`}</Code>
         <p>
-          <strong>Your own deployment.</strong> Deploy and seed with Foundry, sync ABIs into the SDK, and
-          point the app at the chain with five environment variables — chain id, chain name, RPC,
-          explorer name and explorer URL. The address book is written to{" "}
-          <code>contracts/deployments/&lt;chainId&gt;.json</code> and regenerated into the SDK; committing
-          both makes the next deploy fully interactive with no code changes. The README carries the
-          exact commands.
+          <strong>Your own deployment.</strong> Deploy with Foundry, sync the contract details into the
+          kit, and point the app at your chain with five settings: chain id, chain name, RPC
+          address, and the name and address of a block explorer. The README has the exact
+          commands.
         </p>
         <p>
-          Values pasted into a hosting dashboard are sanitised before use — wrapping quotes and
-          stray whitespace once turned the chain id into <code>NaN</code> and took the whole app down —
-          and a set but broken value falls back to Robinhood Chain, which is the sane recovery for
-          a hosted deployment. The vault page right now reports{" "}
-          <span className="num text-ink">${fmt(vault.tvlUsd, 0)}</span> locked at{" "}
-          <span className="num text-ink">{vault.utilizationPct.toFixed(1)}%</span> utilisation of an{" "}
-          <span className="num text-ink">{vault.capPct.toFixed(0)}%</span> cap; that line is live, like every
+          Settings pasted into a hosting dashboard are cleaned up before use. Stray quotes once
+          turned the chain id into gibberish and took the whole app down. A broken value now
+          falls back to Robinhood Chain. And as one last live check, the pool page right now
+          reports <span className="num text-ink">${fmt(vault.tvlUsd, 0)}</span> in the pool with{" "}
+          <span className="num text-ink">{vault.utilizationPct.toFixed(1)}%</span> lent out, against a limit of{" "}
+          <span className="num text-ink">{vault.capPct.toFixed(0)}%</span>. That sentence is live, like every
           other number on this page.
         </p>
       </Section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 15. Glossary                                                        */}
+      {/* 15. Words                                                           */}
       {/* ------------------------------------------------------------------ */}
-      <Section id="glossary" index="15" title="Glossary">
+      <Section id="glossary" index="15" title="Words we use">
         <Terms
           rows={[
-            { term: "Basis point (bps)", def: "One hundredth of a percent. 100 bps = 1%. Every fee and cap in the contracts is stored in basis points." },
-            { term: "Checkpoint", def: "A (timestamp, value) pair written on every balance change, so any past balance can be read back exactly. OpenZeppelin Checkpoints.Trace208." },
-            { term: "Close factor", def: "The maximum share of a borrower's debt a liquidator may repay in one liquidation. 50%." },
-            { term: "ERC-4626", def: "The tokenized vault standard. Deposit an asset, receive shares whose price rises with the vault's earnings. The advance vault implements it." },
-            { term: "Keeper", def: "An automated, permissioned caller that does housekeeping: settles dividends, runs clawback, batch claims for holders, opens split series. It can never redirect funds." },
-            { term: "Obligation", def: "Net USDG the vault still owes to holders who advanced. Always covered by cash." },
-            { term: "Orbit L2", def: "An Arbitrum Orbit rollup. Robinhood Chain is one, so anything written for Arbitrum semantics runs on it." },
-            { term: "Receivable", def: "Gross USDG the issuer will hand over at settlement for advances already booked. Capped at 80% of vault assets." },
-            { term: "Utilisation", def: "receivables ÷ totalAssets. How much of the vault is currently fronting dividends." },
-            { term: "Unsigned transaction", def: "{ to, data, value, description } — calldata built for a wallet to review and sign. Everything the agent and SDK produce for a write." },
+            { term: "Basis point", def: "One hundredth of one percent. 100 basis points is 1%. The code stores every fee and limit this way." },
+            { term: "Chainlink", def: "A service that publishes live prices on chain. Osinko reads stock prices from it and refuses any price more than an hour old." },
+            { term: "Helper bot", def: "An automated program with limited permission to do housekeeping: bring in the company's payment, run cancellations, collect payouts for people, open splits. It can never send money to anyone but its owner." },
+            { term: "Lender", def: "Someone who puts USDG into the pool. They earn the 1% early payment fee and, once borrowing is live, loan interest." },
+            { term: "Pool share", def: "What a lender holds. Its value goes up as the pool earns fees and down if the pool takes a loss." },
+            { term: "Robinhood Chain", def: "The blockchain this runs on. It is built on Arbitrum technology and went public in February 2026." },
+            { term: "Safety score", def: "For a loan: your stock's value × 0.65 ÷ what you owe. Above 1.00 is fine. Below 1.00, some stock can be sold to pay the loan down." },
+            { term: "Stablecoin", def: "A token that is always worth one dollar. USDG is the one Osinko uses." },
+            { term: "Unsigned transaction", def: "A transaction that has been written out but not approved. Your wallet approves it, or nothing happens. It is the only thing the agent can produce." },
+            { term: "Wallet", def: "The app or device that holds your keys. It is the only thing that can move your money." },
           ]}
         />
         <p className="border-t border-line-soft pt-6 text-[13px] text-faint">
-          Nothing here is financial advice. PT and YT, once a market exists, are volatile, market
-          priced tokens and may lose value. Robinhood Chain and stock token names are used to
-          describe what the software does.
+          None of this is financial advice. Share tokens and dividend tokens will move in price
+          once there is a market for them, and can lose value. Robinhood Chain and stock names
+          are used here to describe what the software does.
         </p>
       </Section>
     </DocsShell>

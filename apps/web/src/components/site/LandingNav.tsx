@@ -7,11 +7,11 @@ import { useMagnetic, useScrollY } from "@/components/motion";
 import { activeChain } from "@/lib/chain.config";
 
 const SECTIONS = [
-  { id: "mechanism", label: "Mechanism" },
-  { id: "modules", label: "Modules" },
-  { id: "universe", label: "Universe" },
-  { id: "live", label: "Live" },
-  { id: "thesis", label: "Thesis" },
+  { id: "mechanism", label: "How it works" },
+  { id: "modules", label: "What you can do" },
+  { id: "universe", label: "Stocks" },
+  { id: "live", label: "See it run" },
+  { id: "thesis", label: "Why" },
 ];
 
 /**
@@ -96,7 +96,7 @@ export function LandingNav() {
             href="/docs"
             className="hidden px-2 py-1 font-mono text-micro font-medium uppercase text-faint transition-colors duration-300 hover:text-ink md:inline-block"
           >
-            Docs
+            Guide
           </Link>
           <span className="pill-live hidden lg:inline-flex">
             <span className="beacon" aria-hidden />
@@ -152,7 +152,7 @@ export function LandingNav() {
             onClick={() => setOpen(false)}
             className="flex items-center justify-between px-5 py-4 font-mono text-micro font-medium uppercase text-muted"
           >
-            Docs
+            Guide
             <span className="text-ghost">→</span>
           </Link>
         </nav>

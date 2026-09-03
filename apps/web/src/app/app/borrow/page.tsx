@@ -15,12 +15,12 @@ export default function BorrowPage() {
   return (
     <div className="rise-group space-y-10">
       <header className="max-w-2xl border-b border-line pb-8">
-        <div className="serial">The credit side</div>
+        <div className="serial">Borrow against your stock</div>
         <h1 className="mt-4 display text-display">Borrow</h1>
         <p className="mt-5 text-[16px] leading-relaxed text-muted">
-          Draw USDG against your holdings without selling a share. The dividends your
-          collateral keeps earning are applied against the interest automatically. At a
-          conservative loan, they cover it.
+          Borrow USDG against your stock without selling a share. Your stock keeps earning
+          dividends, and those dividends go toward the interest first. Borrow a modest amount
+          and the loan pays for itself.
         </p>
       </header>
 
@@ -44,23 +44,23 @@ function CreditStrip() {
     <section className="panel" aria-label="Credit line">
       <div className="grid grid-cols-2 gap-px bg-panel-line lg:grid-cols-4">
         <div className="bg-panel p-6">
-          <div className="panel-title">Collateral</div>
+          <div className="panel-title">Your stock is worth</div>
           <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-panel-text">
             <AnimatedNumber value={c.collateralValueUsd} decimals={0} prefix="$" flash="dark" />
           </div>
-          <div className="mt-1 text-[12px] text-panel-muted">Your deposited stocks, at Chainlink prices</div>
+          <div className="mt-1 text-[12px] text-panel-muted">At live prices. This backs the loan.</div>
         </div>
         <div className="bg-panel p-6">
-          <div className="panel-title">Borrowed</div>
+          <div className="panel-title">You borrowed</div>
           <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-panel-text">
             <AnimatedNumber value={c.borrowedUsd} decimals={0} prefix="$" flash="dark" />
           </div>
           <div className="mt-1 text-[12px] text-panel-muted">
-            of ${fmt(c.maxBorrowUsd, 0)} available at {c.maxLtvPct.toFixed(0)}% LTV
+            You can borrow up to ${fmt(c.maxBorrowUsd, 0)}, which is {c.maxLtvPct.toFixed(0)}% of your stock
           </div>
         </div>
         <div className="bg-panel p-6">
-          <div className="panel-title">Health factor</div>
+          <div className="panel-title">Safety score</div>
           <div className={`mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter ${c.healthFactor < 1.2 ? "text-down" : "text-cyan"}`}>
             {Number.isFinite(c.healthFactor) ? <AnimatedNumber value={c.healthFactor} decimals={2} flash="dark" /> : "∞"}
           </div>
@@ -68,16 +68,16 @@ function CreditStrip() {
             <Meter pct={ltvPct} capPct={c.liqThresholdPct} />
           </div>
           <div className="mt-1.5 flex justify-between text-micro font-bold uppercase text-panel-faint">
-            <span className="num">{ltvPct.toFixed(1)}% drawn</span>
-            <span>Liq at {c.liqThresholdPct.toFixed(0)}%</span>
+            <span className="num">{ltvPct.toFixed(1)}% borrowed</span>
+            <span>Danger at {c.liqThresholdPct.toFixed(0)}%</span>
           </div>
         </div>
         <div className="bg-panel p-6">
-          <div className="panel-title">Net carry / year</div>
+          <div className="panel-title">You come out ahead by</div>
           <div className={`mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter ${c.netCarryPerYearUsd >= 0 ? "text-cyan" : "text-down"}`}>
             <AnimatedNumber value={Math.abs(c.netCarryPerYearUsd)} decimals={0} prefix={c.netCarryPerYearUsd >= 0 ? "+$" : "-$"} flash="dark" />
           </div>
-          <div className="mt-1 text-[12px] text-panel-muted">Dividends earned minus interest owed</div>
+          <div className="mt-1 text-[12px] text-panel-muted">Per year. Dividends earned minus interest owed.</div>
         </div>
       </div>
     </section>
@@ -90,19 +90,19 @@ function CarryPanel() {
   return (
     <section className="panel lg:col-span-2" aria-label="Your carry">
       <div className="panel-head">
-        <span className="panel-title">Your carry</span>
+        <span className="panel-title">Does the loan pay for itself?</span>
         <span className="text-micro font-bold uppercase text-panel-faint">Dividends vs interest, live</span>
       </div>
 
       <div className="grid gap-px bg-panel-line sm:grid-cols-2">
         <div className="bg-panel p-6">
-          <div className="panel-title">Dividends your collateral earns</div>
+          <div className="panel-title">Dividends your stock earns</div>
           <div className="num mt-3 text-[26px] font-semibold tracking-tighter text-cyan">
             +${fmt(c.dividendsPerYearUsd)} <span className="text-[13px] text-panel-muted">/ year</span>
           </div>
         </div>
         <div className="bg-panel p-6">
-          <div className="panel-title">Interest your debt costs</div>
+          <div className="panel-title">Interest your loan costs</div>
           <div className="num mt-3 text-[26px] font-semibold tracking-tighter text-panel-text">
             -${fmt(c.interestPerYearUsd)} <span className="text-[13px] text-panel-muted">/ year at {c.borrowAprPct.toFixed(1)}%</span>
           </div>
@@ -110,14 +110,14 @@ function CarryPanel() {
       </div>
 
       <div className="border-t border-panel-line px-6 py-5">
-        <div className="panel-title">Interest serviced by dividends since the loan opened</div>
+        <div className="panel-title">Interest your dividends have paid since you borrowed</div>
         <div className="mt-2 text-[clamp(24px,2.6vw,36px)] font-semibold tracking-tighter text-cyan">
           <LiveCounter base={c.servicedBaseUsd} ratePerSec={c.servicedRatePerSec} decimals={4} prefix="$" />
         </div>
         <p className="mt-3 max-w-lg text-[13px] leading-relaxed text-panel-muted">
-          Every dividend your collateral earns is applied against interest first. While the
-          cyan number above outruns your rate, the loan carries itself: you spend the USDG
-          and keep every share.
+          Every dividend your stock earns goes toward the interest first. As long as the
+          dividends earn more than the interest costs, the loan pays for itself. You spend
+          the USDG and keep every share.
         </p>
       </div>
     </section>
@@ -169,7 +169,7 @@ function BorrowPanel() {
 
       <div className="space-y-4 p-5">
         <div className="flex items-baseline justify-between text-micro font-bold uppercase text-panel-muted">
-          <span>{tab === "borrow" ? "Available to draw" : "Repayable now"}</span>
+          <span>{tab === "borrow" ? "You can borrow" : "You can repay"}</span>
           <span className="num">${fmt(max)}</span>
         </div>
         <div className="flex gap-2">
@@ -192,16 +192,16 @@ function BorrowPanel() {
 
         <dl className="text-[13px]">
           <div className="flex justify-between border-b border-panel-line py-2">
-            <dt className="text-panel-muted">Rate</dt>
-            <dd className="num text-panel-text">{c.borrowAprPct.toFixed(1)}% APR</dd>
+            <dt className="text-panel-muted">Interest per year</dt>
+            <dd className="num text-panel-text">{c.borrowAprPct.toFixed(1)}%</dd>
           </div>
           <div className="flex justify-between border-b border-panel-line py-2">
-            <dt className="text-panel-muted">USDG in wallet</dt>
+            <dt className="text-panel-muted">USDG in your wallet</dt>
             <dd className="num text-panel-text">${fmt(wallet.usdg)}</dd>
           </div>
           <div className="flex justify-between py-2">
-            <dt className="text-panel-muted">Liquidation threshold</dt>
-            <dd className="num text-panel-text">{c.liqThresholdPct.toFixed(0)}% LTV</dd>
+            <dt className="text-panel-muted">Danger line</dt>
+            <dd className="num text-panel-text">{c.liqThresholdPct.toFixed(0)}% of your stock</dd>
           </div>
         </dl>
 
@@ -210,8 +210,9 @@ function BorrowPanel() {
         </button>
         {error ? <p className="text-[12px] text-down">{error}</p> : null}
         <p className="text-[12px] leading-snug text-panel-faint">
-          No fixed term. Repay whenever, or let the dividends chip away at it. Liquidation
-          only if your loan passes {c.liqThresholdPct.toFixed(0)} percent of collateral value.
+          No deadline. Repay whenever you like, or let the dividends chip away at it. Your
+          stock is only ever sold to cover the loan if the loan grows past{" "}
+          {c.liqThresholdPct.toFixed(0)}% of what the stock is worth.
         </p>
       </div>
     </section>
@@ -223,18 +224,18 @@ function HowItWorks() {
   const rows = [
     {
       n: "01",
-      h: "Your stocks stay yours",
-      p: "Collateral sits in the same custody as your dividend positions. It keeps earning, streaming and compounding while it backs the loan.",
+      h: "Your stock stays yours",
+      p: "The stock backing your loan is the same stock earning your dividends. It keeps paying out while it backs the loan. You never sell a share to borrow.",
     },
     {
       n: "02",
       h: "Dividends pay the interest first",
-      p: "Every dividend the collateral earns is applied against interest before anything else. At a conservative LTV, the yield covers the whole rate.",
+      p: "Every dividend your stock earns goes toward the interest before anything else. Borrow a modest amount and the dividends cover the whole cost.",
     },
     {
       n: "03",
-      h: "Priced by Chainlink, bounded by the cap",
-      p: "Collateral is valued by the same Chainlink feeds that price every listing, and the borrow cap sits far below the liquidation line on purpose.",
+      h: "A big safety margin, on purpose",
+      p: "You can borrow up to 40% of what your stock is worth. Your stock is only sold to cover the loan if the loan passes 65%. That gap is there to ride out a bad month.",
     },
   ];
   return (
@@ -255,8 +256,8 @@ function HowItWorks() {
       {holdings.rows.length > 0 ? (
         <div className="border border-panel-line">
           <div className="flex items-baseline justify-between border-b border-panel-line px-5 py-3">
-            <span className="serial">Your collateral</span>
-            <span className="text-micro font-bold uppercase text-panel-muted">Keeps earning while pledged</span>
+            <span className="serial">Stock backing your loan</span>
+            <span className="text-micro font-bold uppercase text-panel-muted">Still earning dividends</span>
           </div>
           <div className="grid grid-cols-2 gap-px bg-panel-3 p-px sm:grid-cols-3 lg:grid-cols-6">
             {holdings.rows.map((h) => (

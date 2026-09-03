@@ -44,25 +44,26 @@ export default function CalendarPage() {
     { key: "all", label: "All upcoming" },
     { key: "week", label: "This week" },
     { key: "month", label: "This month" },
-    { key: "mine", label: "My holdings" },
+    { key: "mine", label: "My stocks" },
   ];
 
   return (
     <div className="rise-group space-y-10">
       <header className="max-w-2xl border-b border-line pb-8">
-        <div className="serial">Registry</div>
-        <h1 className="mt-4 display text-display">Ex date calendar</h1>
+        <div className="serial">Payout calendar</div>
+        <h1 className="mt-4 display text-display">Payout dates</h1>
         <p className="mt-5 text-[16px] leading-relaxed text-muted">
-          The ex date is when the money becomes yours. The pay date is when the issuer gets around
-          to it. Osinko pays you on the first one.
+          The ex date is the day you must own a stock to get its next dividend. The pay date is
+          when the company actually sends the money, usually three weeks later. Osinko pays you
+          on the first one.
         </p>
       </header>
 
       <div className="grid grid-cols-3 gap-px border border-panel-line bg-panel-2">
         {[
-          { label: "Dividends listed", value: String(filtered.length) },
-          { label: "Total per share", value: `$${fmt(totalPerShare)}` },
-          { label: "Average days early", value: String(avgEarly), accent: true },
+          { label: "Dividends coming up", value: String(filtered.length) },
+          { label: "Added up, per share", value: `$${fmt(totalPerShare)}` },
+          { label: "Days early, on average", value: String(avgEarly), accent: true },
         ].map((s) => (
           <div key={s.label} className="bg-paper p-5">
             <div className="eyebrow text-panel-muted">{s.label}</div>
@@ -112,8 +113,8 @@ export default function CalendarPage() {
         {view === "table" ? <CalendarTable rows={filtered} held={held} /> : <MonthGrid rows={filtered} />}
 
         <p className="text-[13px] text-panel-muted">
-          Paid early by is the gap between the ex date and the pay date. Wait for the issuer and you
-          get the right hand date. Use Osinko and you get the left hand one, minus one percent.
+          “Paid early by” is the gap between the two dates. Wait for the company and you get paid on
+          the pay date. Use Osinko and you get paid on the ex date, minus 1%.
         </p>
       </section>
     </div>
@@ -124,8 +125,8 @@ function CalendarTable({ rows, held }: { rows: DividendRow[]; held: Set<string> 
   if (rows.length === 0) {
     return (
       <div className="border border-panel-line bg-panel-2 px-6 py-12 text-center">
-        <p className="text-[15px] font-bold">Nothing in this window</p>
-        <p className="mt-1 text-[13px] text-panel-muted">Try a wider filter.</p>
+        <p className="text-[15px] font-bold">Nothing in this range</p>
+        <p className="mt-1 text-[13px] text-panel-muted">Try a wider one.</p>
       </div>
     );
   }
@@ -135,7 +136,7 @@ function CalendarTable({ rows, held }: { rows: DividendRow[]; held: Set<string> 
       <table className="data-table min-w-[760px] text-[14px]">
         <thead>
           <tr>
-            <th>Token</th>
+            <th>Stock</th>
             <th>Per share</th>
             <th>Ex date</th>
             <th>Pay date</th>

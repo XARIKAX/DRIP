@@ -89,8 +89,8 @@ export function Terms({ rows }: { rows: { term: string; def: ReactNode }[] }) {
       <table className="data-table text-[13.5px]">
         <thead>
           <tr>
-            <th className="w-[30%]">Term</th>
-            <th>Definition</th>
+            <th className="w-[30%]">Word</th>
+            <th>What it means</th>
           </tr>
         </thead>
         <tbody>

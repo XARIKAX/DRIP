@@ -5,22 +5,22 @@ import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://dripmarkets.net"),
-  title: "Osinko — Hold the share. Stream the drip.",
+  title: "Osinko — Split the stock. Trade the dividend. Borrow on both.",
   description:
-    "The Aave of dividends. Stream stock dividends per second, take them early at the ex date, and borrow against your portfolio while the dividends pay the interest. On Robinhood Chain.",
+    "The Aave of stocks. Deposit your stock and get the dividend the day you earn it, a little every second, or as more stock. Borrow against your stock and let the dividends pay the interest. Split a stock and sell the dividend on its own. On Robinhood Chain.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Osinko — The Aave of dividends",
+    title: "Osinko — The Aave of stocks",
     description:
-      "Dividends streamed per second and advanced at the ex date. Credit against your stocks, serviced by the dividends themselves. On Robinhood Chain.",
+      "Get your dividends weeks early. Borrow against your stock and let the dividends pay the interest. Split a stock and sell the dividend on its own. On Robinhood Chain.",
     url: "https://dripmarkets.net",
     siteName: "Osinko",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Osinko — The Aave of dividends",
-    description: "Dividends streamed per second, advanced at the ex date, and credit your dividends repay.",
+    title: "Osinko — The Aave of stocks",
+    description: "Get your dividends weeks early. Borrow against your stock and let the dividends pay the interest. Sell the dividend on its own.",
   },
 };
 

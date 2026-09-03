@@ -102,4 +102,4 @@ export function explorerAddress(address: string): string | null {
 }
 
 /** The line the status rail leads with. The product's own description of itself. */
-export const STATUS_NOTICE = "The Aave of stocks · every number onchain";
+export const STATUS_NOTICE = "The Aave of stocks · your dividends, put to work";
