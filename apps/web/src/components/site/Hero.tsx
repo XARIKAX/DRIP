@@ -81,22 +81,26 @@ export function Hero() {
         <div className="mt-14 grid items-start gap-16 lg:grid-cols-12 lg:gap-12">
           {/* The argument */}
           <div className="min-w-0 lg:col-span-6">
-            {/* Two lines at full scale; the third is a coda and is set as one — at hero
-                size it wrapped, and a wrapped third line unbalances the whole spread.
-                "Paid early" is the specific, ownable claim — it is the exact number the
-                stat rail proves two beats later ("21 days early"), so the headline is
-                not a slogan the page has to go defend, it is a claim the page backs up. */}
+            {/* Three beats, in the product's own vocabulary — share, drip, borrow are
+                the exact nouns the modules below use. Two at full scale; the third is a
+                coda set at its own size, because a third line at hero scale unbalances
+                the spread. This is the reply to a competitor's "split the stock, trade
+                the drip, merge at par": we don't split anything or merge it back — the
+                share just stays put, which is the entire thesis, so the copy says that.
+                Articles cost real width in Bodoni at hero scale: "Hold the share." wraps
+                at 1024px where "Share stays." — same idea, two words shorter — does not;
+                confirmed by rendering both and measuring, not by guessing. */}
             <h1 className="display text-hero">
               <MaskLine>
-                <span>Paid early.</span>
+                <span>Share stays.</span>
               </MaskLine>
               <MaskLine>
-                <span className="italic">Don&apos;t sell.</span>
+                <span className="italic">Drip flows.</span>
               </MaskLine>
             </h1>
             <div className="display-light mt-4 text-[clamp(24px,3vw,44px)] leading-none text-ghost">
               <MaskLine>
-                <span className="whitespace-nowrap italic">Borrow anyway.</span>
+                <span className="whitespace-nowrap italic">Borrow on both.</span>
               </MaskLine>
             </div>
 
