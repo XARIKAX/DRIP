@@ -68,7 +68,7 @@ function TopStrip() {
     const id = setInterval(tick, 1000);
     return () => {
       clearInterval(id);
-      document.title = "Osinko — Share stays. Drip flows.";
+      document.title = "Osinko — Hold the share. Stream the drip.";
     };
   }, [summary.valueUsd, summary.streamRatePerSec]);
 

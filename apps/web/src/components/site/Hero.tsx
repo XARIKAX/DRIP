@@ -80,22 +80,32 @@ export function Hero() {
 
         <div className="mt-14 grid items-start gap-16 lg:grid-cols-12 lg:gap-12">
           {/* The argument */}
-          <div className="min-w-0 lg:col-span-6">
-            {/* Three beats, in the product's own vocabulary — share, drip, borrow are
-                the exact nouns the modules below use. Two at full scale; the third is a
-                coda set at its own size, because a third line at hero scale unbalances
-                the spread. This is the reply to a competitor's "split the stock, trade
-                the drip, merge at par": we don't split anything or merge it back — the
-                share just stays put, which is the entire thesis, so the copy says that.
-                Articles cost real width in Bodoni at hero scale: "Hold the share." wraps
-                at 1024px where "Share stays." — same idea, two words shorter — does not;
-                confirmed by rendering both and measuring, not by guessing. */}
-            <h1 className="display text-hero">
+          <div className="min-w-0 lg:col-span-7">
+            {/* Three beats in the product's own vocabulary, matching a competitor's own
+                cadence line for line — "split the stock / trade the drip / merge at
+                par" — without using their words, since we do the opposite of what that
+                line describes: nothing splits, nothing merges back, the share just
+                stays where it is. First draft of this exact phrasing wrapped to two
+                lines at every desktop width tested (the "verb the noun" pattern with
+                articles is simply wider than the shortened version shipped earlier), so
+                rather than cut the words again the column beside it gave up some of its
+                width instead (7/5 split, was 6/6) — confirmed by rendering and
+                measuring computed line height at 1024 through 1600, not by guessing.
+                One more thing the widened column alone didn't fix: text-hero scales off
+                viewport width (vw), so past 1523px the font keeps growing even though
+                the shell's own max-width caps the column at a fixed pixel size — a
+                widening column can't out-run a font that scales off the wrong
+                dimension. Sized this h1 on its own clamp instead, fit to the measured
+                container width at each breakpoint with real margin (natural text width
+                stayed 7-8% under the box at every one of 1024/1280/1440/1600, not
+                shaving it to the wire) rather than reusing text-hero, which stays as it
+                was for the wide, unconstrained closing headline that still needs it. */}
+            <h1 className="display text-[clamp(52px,7.4vw,112px)] leading-[0.94] tracking-[-0.025em]">
               <MaskLine>
-                <span>Share stays.</span>
+                <span>Hold the share.</span>
               </MaskLine>
               <MaskLine>
-                <span className="italic">Drip flows.</span>
+                <span className="italic">Stream the drip.</span>
               </MaskLine>
             </h1>
             <div className="display-light mt-4 text-[clamp(24px,3vw,44px)] leading-none text-ghost">
@@ -130,7 +140,7 @@ export function Hero() {
           </div>
 
           {/* The document */}
-          <div className="reveal reveal-3 min-w-0 lg:col-span-6">
+          <div className="reveal reveal-3 min-w-0 lg:col-span-5">
             <Certificate
               symbol={lead?.symbol ?? "AAPL"}
               name={lead?.name ?? "Apple Inc"}
@@ -256,7 +266,12 @@ function Certificate({
               shares of {name}
             </div>
 
-            <div className="mt-6 grid grid-cols-3 gap-4 border-t border-line-soft pt-5">
+            {/* auto-fit/minmax rather than a fixed 3-column grid: at the certificate's
+                narrowest width (a 5/12 column at 1024px) three fixed columns forced
+                "150.0000" to overflow its track into "AAPL" with no visible gap between
+                them — this wraps to two rows instead of colliding when the content
+                genuinely doesn't fit three across. */}
+            <div className="mt-6 grid grid-cols-[repeat(auto-fit,minmax(84px,1fr))] gap-x-4 gap-y-5 border-t border-line-soft pt-5">
               <div className="min-w-0">
                 <div className="serial">Quantity</div>
                 <div className="figure mt-2 text-[22px] leading-none">{fmt(shares, 4)}</div>
