@@ -52,91 +52,96 @@ export function Mechanism() {
   const { ref, progress } = useScrollProgress<HTMLDivElement>();
 
   return (
-    // A full-bleed black band on the paper page: the section *is* the data surface,
-    // which is the system's one inversion stated at the largest scale it ever gets.
-    <section id="mechanism" className="panel relative border-x-0">
+    // The dark surface is a framed instrument now, not a full-bleed band: set back
+    // from the page edge on every side so the paper shows around it, the way a screen
+    // sits inset into its own bezel rather than being the whole device.
+    <section id="mechanism" className="relative bg-ground py-10 md:py-16">
       {/* Pinned scene, large screens only. */}
       <div ref={ref} className="hidden lg:block lg:h-[420vh]">
-        <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
-          <div className="pointer-events-none absolute inset-0 grid-bg-dark opacity-60" aria-hidden />
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(760px 420px at 68% 50%, rgba(53,194,219,0.10), transparent 72%)",
-            }}
-            aria-hidden
-          />
+        <div className="shell sticky top-8">
+          <div className="panel-frame flex h-[calc(100vh-64px)] flex-col justify-center">
+            <div className="pointer-events-none absolute inset-0 grid-bg-dark opacity-60" aria-hidden />
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(760px 420px at 68% 50%, rgba(53,194,219,0.12), transparent 72%)",
+              }}
+              aria-hidden
+            />
 
-          {/* Scene and rail are centred as one block. Pinning the rail to the floor of
-              the viewport instead leaves a dead band under a composition this compact. */}
-          <div className="relative flex items-center">
-            <div className="shell grid w-full grid-cols-12 items-center gap-10">
-              <div className="col-span-5 min-w-0">
-                <StageText progress={progress} />
-              </div>
-              <div className="col-span-7 min-w-0">
-                <Scene progress={progress} />
+            {/* Scene and rail are centred as one block. Pinning the rail to the floor of
+                the frame instead leaves a dead band under a composition this compact. */}
+            <div className="relative flex items-center px-8 md:px-14">
+              <div className="grid w-full grid-cols-12 items-center gap-10">
+                <div className="col-span-5 min-w-0">
+                  <StageText progress={progress} />
+                </div>
+                <div className="col-span-7 min-w-0">
+                  <Scene progress={progress} />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* The chapter index, held at the foot of the frame: at any moment you can see
-              where in the argument you are and what is still coming. */}
-          <div className="shell relative mt-16 shrink-0">
-            <div className="grid grid-cols-4 border-t border-panel-line">
-              {STAGES.map((s, i) => {
-                const on = Math.min(Math.floor(progress * STAGES.length), STAGES.length - 1) === i;
-                return (
-                  <div
-                    key={s.index}
-                    className={`min-w-0 border-r border-panel-line px-4 py-4 last:border-r-0 transition-colors duration-500 ${
-                      on ? "text-panel-text" : "text-panel-faint"
-                    }`}
-                  >
-                    <div className="flex items-baseline gap-3">
-                      <span
-                        className={`num text-nano transition-colors duration-500 ${
-                          on ? "text-cyan" : "text-panel-faint"
-                        }`}
-                      >
-                        {s.index}
-                      </span>
-                      <span className="truncate font-mono text-nano uppercase">{s.note}</span>
-                    </div>
+            {/* The chapter index, held at the foot of the frame: at any moment you can
+                see where in the argument you are and what is still coming. */}
+            <div className="relative mt-16 shrink-0 px-8 pb-2 md:px-14">
+              <div className="grid grid-cols-4 border-t border-panel-line">
+                {STAGES.map((s, i) => {
+                  const on = Math.min(Math.floor(progress * STAGES.length), STAGES.length - 1) === i;
+                  return (
                     <div
-                      className={`mt-3 h-px origin-left bg-cyan transition-transform duration-700 ease-osk ${
-                        on ? "scale-x-100" : "scale-x-0"
+                      key={s.index}
+                      className={`min-w-0 border-r border-panel-line px-4 py-4 last:border-r-0 transition-colors duration-500 ${
+                        on ? "text-panel-text" : "text-panel-faint"
                       }`}
-                      aria-hidden
-                    />
-                  </div>
-                );
-              })}
+                    >
+                      <div className="flex items-baseline gap-3">
+                        <span
+                          className={`num text-nano transition-colors duration-500 ${
+                            on ? "text-cyan" : "text-panel-faint"
+                          }`}
+                        >
+                          {s.index}
+                        </span>
+                        <span className="truncate font-mono text-nano uppercase">{s.note}</span>
+                      </div>
+                      <div
+                        className={`mt-3 h-px origin-left bg-cyan transition-transform duration-700 ease-osk ${
+                          on ? "scale-x-100" : "scale-x-0"
+                        }`}
+                        aria-hidden
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Unpinned fallback. */}
+      {/* Unpinned fallback. Same framed instrument, laid out rather than pinned. */}
       <div className="lg:hidden">
-        <div className="shell py-20">
-          <div className="serial">The mechanism</div>
-          <h2 className="mt-4 display text-display text-panel-text">A share that never moves</h2>
-          <div className="mt-10 -mx-2">
-            <Scene progress={1} />
+        <div className="shell">
+          <div className="panel-frame p-6 md:p-10">
+            <div className="serial">The mechanism</div>
+            <h2 className="mt-4 display text-display text-panel-text">A share that never moves</h2>
+            <div className="mt-10 -mx-2">
+              <Scene progress={1} />
+            </div>
+            <ol className="mt-12 space-y-10">
+              {STAGES.map((s) => (
+                <li key={s.index} className="border-t border-panel-line pt-6">
+                  <div className="flex items-baseline gap-4">
+                    <span className="num text-micro font-medium text-cyan">{s.index}</span>
+                    <h3 className="display text-title text-panel-text">{s.title}</h3>
+                  </div>
+                  <p className="mt-3 text-[15px] leading-relaxed text-panel-muted">{s.body}</p>
+                </li>
+              ))}
+            </ol>
           </div>
-          <ol className="mt-12 space-y-10">
-            {STAGES.map((s) => (
-              <li key={s.index} className="border-t border-panel-line pt-6">
-                <div className="flex items-baseline gap-4">
-                  <span className="num text-micro font-medium text-cyan">{s.index}</span>
-                  <h3 className="display text-title text-panel-text">{s.title}</h3>
-                </div>
-                <p className="mt-3 text-[15px] leading-relaxed text-panel-muted">{s.body}</p>
-              </li>
-            ))}
-          </ol>
         </div>
       </div>
     </section>

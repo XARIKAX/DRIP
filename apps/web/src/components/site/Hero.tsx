@@ -82,10 +82,13 @@ export function Hero() {
           {/* The argument */}
           <div className="min-w-0 lg:col-span-6">
             {/* Two lines at full scale; the third is a coda and is set as one — at hero
-                size it wrapped, and a wrapped third line unbalances the whole spread. */}
+                size it wrapped, and a wrapped third line unbalances the whole spread.
+                "Paid early" is the specific, ownable claim — it is the exact number the
+                stat rail proves two beats later ("21 days early"), so the headline is
+                not a slogan the page has to go defend, it is a claim the page backs up. */}
             <h1 className="display text-hero">
               <MaskLine>
-                <span>Get paid.</span>
+                <span>Paid early.</span>
               </MaskLine>
               <MaskLine>
                 <span className="italic">Don&apos;t sell.</span>
@@ -206,12 +209,14 @@ function Certificate({
           className="absolute inset-x-0 bottom-0 h-[22px] w-full text-ink/25"
         />
 
-        {/* The rose engine turns behind the document, clipped by the sheet. */}
+        {/* The rose engine turns behind the number, clipped by the sheet — closer and
+            brighter than a background watermark should be, because this is the one
+            ornament on the page allowed to compete for attention with the type. */}
         <div
-          className="pointer-events-none absolute -right-16 top-16 text-ink/[0.16]"
+          className="pointer-events-none absolute -right-8 top-20 text-ink/[0.24]"
           aria-hidden
         >
-          <Rosette size={280} rings={34} R={100} r={29} a={66} drift={0.8} spin={150} />
+          <Rosette size={330} rings={36} R={100} r={28} a={68} drift={0.78} spin={90} />
         </div>
 
         <div className="relative px-8 py-11 md:px-10 md:py-12">
@@ -232,7 +237,15 @@ function Certificate({
           {/* The holding, stated the way a document states it. */}
           <div className="relative mt-7">
             <div className="serial">This certifies the holding of</div>
-            <div className="display mt-3.5 text-[clamp(36px,4.6vw,52px)] leading-[1]">
+            {/* The one number on the page allowed to shimmer. A foil strip, not a
+                gradient: the base glyphs stay solid ink, embossed with a hairline of
+                light on top and shadow beneath, and a specular band sweeps across them
+                the way a hologram catches the light as a certificate tilts. */}
+            <div
+              className="foil-text display mt-3.5 text-[clamp(36px,4.6vw,52px)] leading-[1]"
+              style={{ textShadow: "0 1px 0 rgba(255,255,255,0.7), 0 -1px 0 rgba(10,10,10,0.14)" }}
+              data-text={inWords(shares)}
+            >
               {inWords(shares)}
             </div>
             <div className="display-light mt-1 text-[20px] italic text-muted">

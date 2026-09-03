@@ -89,7 +89,7 @@ export function Universe() {
           </p>
         </div>
 
-        <div ref={glow} className="reveal reveal-2 panel spotlight mt-14">
+        <div ref={glow} className="reveal reveal-2 panel-frame spotlight mt-14">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-panel-line px-5 py-4">
             <div className="seg-dark">
               {FILTERS.map((f) => (

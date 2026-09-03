@@ -5,7 +5,7 @@ import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://dripmarkets.net"),
-  title: "Osinko — Get paid. Don't sell.",
+  title: "Osinko — Paid early. Don't sell.",
   description:
     "The Aave of dividends. Stream stock dividends per second, take them early at the ex date, and borrow against your portfolio while the dividends pay the interest. On Robinhood Chain.",
   alternates: { canonical: "/" },

@@ -68,7 +68,7 @@ function TopStrip() {
     const id = setInterval(tick, 1000);
     return () => {
       clearInterval(id);
-      document.title = "Osinko — Get paid. Don't sell.";
+      document.title = "Osinko — Paid early. Don't sell.";
     };
   }, [summary.valueUsd, summary.streamRatePerSec]);
 

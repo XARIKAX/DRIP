@@ -19,7 +19,7 @@ a USDG line whose interest the dividends pay.
 5. **Agent** — every action exposed over MCP so an agent can manage the whole strategy
    from natural language, signing nothing itself
 
-**Get paid. Don't sell. Let the dividends do the work.**
+**Paid early. Don't sell. Let the dividends do the work.**
 
 > Testnet build. Every token in here is worthless by design.
 
