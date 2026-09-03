@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 
 /**
- * The primitives. Every surface in the product is built from these five things,
- * which is why the product looks like one product.
+ * The primitives.
+ *
+ * Every surface in the product is built from these six things, which is the reason the
+ * product looks like one product rather than six pages by four people.
  */
 
 export function Card({
@@ -21,7 +23,10 @@ export function Eyebrow({ children, className = "" }: { children: ReactNode; cla
   return <div className={`eyebrow ${className}`}>{children}</div>;
 }
 
-/** A labelled number. The label is small and tracked out; the number does the talking. */
+/**
+ * A labelled number. The label is small, mono and tracked out; the number is large and
+ * does the talking. The ratio between them is the house style in a single component.
+ */
 export function Stat({
   label,
   value,
@@ -34,21 +39,21 @@ export function Stat({
   accent?: boolean;
 }) {
   return (
-    <div>
-      <div className="eyebrow text-muted">{label}</div>
+    <div className="min-w-0">
+      <div className="eyebrow">{label}</div>
       <div
-        className={`num mt-2 text-3xl font-semibold tracking-tighter md:text-4xl ${
-          accent ? "text-cyan-dark" : "text-ink"
+        className={`figure mt-3 text-[clamp(24px,2.6vw,34px)] leading-none ${
+          accent ? "text-cyan" : "text-chalk"
         }`}
       >
         {value}
       </div>
-      {sub ? <div className="mt-1 text-[13px] text-muted">{sub}</div> : null}
+      {sub ? <div className="mt-2 text-[13px] text-dim">{sub}</div> : null}
     </div>
   );
 }
 
-/** Section heading with a rule above it. Used to break long pages. */
+/** Section heading with a drawn rule above it. Used to break long pages. */
 export function SectionHead({
   eyebrow,
   title,
@@ -59,20 +64,23 @@ export function SectionHead({
   action?: ReactNode;
 }) {
   return (
-    <div className="rule-t flex flex-wrap items-end justify-between gap-4 pt-5">
-      <div>
-        <Eyebrow className="text-cyan-dark">{eyebrow}</Eyebrow>
-        <h2 className="mt-2 text-2xl font-extrabold tracking-tighter md:text-3xl">{title}</h2>
+    <div className="border-t border-line-soft pt-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <Eyebrow className="text-cyan">{eyebrow}</Eyebrow>
+          <h2 className="mt-3 text-headline font-black tracking-cut text-chalk">{title}</h2>
+        </div>
+        {action}
       </div>
-      {action}
     </div>
   );
 }
 
+/** Never a spinner: the layout is held while the data settles. */
 export function Loading({ label = "Loading" }: { label?: string }) {
   return (
-    <div className="flex items-center gap-3 border border-faint px-5 py-6 text-muted">
-      <span className="block h-2 w-2 animate-pulse bg-cyan" aria-hidden />
+    <div className="flex items-center gap-3 border border-line-soft bg-surface px-5 py-6">
+      <span className="beacon" aria-hidden />
       <span className="eyebrow">{label}</span>
     </div>
   );
@@ -80,21 +88,21 @@ export function Loading({ label = "Loading" }: { label?: string }) {
 
 export function Empty({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
   return (
-    <div className="border border-faint bg-wash px-6 py-10 text-center">
-      <div className="text-lg font-bold tracking-tight">{title}</div>
-      <p className="mx-auto mt-2 max-w-md text-[14px] text-muted">{body}</p>
-      {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
+    <div className="border border-line-soft bg-surface px-6 py-14 text-center">
+      <div className="text-title font-bold tracking-tighter text-chalk">{title}</div>
+      <p className="mx-auto mt-3 max-w-md text-[14px] leading-relaxed text-dim">{body}</p>
+      {action ? <div className="mt-7 flex justify-center">{action}</div> : null}
     </div>
   );
 }
 
 export function ErrorNote({ message, retry }: { message: string; retry?: () => void }) {
   return (
-    <div className="border border-down px-5 py-4">
+    <div className="border border-down/40 bg-down/5 px-5 py-4">
       <div className="eyebrow text-down">Error</div>
-      <p className="mt-2 text-[14px]">{message}</p>
+      <p className="mt-2 text-[14px] text-chalk">{message}</p>
       {retry ? (
-        <button type="button" className="btn-ghost btn-sm mt-4" onClick={retry}>
+        <button type="button" className="btn-quiet btn-sm mt-4" onClick={retry}>
           Try again
         </button>
       ) : null}

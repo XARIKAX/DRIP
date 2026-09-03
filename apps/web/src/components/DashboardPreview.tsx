@@ -6,9 +6,12 @@ import { useHoldings, usePortfolioSummary, useStreamRows } from "@/lib/data/prov
 import { MODE_LABEL } from "@/lib/data/types";
 
 /**
- * The product shot on the homepage. Not an image: the actual dashboard, framed,
- * running against the same demo data as /app, ticking in real time. What you see
- * is literally what you get one click later.
+ * The product shot, except it is the product.
+ *
+ * Not an image and not a mock-up: the actual dashboard components, bound to the same
+ * demo store as /app, accruing against the wall clock while the page is open. Framed
+ * in a window whose chrome carries the live marker, because the claim being made is
+ * that the numbers are moving — so they had better be moving.
  */
 export function DashboardPreview() {
   const summary = usePortfolioSummary();
@@ -16,70 +19,94 @@ export function DashboardPreview() {
   const holdings = useHoldings();
 
   const open = streams.rows.filter((s) => !s.closed).slice(0, 2);
-  const top = holdings.rows.slice(0, 3);
+  const top = holdings.rows.slice(0, 4);
 
   return (
-    <div className="border border-ink bg-paper p-2 shadow-[8px_8px_0_0_rgba(10,10,10,0.06)]">
+    <div className="float">
       {/* Window chrome */}
-      <div className="flex items-center justify-between border border-ink bg-wash px-4 py-2">
+      <div className="flex items-center justify-between border-b border-line-soft px-5 py-3.5">
         <div className="flex items-center gap-1.5" aria-hidden>
-          <span className="block h-2.5 w-2.5 border border-ink" />
-          <span className="block h-2.5 w-2.5 border border-ink" />
-          <span className="block h-2.5 w-2.5 border border-ink bg-cyan" />
+          <span className="block h-2 w-2 rounded-full bg-surface-4" />
+          <span className="block h-2 w-2 rounded-full bg-surface-4" />
+          <span className="block h-2 w-2 rounded-full bg-cyan/70" />
         </div>
-        <span className="num text-micro font-bold uppercase text-muted">osinko — live demo</span>
-        <span className="tag-accent">Ticking now</span>
+        <span className="font-mono text-nano uppercase tracking-widest text-ghost">
+          osinko · dashboard
+        </span>
+        <span className="flex items-center gap-2 font-mono text-nano uppercase text-cyan">
+          <span className="beacon" aria-hidden />
+          Live
+        </span>
       </div>
 
-      <div className="border-x border-b border-ink bg-panel p-5 text-paper md:p-6">
-        {/* Top strip */}
-        <div className="grid grid-cols-2 gap-px bg-panel-line md:grid-cols-3">
-          <div className="bg-panel p-4">
+      <div className="p-5 md:p-6">
+        {/* Headline figures */}
+        <div className="grid grid-cols-2 gap-px bg-line-soft md:grid-cols-3">
+          <div className="bg-surface p-4">
             <div className="panel-title">Portfolio value</div>
-            <div className="mt-2 text-[clamp(20px,2vw,28px)] font-semibold tracking-tighter">
-              <LiveCounter base={summary.valueUsd} ratePerSec={summary.streamRatePerSec} decimals={2} prefix="$" />
+            <div className="figure mt-2.5 text-[clamp(19px,2vw,26px)] leading-none">
+              <LiveCounter
+                base={summary.valueUsd}
+                ratePerSec={summary.streamRatePerSec}
+                decimals={2}
+                prefix="$"
+              />
             </div>
           </div>
-          <div className="bg-panel p-4">
+          <div className="bg-surface p-4">
             <div className="panel-title">Earned this week</div>
-            <div className="num mt-2 text-[clamp(20px,2vw,28px)] font-semibold tracking-tighter text-cyan">
+            <div className="figure mt-2.5 text-[clamp(19px,2vw,26px)] leading-none text-cyan">
               ${fmt(summary.earnedThisWeekUsd)}
             </div>
           </div>
-          <div className="hidden bg-panel p-4 md:block">
-            <div className="panel-title">Next dividend</div>
-            <div className="num mt-2 text-[clamp(20px,2vw,28px)] font-semibold tracking-tighter">
-              {summary.nextDividend ? `${summary.nextDividend.symbol} · ${shortDate(summary.nextDividend.exDate)}` : "—"}
+          <div className="hidden bg-surface p-4 md:block">
+            <div className="panel-title">Next ex date</div>
+            <div className="figure mt-2.5 text-[clamp(19px,2vw,26px)] leading-none">
+              {summary.nextDividend
+                ? `${summary.nextDividend.symbol} · ${shortDate(summary.nextDividend.exDate)}`
+                : "—"}
             </div>
           </div>
         </div>
 
         {/* Streams */}
-        <div className="mt-4 border border-panel-line">
-          <div className="border-b border-panel-line px-4 py-2.5">
-            <span className="panel-title">Your streams</span>
+        <div className="mt-5 border border-line-soft">
+          <div className="border-b border-line-soft px-4 py-3">
+            <span className="panel-title">Open streams</span>
           </div>
           {open.map((s) => {
-            const pct = Math.min(((Date.now() / 1000 - s.start) / (s.end - s.start)) * 100, 100);
+            const pct = Math.min(
+              Math.max(((Date.now() / 1000 - s.start) / (s.end - s.start)) * 100, 0),
+              100
+            );
             return (
-              <div key={s.id} className="border-b border-panel-line px-4 py-3 last:border-b-0">
+              <div key={s.id} className="border-b border-line-soft px-4 py-3.5 last:border-b-0">
                 <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <TokenMark symbol={s.symbol} dark size={26} />
-                    <div>
-                      <div className="text-[13px] font-extrabold tracking-tight">{s.symbol}</div>
-                      <div className="text-micro font-bold uppercase text-panel-muted">{MODE_LABEL[s.mode]}</div>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <TokenMark symbol={s.symbol} size={28} />
+                    <div className="min-w-0">
+                      <div className="text-[13px] font-bold tracking-tight text-chalk">
+                        {s.symbol}
+                      </div>
+                      <div className="font-mono text-nano uppercase text-ghost">
+                        {MODE_LABEL[s.mode]}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-[18px] font-semibold tracking-tighter text-cyan">
+                  <div className="shrink-0 text-right">
+                    <div className="figure text-[17px] leading-none text-cyan">
                       <StreamTicker stream={s} />
                     </div>
-                    <div className="num text-micro font-bold uppercase text-panel-faint">of ${fmt(s.totalUsd)}</div>
+                    <div className="num mt-1.5 text-nano uppercase text-ghost">
+                      of ${fmt(s.totalUsd)}
+                    </div>
                   </div>
                 </div>
-                <div className="mt-2.5 h-1 w-full bg-panel-line">
-                  <div className="h-1 bg-cyan" style={{ width: `${pct}%` }} />
+                <div className="mt-3 h-px w-full bg-line-soft">
+                  <div
+                    className="h-px bg-cyan transition-[width] duration-1000 ease-linear"
+                    style={{ width: `${pct}%` }}
+                  />
                 </div>
               </div>
             );
@@ -87,19 +114,22 @@ export function DashboardPreview() {
         </div>
 
         {/* Holdings */}
-        <div className="mt-4 hidden border border-panel-line md:block">
-          <div className="border-b border-panel-line px-4 py-2.5">
+        <div className="mt-5 hidden border border-line-soft md:block">
+          <div className="border-b border-line-soft px-4 py-3">
             <span className="panel-title">Holdings</span>
           </div>
           {top.map((h) => (
-            <div key={h.symbol} className="flex items-center justify-between border-b border-panel-line px-4 py-2.5 last:border-b-0">
-              <div className="flex items-center gap-3">
-                <TokenMark symbol={h.symbol} dark size={24} />
-                <span className="text-[13px] font-extrabold tracking-tight">{h.symbol}</span>
+            <div
+              key={h.symbol}
+              className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 border-b border-line-soft px-4 py-3 last:border-b-0"
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <TokenMark symbol={h.symbol} size={24} />
+                <span className="text-[13px] font-bold tracking-tight text-chalk">{h.symbol}</span>
               </div>
-              <span className="num text-[13px] text-panel-muted">{fmt(h.amount, 4)}</span>
-              <span className="num text-[13px] font-medium">${fmt(h.valueUsd)}</span>
-              <span className="text-micro font-bold uppercase text-cyan">{MODE_LABEL[h.mode]}</span>
+              <span className="num text-[12px] text-faint">{fmt(h.amount, 4)}</span>
+              <span className="num text-[12px] text-chalk">${fmt(h.valueUsd)}</span>
+              <span className="font-mono text-nano uppercase text-cyan">{MODE_LABEL[h.mode]}</span>
             </div>
           ))}
         </div>

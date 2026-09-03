@@ -1,7 +1,7 @@
 "use client";
 
 import "@rainbow-me/rainbowkit/styles.css";
-import { RainbowKitProvider, getDefaultConfig, lightTheme } from "@rainbow-me/rainbowkit";
+import { RainbowKitProvider, darkTheme, getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
 import { useState, type ReactNode } from "react";
@@ -26,12 +26,22 @@ const wagmiConfig = getDefaultConfig({
   ssr: false,
 });
 
-const rainbowTheme = lightTheme({
-  accentColor: "#35C2DB",
-  accentColorForeground: "#0A0A0A",
-  borderRadius: "none",
-  fontStack: "system",
-});
+/** The connect modal has to belong to the same product as the page behind it. */
+const rainbowTheme = {
+  ...darkTheme({
+    accentColor: "#35C2DB",
+    accentColorForeground: "#04060A",
+    borderRadius: "none",
+    fontStack: "system",
+  }),
+};
+
+rainbowTheme.colors.modalBackground = "#0B0E11";
+rainbowTheme.colors.modalBorder = "rgba(255,255,255,0.10)";
+rainbowTheme.colors.profileForeground = "#101418";
+rainbowTheme.colors.connectButtonBackground = "#0B0E11";
+rainbowTheme.colors.connectButtonInnerBackground = "#101418";
+rainbowTheme.fonts.body = "Archivo, Helvetica Neue, Helvetica, Arial, sans-serif";
 
 export default function WalletProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(

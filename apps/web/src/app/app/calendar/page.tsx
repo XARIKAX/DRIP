@@ -49,24 +49,24 @@ export default function CalendarPage() {
 
   return (
     <div className="rise-group space-y-10">
-      <header className="max-w-2xl">
-        <div className="eyebrow text-cyan-dark">Registry</div>
-        <h1 className="mt-2 text-headline font-extrabold">Ex date calendar</h1>
-        <p className="mt-4 text-[15px] leading-relaxed text-ink/80">
+      <header className="max-w-2xl border-b border-line-soft pb-8">
+        <div className="eyebrow">Registry</div>
+        <h1 className="mt-4 text-display font-black tracking-cut text-lit">Ex date calendar</h1>
+        <p className="mt-5 text-[16px] leading-relaxed text-dim">
           The ex date is when the money becomes yours. The pay date is when the issuer gets around
           to it. Osinko pays you on the first one.
         </p>
       </header>
 
-      <div className="grid grid-cols-3 gap-px border border-ink bg-ink">
+      <div className="grid grid-cols-3 gap-px border border-line bg-surface-2">
         {[
           { label: "Dividends listed", value: String(filtered.length) },
           { label: "Total per share", value: `$${fmt(totalPerShare)}` },
           { label: "Average days early", value: String(avgEarly), accent: true },
         ].map((s) => (
-          <div key={s.label} className="bg-paper p-5">
-            <div className="eyebrow text-muted">{s.label}</div>
-            <div className={`num mt-2 text-3xl font-semibold tracking-tighter ${s.accent ? "text-cyan-dark" : ""}`}>
+          <div key={s.label} className="bg-void p-5">
+            <div className="eyebrow text-dim">{s.label}</div>
+            <div className={`num mt-2 text-3xl font-semibold tracking-tighter ${s.accent ? "text-cyan" : ""}`}>
               {s.value}
             </div>
           </div>
@@ -83,22 +83,24 @@ export default function CalendarPage() {
                 aria-pressed={filter === f.key}
                 onClick={() => setFilter(f.key)}
                 className={`border px-3 py-1.5 text-micro font-bold uppercase transition-colors ${
-                  filter === f.key ? "border-ink bg-ink text-paper" : "border-hairline hover:border-ink"
+                  filter === f.key
+                    ? "border-cyan bg-cyan text-void-deep"
+                    : "border-line-soft text-faint hover:border-line hover:text-chalk"
                 }`}
               >
                 {f.label}
               </button>
             ))}
           </div>
-          <div className="inline-flex border border-ink" role="group" aria-label="View">
+          <div className="inline-flex border border-line" role="group" aria-label="View">
             {(["table", "month"] as View[]).map((v, i) => (
               <button
                 key={v}
                 type="button"
                 aria-pressed={view === v}
                 onClick={() => setView(v)}
-                className={`px-3 py-1.5 text-micro font-bold uppercase ${i > 0 ? "border-l border-ink" : ""} ${
-                  view === v ? "bg-ink text-paper" : "bg-paper hover:bg-cyan"
+                className={`px-3 py-1.5 text-micro font-bold uppercase ${i > 0 ? "border-l border-line" : ""} ${
+                  view === v ? "bg-cyan text-void-deep" : "bg-transparent text-faint hover:text-chalk"
                 }`}
               >
                 {v === "table" ? "Table" : "Month"}
@@ -109,7 +111,7 @@ export default function CalendarPage() {
 
         {view === "table" ? <CalendarTable rows={filtered} held={held} /> : <MonthGrid rows={filtered} />}
 
-        <p className="text-[13px] text-muted">
+        <p className="text-[13px] text-dim">
           Paid early by is the gap between the ex date and the pay date. Wait for the issuer and you
           get the right hand date. Use Osinko and you get the left hand one, minus one percent.
         </p>
@@ -121,15 +123,15 @@ export default function CalendarPage() {
 function CalendarTable({ rows, held }: { rows: DividendRow[]; held: Set<string> }) {
   if (rows.length === 0) {
     return (
-      <div className="border border-faint bg-wash px-6 py-12 text-center">
+      <div className="border border-line-soft bg-surface-2 px-6 py-12 text-center">
         <p className="text-[15px] font-bold">Nothing in this window</p>
-        <p className="mt-1 text-[13px] text-muted">Try a wider filter.</p>
+        <p className="mt-1 text-[13px] text-dim">Try a wider filter.</p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto border border-ink">
+    <div className="overflow-x-auto border border-line">
       <table className="data-table min-w-[760px] text-[14px]">
         <thead>
           <tr>
@@ -137,13 +139,13 @@ function CalendarTable({ rows, held }: { rows: DividendRow[]; held: Set<string> 
             <th>Per share</th>
             <th>Ex date</th>
             <th>Pay date</th>
-            <th className="text-cyan-dark">Paid early by</th>
+            <th className="text-cyan">Paid early by</th>
             <th aria-label="Actions" />
           </tr>
         </thead>
         <tbody>
           {rows.map((d) => (
-            <tr key={d.id} className="group transition-colors hover:bg-wash">
+            <tr key={d.id} className="group transition-colors hover:bg-surface-2">
               <td>
                 <div className="flex items-center gap-3">
                   <TokenMark symbol={d.symbol} size={28} />
@@ -154,11 +156,11 @@ function CalendarTable({ rows, held }: { rows: DividendRow[]; held: Set<string> 
               <td className="num font-semibold">${fmt(d.perShare)}</td>
               <td className="num">
                 {shortDate(d.exDate)}
-                <span className="ml-2 text-micro font-bold uppercase text-muted">{relativeTime(d.exDate)}</span>
+                <span className="ml-2 text-micro font-bold uppercase text-dim">{relativeTime(d.exDate)}</span>
               </td>
-              <td className="num text-muted">{shortDate(d.payDate)}</td>
+              <td className="num text-dim">{shortDate(d.payDate)}</td>
               <td>
-                <span className="num text-[17px] font-extrabold text-cyan-dark">{d.daysEarly} days</span>
+                <span className="num text-[17px] font-extrabold text-cyan">{d.daysEarly} days</span>
               </td>
               <td className="text-right">
                 <Link
@@ -198,30 +200,30 @@ function MonthGrid({ rows }: { rows: DividendRow[] }) {
   const monthName = today.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
   return (
-    <div className="border border-ink">
-      <div className="flex items-baseline justify-between border-b border-ink px-4 py-3">
+    <div className="border border-line">
+      <div className="flex items-baseline justify-between border-b border-line px-4 py-3">
         <span className="text-[15px] font-extrabold tracking-tight">{monthName}</span>
-        <span className="text-micro font-bold uppercase text-muted">Ex dates this month</span>
+        <span className="text-micro font-bold uppercase text-dim">Ex dates this month</span>
       </div>
-      <div className="grid grid-cols-7 gap-px bg-faint p-px">
+      <div className="grid grid-cols-7 gap-px bg-surface-3 p-px">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-          <div key={d} className="bg-paper px-2 py-1.5 text-center text-micro font-bold uppercase text-muted">
+          <div key={d} className="bg-void px-2 py-1.5 text-center text-micro font-bold uppercase text-dim">
             {d}
           </div>
         ))}
         {Array.from({ length: leadBlanks }).map((_, i) => (
-          <div key={`b${i}`} className="min-h-[72px] bg-wash" />
+          <div key={`b${i}`} className="min-h-[72px] bg-surface-2" />
         ))}
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1;
           const events = byDay.get(day) ?? [];
           const isToday = day === today.getDate();
           return (
-            <div key={day} className={`min-h-[72px] bg-paper p-1.5 ${isToday ? "outline outline-1 outline-cyan-dark" : ""}`}>
-              <div className={`num text-[11px] ${isToday ? "font-bold text-cyan-dark" : "text-muted"}`}>{day}</div>
+            <div key={day} className={`min-h-[72px] bg-void p-1.5 ${isToday ? "outline outline-1 outline-cyan" : ""}`}>
+              <div className={`num text-[11px] ${isToday ? "font-bold text-cyan" : "text-dim"}`}>{day}</div>
               <div className="mt-1 space-y-1">
                 {events.map((e) => (
-                  <div key={e.id} className="bg-cyan px-1.5 py-0.5 text-[11px] font-bold tracking-tight text-ink">
+                  <div key={e.id} className="bg-cyan px-1.5 py-0.5 text-[11px] font-bold tracking-tight text-chalk">
                     {e.symbol} <span className="num">${fmt(e.perShare)}</span>
                   </div>
                 ))}

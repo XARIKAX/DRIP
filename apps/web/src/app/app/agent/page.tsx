@@ -364,12 +364,12 @@ export default function AgentPage() {
 
   return (
     <div className="rise-group space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <div className="eyebrow text-cyan-dark">Module 04</div>
-          <h1 className="mt-2 text-headline font-extrabold">Agent console</h1>
+      <header className="flex flex-wrap items-end justify-between gap-6 border-b border-line-soft pb-8">
+        <div className="min-w-0">
+          <div className="eyebrow">Module 05</div>
+          <h1 className="mt-4 text-display font-black tracking-cut text-lit">Agent console</h1>
         </div>
-        <p className="max-w-sm text-[13px] text-muted">
+        <p className="max-w-sm text-[13px] text-dim">
           The same six tools are exposed over MCP, so an external agent drives exactly what this console drives.
         </p>
       </header>
@@ -377,21 +377,21 @@ export default function AgentPage() {
       <section className="panel flex flex-col" aria-label="Agent console">
         <div className="panel-head">
           <span className="panel-title">osinko · agent</span>
-          <span className="num text-micro font-bold uppercase text-panel-faint">{source === "demo" ? "demo session" : "chain session"}</span>
+          <span className="num text-micro font-bold uppercase text-ghost">{source === "demo" ? "demo session" : "chain session"}</span>
         </div>
 
         <div ref={logRef} className="dark-scroll min-h-[280px] flex-1 space-y-5 overflow-y-auto px-5 py-5" style={{ maxHeight: 560 }}>
           {messages.map((m) =>
             m.role === "user" ? (
               <div key={m.id} className="flex justify-end">
-                <div className="max-w-[85%] border border-panel-edge bg-panel-2 px-4 py-2.5">
-                  <span className="num text-[13px] text-paper">{m.text}</span>
+                <div className="max-w-[85%] border border-line bg-surface-2 px-4 py-2.5">
+                  <span className="num text-[13px] text-chalk">{m.text}</span>
                 </div>
               </div>
             ) : (
               <div key={m.id} className="max-w-[92%] space-y-2.5">
                 {m.toolLines?.map((line, i) => (
-                  <div key={i} className="num text-[12px] text-panel-faint">
+                  <div key={i} className="num text-[12px] text-ghost">
                     <span className="text-cyan">▸</span> {line}
                   </div>
                 ))}
@@ -410,14 +410,14 @@ export default function AgentPage() {
           )}
         </div>
 
-        <div className="border-t border-panel-line p-4">
+        <div className="border-t border-line-soft p-4">
           <div className="mb-3 flex flex-wrap gap-2">
             {EXAMPLE_PROMPTS.slice(0, 6).map((p) => (
               <button
                 key={p}
                 type="button"
                 onClick={() => send(p)}
-                className="border border-panel-edge px-2.5 py-1 text-[12px] text-panel-muted transition-colors hover:border-cyan hover:text-cyan"
+                className="border border-line px-2.5 py-1 text-[12px] text-faint transition-colors hover:border-cyan hover:text-cyan"
               >
                 {p}
               </button>
@@ -434,7 +434,7 @@ export default function AgentPage() {
               ❯
             </span>
             <input
-              className="num w-full border border-panel-edge bg-panel-2 px-3 py-2.5 text-[14px] text-paper outline-none placeholder:text-panel-faint focus:border-cyan"
+              className="num w-full border border-line bg-surface-2 px-3 py-2.5 text-[14px] text-chalk outline-none placeholder:text-ghost focus:border-cyan"
               placeholder="reinvest all my MSFT dividends"
               aria-label="Agent command"
               value={input}
@@ -444,7 +444,7 @@ export default function AgentPage() {
               Run
             </button>
           </form>
-          <p className="mt-3 text-[11px] text-panel-faint">
+          <p className="mt-3 text-[11px] text-ghost">
             Agent actions always require your confirmation, and on chain your signature. Nothing auto executes.
           </p>
         </div>
@@ -473,7 +473,7 @@ function TypeText({ text }: { text: string }) {
     return () => clearInterval(id);
   }, [text, reduced]);
 
-  return <p className="whitespace-pre-line text-[14px] leading-relaxed text-paper">{text.slice(0, shown)}</p>;
+  return <p className="whitespace-pre-line text-[14px] leading-relaxed text-chalk">{text.slice(0, shown)}</p>;
 }
 
 function PlanCard({
@@ -490,31 +490,31 @@ function PlanCard({
   onDismiss: () => void;
 }) {
   return (
-    <div className="border border-panel-edge bg-panel-2">
-      <div className="flex items-center justify-between border-b border-panel-line px-4 py-2.5">
-        <span className="text-[13px] font-extrabold tracking-tight text-paper">{plan.title}</span>
-        <span className="text-micro font-bold uppercase text-panel-faint">
+    <div className="border border-line bg-surface-2">
+      <div className="flex items-center justify-between border-b border-line-soft px-4 py-2.5">
+        <span className="text-[13px] font-extrabold tracking-tight text-chalk">{plan.title}</span>
+        <span className="text-micro font-bold uppercase text-ghost">
           {state === "done" ? "Executed" : state === "dismissed" ? "Dismissed" : "Plan"}
         </span>
       </div>
       <dl className="px-4 py-2">
         {plan.rows.map((r, i) => (
-          <div key={i} className="flex items-baseline justify-between gap-4 border-b border-panel-line py-2 last:border-b-0">
-            <dt className="text-micro font-bold uppercase text-panel-muted">{r.label}</dt>
-            <dd className="num text-right text-[13px] text-paper">{r.value}</dd>
+          <div key={i} className="flex items-baseline justify-between gap-4 border-b border-line-soft py-2 last:border-b-0">
+            <dt className="text-micro font-bold uppercase text-faint">{r.label}</dt>
+            <dd className="num text-right text-[13px] text-chalk">{r.value}</dd>
           </div>
         ))}
       </dl>
-      <p className="px-4 pb-3 text-[12px] leading-snug text-panel-muted">{plan.effect}</p>
+      <p className="px-4 pb-3 text-[12px] leading-snug text-faint">{plan.effect}</p>
       {state === "done" && result ? (
-        <p className="border-t border-panel-line px-4 py-3 text-[13px] text-cyan">{result}</p>
+        <p className="border-t border-line-soft px-4 py-3 text-[13px] text-cyan">{result}</p>
       ) : null}
       {state === "proposed" && plan.confirmLabel ? (
-        <div className="flex gap-2 border-t border-panel-line p-3">
+        <div className="flex gap-2 border-t border-line-soft p-3">
           <button type="button" className="btn-accent btn-sm" onClick={onConfirm}>
             {plan.confirmLabel}
           </button>
-          <button type="button" className="border border-panel-edge px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-panel-muted hover:text-paper" onClick={onDismiss}>
+          <button type="button" className="border border-line px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-faint hover:text-chalk" onClick={onDismiss}>
             Dismiss
           </button>
         </div>

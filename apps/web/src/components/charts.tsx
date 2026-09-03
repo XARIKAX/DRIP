@@ -3,9 +3,12 @@
 import { useId } from "react";
 
 /**
- * Every chart in the product is an inline SVG built from the same data the tables
- * show. No chart library, no external assets, nothing that cannot draw itself in
- * under a millisecond. Lines draw left to right on first view; fills fade in after.
+ * Every chart in the product is an inline SVG built from the same data the tables show.
+ * No chart library, no external assets, nothing that cannot draw itself in under a
+ * millisecond. Lines draw left to right on first view; fills follow.
+ *
+ * On a dark canvas the accent carries direction, so a rising series is cyan and only a
+ * falling one takes the red — colour is used to say something, not to decorate.
  */
 
 function toPath(points: number[], w: number, h: number, pad = 2): { line: string; area: string } {
@@ -22,13 +25,12 @@ function toPath(points: number[], w: number, h: number, pad = 2): { line: string
   return { line, area };
 }
 
-/** 60 point inline sparkline for table rows. */
+/** Inline sparkline for table rows. */
 export function Sparkline({
   points,
   width = 96,
   height = 26,
   up,
-  dark = false,
 }: {
   points: number[];
   width?: number;
@@ -37,7 +39,7 @@ export function Sparkline({
   dark?: boolean;
 }) {
   const { line } = toPath(points, width, height);
-  const stroke = up ? (dark ? "#35C2DB" : "#0E8A5F") : "#C0392B";
+  const stroke = up ? "#35C2DB" : "#FF6B6B";
   return (
     <svg
       width={width}
@@ -47,7 +49,14 @@ export function Sparkline({
       className="block"
       role="presentation"
     >
-      <path d={line} fill="none" stroke={stroke} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+      <path
+        d={line}
+        fill="none"
+        stroke={stroke}
+        strokeWidth="1.5"
+        vectorEffect="non-scaling-stroke"
+        opacity={up ? 1 : 0.9}
+      />
     </svg>
   );
 }
@@ -59,7 +68,6 @@ export function AreaChart({
   labelLeft,
   labelRight,
   formatValue = (v: number) => v.toFixed(1),
-  dark = true,
 }: {
   points: number[];
   height?: number;
@@ -73,33 +81,37 @@ export function AreaChart({
   const { line, area } = toPath(points, w, height, 4);
   const min = Math.min(...points);
   const max = Math.max(...points);
-  const axis = dark ? "#4A5058" : "#6B6B6B";
-  const grid = dark ? "#15181B" : "#E5E5E5";
 
   return (
     <div className="relative">
-      <svg viewBox={`0 0 ${w} ${height}`} className="block w-full" role="img" aria-label="History chart">
+      <svg
+        viewBox={`0 0 ${w} ${height}`}
+        className="block w-full"
+        role="img"
+        aria-label="History chart"
+      >
         <defs>
           <linearGradient id={`fill-${id}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#35C2DB" stopOpacity="0.16" />
-            <stop offset="100%" stopColor="#35C2DB" stopOpacity="0.02" />
+            <stop offset="0%" stopColor="#35C2DB" stopOpacity="0.20" />
+            <stop offset="100%" stopColor="#35C2DB" stopOpacity="0" />
           </linearGradient>
         </defs>
         {[0.25, 0.5, 0.75].map((p) => (
-          <line key={p} x1="0" x2={w} y1={height * p} y2={height * p} stroke={grid} strokeWidth="1" />
+          <line
+            key={p}
+            x1="0"
+            x2={w}
+            y1={height * p}
+            y2={height * p}
+            stroke="rgba(255,255,255,0.055)"
+            strokeWidth="1"
+          />
         ))}
         <path d={area} fill={`url(#fill-${id})`} className="chart-fill" />
-        <path
-          d={line}
-          fill="none"
-          stroke="#35C2DB"
-          strokeWidth="2"
-          pathLength={1}
-          className="draw-line"
-        />
+        <path d={line} fill="none" stroke="#35C2DB" strokeWidth="1.75" pathLength={1} className="draw-line" />
       </svg>
       {(labelLeft || labelRight) && (
-        <div className="mt-2 flex justify-between text-micro font-bold uppercase" style={{ color: axis }}>
+        <div className="mt-3 flex justify-between font-mono text-nano uppercase text-ghost">
           <span>
             {labelLeft} · <span className="num">{formatValue(min)}</span> low
           </span>
@@ -112,22 +124,17 @@ export function AreaChart({
   );
 }
 
-/** Thin horizontal meter with an optional cap marker. Used for utilisation. */
-export function Meter({
-  pct,
-  capPct,
-  dark = true,
-}: {
-  pct: number;
-  capPct?: number;
-  dark?: boolean;
-}) {
+/** Thin horizontal meter with an optional cap marker. Used for utilisation and health. */
+export function Meter({ pct, capPct }: { pct: number; capPct?: number; dark?: boolean }) {
   return (
-    <div className={`relative h-2 w-full ${dark ? "bg-panel-line" : "bg-faint"}`}>
-      <div className="h-2 bg-cyan transition-[width] duration-500 ease-drip" style={{ width: `${Math.min(pct, 100)}%` }} />
+    <div className="relative h-1.5 w-full bg-surface-3">
+      <div
+        className="h-1.5 bg-cyan transition-[width] duration-700 ease-osk"
+        style={{ width: `${Math.min(Math.max(pct, 0), 100)}%` }}
+      />
       {capPct !== undefined ? (
         <div
-          className={`absolute top-[-3px] h-[14px] w-px ${dark ? "bg-paper" : "bg-ink"}`}
+          className="absolute top-[-4px] h-[14px] w-px bg-chalk"
           style={{ left: `${Math.min(capPct, 100)}%` }}
           aria-hidden
         />

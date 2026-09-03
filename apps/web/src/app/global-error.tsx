@@ -21,13 +21,21 @@ export default function GlobalError({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#FFFFFF",
-          color: "#0A0A0A",
+          background: "#06080A",
+          color: "#F3F6F8",
           fontFamily: "Archivo, 'Helvetica Neue', Arial, sans-serif",
         }}
       >
-        <div style={{ maxWidth: 560, width: "100%", border: "1px solid #0A0A0A", padding: 32 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", color: "#1899B1" }}>
+        <div
+          style={{
+            maxWidth: 560,
+            width: "100%",
+            border: "1px solid rgba(255,255,255,0.10)",
+            background: "#0B0E11",
+            padding: 32,
+          }}
+        >
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", color: "#35C2DB" }}>
             SOMETHING BROKE
           </div>
           <h1 style={{ margin: "12px 0 0", fontSize: 30, letterSpacing: "-0.03em" }}>
@@ -37,8 +45,9 @@ export default function GlobalError({
             style={{
               marginTop: 20,
               padding: 16,
-              border: "1px solid #E5E5E5",
-              background: "#F6F6F6",
+              border: "1px solid rgba(255,255,255,0.06)",
+              background: "#101418",
+              color: "#8B949C",
               fontFamily: "'IBM Plex Mono', Menlo, monospace",
               fontSize: 13,
               wordBreak: "break-word",
@@ -52,9 +61,9 @@ export default function GlobalError({
             onClick={reset}
             style={{
               marginTop: 24,
-              border: "1px solid #0A0A0A",
-              background: "#0A0A0A",
-              color: "#FFFFFF",
+              border: "1px solid #35C2DB",
+              background: "#35C2DB",
+              color: "#04060A",
               padding: "12px 20px",
               fontSize: 13,
               fontWeight: 700,

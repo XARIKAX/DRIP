@@ -12,10 +12,10 @@ import { useDataActions, useVaultView, useWalletView } from "@/lib/data/provider
 export default function VaultPage() {
   return (
     <div className="rise-group space-y-10">
-      <header className="max-w-2xl">
-        <div className="eyebrow text-cyan-dark">The other side of early</div>
-        <h1 className="mt-2 text-headline font-extrabold">Advance vault</h1>
-        <p className="mt-4 text-[15px] leading-relaxed text-ink/80">
+      <header className="max-w-2xl border-b border-line-soft pb-8">
+        <div className="eyebrow">The other side of early</div>
+        <h1 className="mt-4 text-display font-black tracking-cut text-lit">Advance vault</h1>
+        <p className="mt-5 text-[16px] leading-relaxed text-dim">
           One pool of USDG funds both sides of Osinko: it fronts dividends weeks early and it
           lends against portfolios. Deposit USDG, earn the advance fee plus borrow interest.
         </p>
@@ -38,51 +38,51 @@ function HeroStats() {
 
   return (
     <section className="panel" aria-label="Vault statistics">
-      <div className="grid grid-cols-2 gap-px bg-panel-line lg:grid-cols-4">
-        <div className="bg-panel p-6">
+      <div className="grid grid-cols-2 gap-px bg-line-soft lg:grid-cols-4">
+        <div className="bg-surface p-6">
           <div className="panel-title">Total value locked</div>
-          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-paper">
+          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-chalk">
             <AnimatedNumber value={vault.tvlUsd} decimals={0} prefix="$" flash="dark" />
           </div>
-          <div className="mt-1 text-[12px] text-panel-muted">USDG from liquidity providers</div>
+          <div className="mt-1 text-[12px] text-faint">USDG from liquidity providers</div>
         </div>
-        <div className="bg-panel p-6">
+        <div className="bg-surface p-6">
           <div className="panel-title">Current APY</div>
           <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-cyan">
             <AnimatedNumber value={vault.apyPct} decimals={2} suffix="%" flash="dark" />
           </div>
-          <div className="mt-1 text-[12px] text-panel-muted">Advance fees plus borrow interest</div>
+          <div className="mt-1 text-[12px] text-faint">Advance fees plus borrow interest</div>
         </div>
-        <div className="bg-panel p-6">
+        <div className="bg-surface p-6">
           <div className="panel-title">Utilisation</div>
-          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-paper">
+          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-chalk">
             <AnimatedNumber value={vault.utilizationPct} decimals={1} suffix="%" flash="dark" />
           </div>
           <div className="mt-3">
             <Meter pct={vault.utilizationPct} capPct={vault.capPct} />
           </div>
-          <div className="mt-1.5 flex justify-between text-micro font-bold uppercase text-panel-faint">
+          <div className="mt-1.5 flex justify-between text-micro font-bold uppercase text-ghost">
             <span>Lent out</span>
             <span>Cap {vault.capPct.toFixed(0)}%</span>
           </div>
         </div>
-        <div className="bg-panel p-6">
+        <div className="bg-surface p-6">
           <div className="panel-title">Advances outstanding</div>
-          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-paper">
+          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-chalk">
             <AnimatedNumber value={vault.advancesOutstandingUsd} decimals={0} prefix="$" flash="dark" />
           </div>
-          <div className="mt-1 text-[12px] text-panel-muted">Owed back by issuers at pay dates</div>
+          <div className="mt-1 text-[12px] text-faint">Owed back by issuers at pay dates</div>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-px border-t border-panel-line bg-panel-line">
+      <div className="grid grid-cols-3 gap-px border-t border-line-soft bg-line-soft">
         {[
           { label: "Free liquidity", value: `$${fmt(vault.freeLiquidityUsd, 0)}` },
           { label: "Fees earned, lifetime", value: `$${fmt(vault.feesEarnedUsd, 0)}` },
           { label: "Share price", value: fmt(vault.sharePrice, 4) },
         ].map((s) => (
-          <div key={s.label} className="bg-panel px-6 py-4">
+          <div key={s.label} className="bg-surface px-6 py-4">
             <div className="panel-title">{s.label}</div>
-            <div className="num mt-1.5 text-[17px] font-medium text-paper">{s.value}</div>
+            <div className="num mt-1.5 text-[17px] font-medium text-chalk">{s.value}</div>
           </div>
         ))}
       </div>
@@ -140,7 +140,7 @@ function LpPanel() {
             aria-selected={tab === t}
             onClick={() => setTab(t)}
             className={`border-b px-4 py-3 text-micro font-bold uppercase transition-colors ${
-              tab === t ? "border-cyan text-cyan" : "border-panel-line text-panel-muted hover:text-paper"
+              tab === t ? "border-cyan text-cyan" : "border-line-soft text-faint hover:text-chalk"
             }`}
           >
             {t}
@@ -149,13 +149,13 @@ function LpPanel() {
       </div>
 
       <div className="space-y-4 p-5">
-        <div className="flex items-baseline justify-between text-micro font-bold uppercase text-panel-muted">
+        <div className="flex items-baseline justify-between text-micro font-bold uppercase text-faint">
           <span>{tab === "deposit" ? "USDG in wallet" : "Withdrawable now"}</span>
           <span className="num">${fmt(max)}</span>
         </div>
         <div className="flex gap-2">
           <input
-            className="num w-full border border-panel-edge bg-panel-2 px-4 py-3 text-[16px] text-paper outline-none placeholder:text-panel-faint focus:border-cyan"
+            className="num w-full border border-line bg-surface-2 px-4 py-3 text-[16px] text-chalk outline-none placeholder:text-ghost focus:border-cyan"
             inputMode="decimal"
             placeholder="0.00"
             aria-label={`USDG to ${tab}`}
@@ -164,7 +164,7 @@ function LpPanel() {
           />
           <button
             type="button"
-            className="border border-panel-edge px-3 text-micro font-bold uppercase text-panel-muted hover:text-paper"
+            className="border border-line px-3 text-micro font-bold uppercase text-faint hover:text-chalk"
             onClick={() => setAmount(max > 0 ? max.toFixed(2) : "")}
           >
             Max
@@ -172,24 +172,24 @@ function LpPanel() {
         </div>
 
         <dl className="text-[13px]">
-          <div className="flex justify-between border-b border-panel-line py-2">
-            <dt className="text-panel-muted">{tab === "deposit" ? "Shares received" : "Shares redeemed"}</dt>
-            <dd className="num text-paper">{fmt(shares, 4)}</dd>
+          <div className="flex justify-between border-b border-line-soft py-2">
+            <dt className="text-faint">{tab === "deposit" ? "Shares received" : "Shares redeemed"}</dt>
+            <dd className="num text-chalk">{fmt(shares, 4)}</dd>
           </div>
-          <div className="flex justify-between border-b border-panel-line py-2">
-            <dt className="text-panel-muted">Your position</dt>
-            <dd className="num text-paper">${fmt(vault.yourAssetsUsd)}</dd>
+          <div className="flex justify-between border-b border-line-soft py-2">
+            <dt className="text-faint">Your position</dt>
+            <dd className="num text-chalk">${fmt(vault.yourAssetsUsd)}</dd>
           </div>
           <div className="flex justify-between py-2">
-            <dt className="text-panel-muted">Your shares</dt>
-            <dd className="num text-paper">{fmt(vault.yourShares, 4)}</dd>
+            <dt className="text-faint">Your shares</dt>
+            <dd className="num text-chalk">{fmt(vault.yourShares, 4)}</dd>
           </div>
         </dl>
 
         <button type="button" className="btn-accent w-full" disabled={!valid || actions.busy} onClick={() => void submit()}>
           {tab === "deposit" ? "Deposit USDG" : "Withdraw USDG"}
         </button>
-        <p className="text-[12px] leading-snug text-panel-faint">
+        <p className="text-[12px] leading-snug text-ghost">
           Capital fronting a dividend is illiquid until the issuer settles. Everything else leaves whenever you ask.
         </p>
       </div>
@@ -217,13 +217,13 @@ function HowItEarns() {
   ];
   return (
     <section aria-label="How the vault earns">
-      <div className="eyebrow text-cyan-dark">How the vault earns</div>
+      <div className="eyebrow text-cyan">How the vault earns</div>
       <div className="mt-4">
         {rows.map((r) => (
           <div key={r.n} className="hairline-t grid gap-2 py-5 md:grid-cols-12 md:gap-6">
-            <div className="num text-micro font-bold text-cyan-dark md:col-span-1">{r.n}</div>
+            <div className="num text-micro font-bold text-cyan md:col-span-1">{r.n}</div>
             <h3 className="text-[17px] font-extrabold tracking-tight md:col-span-4">{r.h}</h3>
-            <p className="text-[14px] leading-relaxed text-muted md:col-span-7">{r.p}</p>
+            <p className="text-[14px] leading-relaxed text-dim md:col-span-7">{r.p}</p>
           </div>
         ))}
       </div>

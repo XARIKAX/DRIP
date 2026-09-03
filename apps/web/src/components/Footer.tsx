@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Wordmark } from "@/components/Wordmark";
+import { Mark } from "@/components/Wordmark";
+import { Reveal } from "@/components/motion";
 
 const COLUMNS = [
   {
@@ -19,50 +20,73 @@ const COLUMNS = [
       { href: "/app/calendar", label: "Dividend registry" },
       { href: "/app/vault", label: "Vault stats" },
       { href: "/app", label: "Your streams" },
+      { href: "/app/borrow", label: "Credit line" },
+    ],
+  },
+  {
+    title: "Network",
+    links: [
+      { href: "/app", label: "Robinhood Chain" },
+      { href: "/app/vault", label: "USDG settlement" },
+      { href: "/app/agent", label: "MCP interface" },
     ],
   },
 ];
 
+/**
+ * The footer.
+ *
+ * Three columns of destinations over a colossal wordmark cut from the background — the
+ * last thing on the page should be the name, at a scale nothing else on the site is
+ * allowed. The legal line sits under its own hairline, in the smallest type we set.
+ */
 export function Footer() {
   return (
-    <footer className="rule-t mt-24 bg-paper">
-      <div className="shell grid gap-10 py-14 md:grid-cols-4">
-        <div className="md:col-span-2">
-          <Wordmark size="lg" />
-          <div className="mt-2 text-micro font-bold uppercase text-muted">
-            $OSINKO · Finnish for dividend
-          </div>
-          <p className="mt-3 max-w-sm text-[14px] text-muted">
-            The Aave of dividends. Streamed per second, advanced at the ex date, and credit
-            your dividends repay. On Robinhood Chain.
+    <footer className="relative mt-band border-t border-line-soft bg-void-deep">
+      <Reveal className="shell grid gap-12 py-20 md:grid-cols-12 md:py-24">
+        <div className="reveal md:col-span-5 lg:col-span-4">
+          <Mark size={30} className="text-chalk" />
+          <p className="mt-7 max-w-xs text-[15px] leading-relaxed text-dim">
+            The Aave of dividends. One deposit streams income per second, advances it at the ex
+            date, and secures a credit line the dividends themselves repay.
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <span className="tag">Testnet</span>
-            <span className="tag">Self custody</span>
-            <span className="tag-accent">Onchain</span>
+          <div className="mt-7 flex flex-wrap gap-2">
+            <span className="pill">Testnet</span>
+            <span className="pill">Self custody</span>
+            <span className="pill-live">Onchain</span>
           </div>
         </div>
 
-        {COLUMNS.map((col) => (
-          <div key={col.title}>
-            <div className="eyebrow text-muted">{col.title}</div>
-            <ul className="mt-4 space-y-2">
-              {col.links.map((link) => (
-                <li key={`${col.title}-${link.label}`}>
-                  <Link href={link.href} className="text-[14px] hover:text-cyan-dark">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        <div className="grid grid-cols-2 gap-10 md:col-span-7 md:grid-cols-3 lg:col-span-7 lg:col-start-6">
+          {COLUMNS.map((col, i) => (
+            <div key={col.title} className={`reveal reveal-${i + 1} min-w-0`}>
+              <div className="eyebrow">{col.title}</div>
+              <ul className="mt-5 space-y-3">
+                {col.links.map((link) => (
+                  <li key={`${col.title}-${link.label}`}>
+                    <Link
+                      href={link.href}
+                      className="text-[14px] text-dim transition-colors duration-300 hover:text-chalk"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </Reveal>
+
+      {/* The name, at the scale it deserves, cut from the background. */}
+      <div className="shell overflow-hidden pb-6" aria-hidden>
+        <div className="text-cut select-none text-colossal font-black leading-[0.78]">OSINKO</div>
       </div>
 
-      <div className="rule-t">
-        <div className="shell flex flex-wrap items-center justify-between gap-3 py-5 text-micro font-bold uppercase text-muted">
-          <span>Testnet build. Tokens have no value.</span>
-          <span>Let the dividends do the work</span>
+      <div className="border-t border-line-soft">
+        <div className="shell flex flex-wrap items-center justify-between gap-3 py-6 font-mono text-nano font-medium uppercase text-ghost">
+          <span>$OSINKO · Finnish for dividend · Testnet build, tokens have no value</span>
+          <span className="text-faint">Let the dividends do the work</span>
         </div>
       </div>
     </footer>

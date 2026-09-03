@@ -5,15 +5,19 @@ import { TickerStrip } from "@/components/TickerStrip";
 import { Footer } from "@/components/Footer";
 import { DemoBanner } from "@/components/DemoBanner";
 
-/** The app shell. Utility bar, nav, ticker, page, footer. Same on every screen. */
+/**
+ * The app shell. Status rail, nav, tape, page, footer — identical on every screen, so
+ * moving between surfaces never feels like moving between products. The grain sits on
+ * the shell rather than the page so it survives every route change.
+ */
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="grain relative min-h-screen bg-void">
       <UtilityBar />
       <SiteNav />
       <TickerStrip />
       <DemoBanner />
-      <main className="shell py-10 md:py-14">{children}</main>
+      <main className="shell relative z-[2] py-12 md:py-16">{children}</main>
       <Footer />
     </div>
   );

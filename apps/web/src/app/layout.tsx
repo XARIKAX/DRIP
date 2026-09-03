@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 import { Providers } from "@/components/providers";
@@ -22,6 +22,12 @@ export const metadata: Metadata = {
     title: "Osinko — The Aave of dividends",
     description: "Dividends streamed per second, advanced at the ex date, and credit your dividends repay.",
   },
+};
+
+/** The browser chrome matches the canvas, so the tab opens black rather than flashing white. */
+export const viewport: Viewport = {
+  themeColor: "#06080A",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

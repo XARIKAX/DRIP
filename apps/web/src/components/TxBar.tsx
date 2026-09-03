@@ -8,7 +8,7 @@ export function TxBar({ state, onDismiss }: { state: TxRunState; onDismiss?: () 
   if (state.status === "idle") return null;
 
   const tone =
-    state.status === "error" ? "border-down" : state.status === "done" ? "border-up" : "border-ink";
+    state.status === "error" ? "border-down" : state.status === "done" ? "border-up" : "border-line";
 
   const label =
     state.status === "error"
@@ -23,7 +23,7 @@ export function TxBar({ state, onDismiss }: { state: TxRunState; onDismiss?: () 
     <div className={`flex flex-wrap items-center justify-between gap-3 border ${tone} px-4 py-3`}>
       <div className="flex items-center gap-3">
         {state.steps > 1 ? (
-          <span className="num text-micro font-bold text-muted">
+          <span className="num text-micro font-bold text-dim">
             {Math.min(state.step + 1, state.steps)}/{state.steps}
           </span>
         ) : null}
@@ -36,7 +36,7 @@ export function TxBar({ state, onDismiss }: { state: TxRunState; onDismiss?: () 
           </a>
         ) : null}
         {onDismiss && (state.status === "done" || state.status === "error") ? (
-          <button type="button" className="text-micro font-bold uppercase text-muted" onClick={onDismiss}>
+          <button type="button" className="text-micro font-bold uppercase text-dim" onClick={onDismiss}>
             Dismiss
           </button>
         ) : null}

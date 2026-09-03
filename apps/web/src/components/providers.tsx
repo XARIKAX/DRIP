@@ -17,11 +17,20 @@ const WalletProviders = dynamic(() => import("@/components/WalletProviders"), {
   loading: () => <BootShell />,
 });
 
-/** What the static HTML contains: the lockup, centered, until the app hydrates. */
+/**
+ * What the static HTML contains: the lockup on the canvas, holding the frame until the
+ * app hydrates. It is the same black as the page that replaces it, so the boot reads as
+ * a fade rather than a flash.
+ */
 function BootShell() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-paper">
-      <Wordmark size="lg" />
+    <div className="flex min-h-screen items-center justify-center bg-void">
+      <div className="flex flex-col items-center gap-6">
+        <Wordmark size="lg" />
+        <span className="font-mono text-nano uppercase tracking-widest text-ghost">
+          Connecting to Robinhood Chain
+        </span>
+      </div>
     </div>
   );
 }
