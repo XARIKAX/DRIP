@@ -1,3 +1,4 @@
+import { ReadProgress } from "@/components/motion";
 import { LandingNav } from "@/components/site/LandingNav";
 import { UtilityBar } from "@/components/UtilityBar";
 import { TickerStrip } from "@/components/TickerStrip";
@@ -18,7 +19,8 @@ import { Footer } from "@/components/Footer";
  */
 export default function HomePage() {
   return (
-    <div className="grain relative min-h-screen bg-void">
+    <div className="grain relative min-h-screen bg-paper">
+      <ReadProgress />
       <UtilityBar />
       <LandingNav />
       <TickerStrip />

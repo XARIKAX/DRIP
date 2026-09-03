@@ -41,10 +41,10 @@ export default function DepositPage() {
 
   return (
     <div className="rise-group space-y-10">
-      <header className="max-w-2xl border-b border-line-soft pb-8">
+      <header className="max-w-2xl border-b border-line pb-8">
         <div className="eyebrow">Custody</div>
         <h1 className="mt-4 text-display font-black tracking-cut text-lit">Deposit stock</h1>
-        <p className="mt-5 text-[16px] leading-relaxed text-dim">
+        <p className="mt-5 text-[16px] leading-relaxed text-muted">
           Only tokens held in Osinko before an ex date are eligible. Deposit once, pick a mode,
           and every dividend after that arrives early, per second, or as more stock.
         </p>
@@ -67,12 +67,12 @@ export default function DepositPage() {
       <div className="grid gap-8 lg:grid-cols-12">
         <div className="space-y-8 lg:col-span-7">
           {/* Step 1: the token */}
-          <section className="card" aria-label="Pick a token">
-            <div className="flex items-baseline justify-between border-b border-line px-5 py-4">
+          <section className="panel" aria-label="Pick a token">
+            <div className="flex items-baseline justify-between border-b border-panel-line px-5 py-4">
               <span className="eyebrow text-cyan">01 — Token</span>
-              <span className="text-micro font-bold uppercase text-dim">Price · yield · next ex</span>
+              <span className="text-micro font-bold uppercase text-panel-muted">Price · yield · next ex</span>
             </div>
-            <div className="grid grid-cols-1 gap-px bg-line-soft sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-px bg-panel-line sm:grid-cols-2">
               {tokens.map((t, i) => {
                 const active = t.symbol === token?.symbol;
                 const spansRow = tokens.length % 2 === 1 && i === tokens.length - 1;
@@ -86,8 +86,8 @@ export default function DepositPage() {
                       spansRow ? "sm:col-span-2" : ""
                     } ${
                       active
-                        ? "bg-surface-3 text-chalk shadow-[inset_2px_0_0_0_#35C2DB]"
-                        : "bg-surface text-dim hover:bg-surface-2"
+                        ? "bg-panel-3 text-panel-text shadow-[inset_2px_0_0_0_#35C2DB]"
+                        : "bg-panel text-panel-muted hover:bg-panel-2"
                     }`}
                   >
                     <TokenMark symbol={t.symbol} dark={active} size={36} />
@@ -96,7 +96,7 @@ export default function DepositPage() {
                         <span className="text-[15px] font-extrabold tracking-tight">{t.symbol}</span>
                         <span className="num text-[13px]">${fmt(t.priceUsd)}</span>
                       </span>
-                      <span className={`mt-0.5 flex items-baseline justify-between gap-2 text-micro font-bold uppercase ${active ? "text-chalk/60" : "text-dim"}`}>
+                      <span className={`mt-0.5 flex items-baseline justify-between gap-2 text-micro font-bold uppercase ${active ? "text-panel-text/60" : "text-panel-muted"}`}>
                         <span>{t.yieldPct.toFixed(2)}% yield</span>
                         <span>{t.nextExDate ? `Ex ${shortDate(t.nextExDate)}` : t.payingNow ? "Paying now" : "Next TBA"}</span>
                       </span>
@@ -108,10 +108,10 @@ export default function DepositPage() {
           </section>
 
           {/* Step 2: the amount */}
-          <section className="card card-pad" aria-label="Amount">
+          <section className="panel card-pad" aria-label="Amount">
             <div className="flex items-baseline justify-between">
               <span className="eyebrow text-cyan">02 — Amount</span>
-              <span className="num text-micro font-bold uppercase text-dim">
+              <span className="num text-micro font-bold uppercase text-panel-muted">
                 Wallet {fmt(walletShares, 4)} {token?.symbol}
               </span>
             </div>
@@ -132,7 +132,7 @@ export default function DepositPage() {
               {tooMuch ? (
                 <span className="text-down">More than this wallet holds.</span>
               ) : (
-                <span className="text-dim">
+                <span className="text-panel-muted">
                   ≈ <AnimatedNumber value={shares * (token?.priceUsd ?? 0)} prefix="$" flash="light" /> USD
                 </span>
               )}
@@ -145,11 +145,11 @@ export default function DepositPage() {
           </section>
 
           {/* Step 3: the mode */}
-          <section className="card" aria-label="Pick a mode">
-            <div className="border-b border-line px-5 py-4">
+          <section className="panel" aria-label="Pick a mode">
+            <div className="border-b border-panel-line px-5 py-4">
               <span className="eyebrow text-cyan">03 — What happens to the dividends</span>
             </div>
-            <div className="grid grid-cols-1 gap-px bg-line-soft md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-px bg-panel-line md:grid-cols-3">
               {MODES.map((m) => {
                 const active = mode === m;
                 return (
@@ -160,15 +160,15 @@ export default function DepositPage() {
                     onClick={() => setMode(m)}
                     className={`p-5 text-left transition-colors duration-300 ${
                       active
-                        ? "bg-surface-3 text-chalk shadow-[inset_0_2px_0_0_#35C2DB]"
-                        : "bg-surface text-dim hover:bg-surface-2"
+                        ? "bg-panel-3 text-panel-text shadow-[inset_0_2px_0_0_#35C2DB]"
+                        : "bg-panel text-panel-muted hover:bg-panel-2"
                     }`}
                   >
                     <span className="flex items-center justify-between">
                       <span className="text-[15px] font-extrabold tracking-tight">{MODE_LABEL[m]}</span>
-                      <span className={`block h-3 w-3 border ${active ? "border-cyan bg-cyan" : "border-line"}`} aria-hidden />
+                      <span className={`block h-3 w-3 border ${active ? "border-cyan bg-cyan" : "border-panel-line"}`} aria-hidden />
                     </span>
-                    <span className={`mt-2 block text-[13px] leading-snug ${active ? "text-chalk/70" : "text-dim"}`}>
+                    <span className={`mt-2 block text-[13px] leading-snug ${active ? "text-panel-text/70" : "text-panel-muted"}`}>
                       {MODE_SENTENCE[m]}
                     </span>
                   </button>
@@ -183,7 +183,7 @@ export default function DepositPage() {
           <section className="panel" aria-label="Summary">
             <div className="panel-head">
               <span className="panel-title">Order summary</span>
-              <span className="text-micro font-bold uppercase text-ghost">Review before it lands</span>
+              <span className="text-micro font-bold uppercase text-panel-faint">Review before it lands</span>
             </div>
             <dl className="px-5 py-4 text-[14px]">
               {[
@@ -194,9 +194,9 @@ export default function DepositPage() {
                 ["Next ex date", token?.nextExDate ? `${shortDate(token.nextExDate)} (${relativeTime(token.nextExDate)})` : "None scheduled"],
                 ["Est. next dividend", token ? `$${fmt(shares * token.perShare)}` : "—"],
               ].map(([k, v]) => (
-                <div key={k} className="flex items-baseline justify-between border-b border-line-soft py-2.5 last:border-b-0">
-                  <dt className="text-micro font-bold uppercase text-faint">{k}</dt>
-                  <dd className="num text-right font-medium text-chalk">{v}</dd>
+                <div key={k} className="flex items-baseline justify-between border-b border-panel-line py-2.5 last:border-b-0">
+                  <dt className="text-micro font-bold uppercase text-panel-muted">{k}</dt>
+                  <dd className="num text-right font-medium text-panel-text">{v}</dd>
                 </div>
               ))}
             </dl>
@@ -204,7 +204,7 @@ export default function DepositPage() {
               <button type="button" className="btn-accent w-full" disabled={!valid || actions.busy} onClick={() => void submit()}>
                 Confirm deposit
               </button>
-              <p className="mt-3 text-[12px] text-ghost">
+              <p className="mt-3 text-[12px] text-panel-faint">
                 Eligibility is checkpointed the second the deposit lands. The next ex date after that is yours.
               </p>
             </div>
@@ -225,8 +225,8 @@ function WithdrawPanel() {
   if (holdings.rows.length === 0) return null;
 
   return (
-    <section className="card" aria-label="Withdraw">
-      <div className="border-b border-line px-5 py-4">
+    <section className="panel" aria-label="Withdraw">
+      <div className="border-b border-panel-line px-5 py-4">
         <span className="eyebrow">Withdraw</span>
       </div>
       <div className="px-5 py-4">
@@ -238,7 +238,7 @@ function WithdrawPanel() {
             <div key={h.symbol} className="hairline-b py-3 last:border-b-0">
               <div className="flex items-baseline justify-between">
                 <span className="text-[14px] font-extrabold tracking-tight">{h.symbol}</span>
-                <span className="num text-[12px] text-dim">{fmt(h.amount, 4)} on deposit</span>
+                <span className="num text-[12px] text-panel-muted">{fmt(h.amount, 4)} on deposit</span>
               </div>
               <div className="mt-2 flex gap-2">
                 <input

@@ -1,19 +1,25 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Osinko design system — "the terminal, made beautiful".
+ * Osinko design system — light chrome, dark data.
  *
- * The canvas is near black and stays near black. Structure is drawn with hairlines,
- * never with boxes-inside-boxes. One accent, cyan, used as punctuation: a live value,
+ * The canvas is white paper and stays white paper. Structure is drawn with hairlines
+ * rather than boxes inside boxes. One accent, cyan, used as punctuation: a live value,
  * a state change, a single call to action per screen. Colour is never decoration.
  *
- * Geometry has exactly one rule and one exception. The rule: rectangles are structure,
- * so every panel, field, table and button is square cornered. The exception: pills are
+ * The one inversion is deliberate and load bearing: anything that is *data* — a stat
+ * strip, the dashboard, the mechanism scene, a numbers band — runs on a near-black
+ * panel. That contrast between paper chrome and black data is the product's signature,
+ * and it is the reason a screen full of numbers reads as an instrument rather than a
+ * marketing page.
+ *
+ * Geometry has one rule and one exception. The rule: rectangles are structure, so every
+ * panel, field, table and button is square cornered. The exception: pills are
  * annotations — status chips, floating labels, metadata. Nothing else is ever rounded.
  *
- * Type has three roles and they never trade places. Archivo sets display and UI.
- * IBM Plex Mono sets every number, label and machine-readable string. Newsreader italic
- * appears only as an editorial kicker, at most once per section.
+ * Type has three roles that never trade places. Archivo sets display and UI. IBM Plex
+ * Mono sets every number, label and machine-readable string. Newsreader italic appears
+ * only as an editorial kicker, at most once per section.
  */
 const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
@@ -25,40 +31,45 @@ const config: Config = {
     },
     extend: {
       colors: {
-        // Canvas and surfaces. Each step is a lift of light, not a border.
-        void: "#06080A",
-        "void-deep": "#030405",
-        surface: "#0B0E11",
-        "surface-2": "#101418",
-        "surface-3": "#161B20",
-        "surface-4": "#1D242A",
+        // Paper. Each step is a wash, never a border.
+        paper: "#FFFFFF",
+        "paper-2": "#F6F7F8",
+        "paper-3": "#EDEFF1",
+        "paper-4": "#E3E6E9",
+
+        // Ink.
+        ink: "#0A0A0A",
+        muted: "#5B6167",
+        faint: "#8A9098",
+        ghost: "#B7BCC1",
 
         // Structure. Hairlines only — the system has no heavy borders.
-        line: "rgba(255, 255, 255, 0.10)",
-        "line-soft": "rgba(255, 255, 255, 0.055)",
-        "line-strong": "rgba(255, 255, 255, 0.20)",
+        line: "rgba(10, 10, 10, 0.11)",
+        "line-soft": "rgba(10, 10, 10, 0.06)",
+        "line-strong": "rgba(10, 10, 10, 0.24)",
 
-        // Type.
-        chalk: "#F3F6F8",
-        dim: "#8B949C",
-        faint: "#5A636B",
-        ghost: "#39424A",
-
-        // The accent.
+        // The accent. Bright cyan fills and rules; the deeper steps carry small type,
+        // because #35C2DB on white is a 1.9:1 contrast and unreadable at label sizes.
         cyan: {
           DEFAULT: "#35C2DB",
           bright: "#5FD9EE",
           dark: "#1899B1",
-          deep: "#0E5C6C",
+          deep: "#0B6B7E",
           soft: "rgba(53, 194, 219, 0.10)",
         },
 
-        up: "#2ED3A7",
-        down: "#FF6B6B",
+        // Dark data surfaces.
+        panel: "#0A0C0F",
+        "panel-2": "#101419",
+        "panel-3": "#171C22",
+        "panel-line": "rgba(255, 255, 255, 0.09)",
+        "panel-edge": "rgba(255, 255, 255, 0.18)",
+        "panel-text": "#F3F6F8",
+        "panel-muted": "#8B949C",
+        "panel-faint": "#5A636B",
 
-        // Retained so the legacy light chrome (OG image, print) still resolves.
-        ink: "#0A0A0A",
-        paper: "#FFFFFF",
+        up: "#0E8A5F",
+        down: "#C0392B",
       },
       fontFamily: {
         sans: ["Archivo", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
@@ -81,8 +92,6 @@ const config: Config = {
         // Display. The scale is deliberately violent: 10:1 against the labels.
         colossal: ["clamp(64px, 12vw, 190px)", { lineHeight: "0.82", letterSpacing: "-0.055em" }],
         hero: ["clamp(46px, 7.6vw, 112px)", { lineHeight: "0.88", letterSpacing: "-0.05em" }],
-        // The step below the hero. Kept short of the hero on purpose: a section head
-        // that competes with the headline flattens the page into one loud plane.
         display: ["clamp(33px, 4.3vw, 62px)", { lineHeight: "0.95", letterSpacing: "-0.04em" }],
         headline: ["clamp(26px, 3.2vw, 42px)", { lineHeight: "1.0", letterSpacing: "-0.03em" }],
         title: ["clamp(19px, 1.8vw, 24px)", { lineHeight: "1.15", letterSpacing: "-0.02em" }],
@@ -93,7 +102,7 @@ const config: Config = {
       },
       spacing: {
         gut: "clamp(20px, 4vw, 56px)",
-        band: "clamp(80px, 12vw, 180px)",
+        band: "clamp(80px, 12vw, 176px)",
       },
       transitionTimingFunction: {
         // The house curve. Everything decelerates; nothing bounces.
@@ -101,10 +110,12 @@ const config: Config = {
         swift: "cubic-bezier(0.4, 0, 0.2, 1)",
       },
       boxShadow: {
-        // Light falls from above and is always cold.
-        lift: "0 1px 0 0 rgba(255,255,255,0.06) inset, 0 24px 60px -20px rgba(0,0,0,0.85)",
-        float: "0 1px 0 0 rgba(255,255,255,0.08) inset, 0 40px 90px -24px rgba(0,0,0,0.9)",
-        glow: "0 0 0 1px rgba(53,194,219,0.35), 0 0 40px -6px rgba(53,194,219,0.45)",
+        // Light falls from above. On paper the shadow is the only depth cue there is,
+        // so it is soft, cool and never larger than the object casting it.
+        lift: "0 1px 2px rgba(10,10,10,0.04), 0 8px 24px -12px rgba(10,10,10,0.10)",
+        float: "0 1px 2px rgba(10,10,10,0.05), 0 24px 60px -24px rgba(10,10,10,0.22)",
+        panel: "0 1px 0 0 rgba(255,255,255,0.06) inset, 0 30px 70px -28px rgba(10,10,10,0.45)",
+        glow: "0 0 0 1px rgba(53,194,219,0.45), 0 0 30px -6px rgba(53,194,219,0.40)",
       },
       zIndex: {
         chrome: "60",

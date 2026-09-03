@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Reveal } from "@/components/motion";
+import { CountUp, Reveal } from "@/components/motion";
 import { DashboardPreview } from "@/components/DashboardPreview";
 
 const NUMBERS = [
-  { value: "80", unit: "%", label: "Maximum vault utilisation", note: "Contract enforced ceiling" },
-  { value: "40", unit: "%", label: "Maximum loan to value", note: "Liquidation sits at 65" },
-  { value: "1", unit: "%", label: "Advance fee to the vault", note: "The only fee in the system" },
-  { value: "0", unit: "", label: "Days between claim and reinvest", note: "Same transaction, same block" },
+  { value: 80, unit: "%", label: "Maximum vault utilisation", note: "Contract enforced ceiling" },
+  { value: 40, unit: "%", label: "Maximum loan to value", note: "Liquidation sits at 65" },
+  { value: 1, unit: "%", label: "Advance fee to the vault", note: "The only fee in the system" },
+  { value: 0, unit: "", label: "Days between claim and reinvest", note: "Same transaction, same block" },
 ];
 
 /**
@@ -30,7 +30,7 @@ export function Live() {
             <h2 className="reveal reveal-1 mt-5 text-display font-black tracking-cut text-lit">
               Not a screenshot
             </h2>
-            <p className="reveal reveal-2 mt-7 max-w-md text-[16px] leading-[1.7] text-dim">
+            <p className="reveal reveal-2 mt-7 max-w-md text-[16px] leading-[1.7] text-muted">
               The panel beside this is the actual dashboard, bound to the same demo portfolio
               you get when you open the app, accruing per second while you read. No wallet is
               required to use any of it — connect one only when you want the numbers to be
@@ -66,15 +66,15 @@ export function Live() {
               {NUMBERS.map((n, i) => (
                 <div key={n.label} className={`reveal reveal-${i + 1} min-w-0`}>
                   <div className="flex items-baseline">
-                    <span className="figure text-[clamp(44px,5.5vw,76px)] leading-[0.85] text-chalk">
-                      {n.value}
+                    <span className="figure text-[clamp(44px,5.5vw,76px)] leading-[0.85] text-ink">
+                      <CountUp to={n.value} />
                     </span>
-                    <span className="figure text-[clamp(20px,2.4vw,30px)] leading-none text-cyan">
+                    <span className="figure text-[clamp(20px,2.4vw,30px)] leading-none text-cyan-dark">
                       {n.unit}
                     </span>
                   </div>
                   <div className="mt-5 border-t border-line-soft pt-4">
-                    <div className="text-[13px] font-semibold leading-snug text-chalk">
+                    <div className="text-[13px] font-semibold leading-snug text-ink">
                       {n.label}
                     </div>
                     <div className="mt-1.5 font-mono text-nano uppercase text-ghost">{n.note}</div>

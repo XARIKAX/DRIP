@@ -7,9 +7,9 @@ import { fmt, shortDate } from "@/components/live";
  * The dividend tape.
  *
  * Every declared dividend in the universe, in ex-date order, running continuously.
- * It pauses when hovered so a reader can actually read it, and it fades at both edges
- * rather than being cut by a border — the tape should feel like it continues past the
- * screen, because it does. Same data source as the calendar, so the numbers agree.
+ * Each cell carries a cyan left edge — the only ornament in the chrome — and the tape
+ * pauses on hover so a reader can actually read it. Same data source as the calendar,
+ * so the numbers here agree with the numbers there.
  */
 export function TickerStrip() {
   const { rows } = useCalendarRows();
@@ -24,7 +24,7 @@ export function TickerStrip() {
       symbol: d.symbol,
       amount: fmt(d.perShare, 2),
       note: shortDate(d.exDate),
-      yield: priceOf.get(d.symbol) ? ((d.perShare * 4) / priceOf.get(d.symbol)!) * 100 : null,
+      price: priceOf.get(d.symbol),
     }));
 
   if (cells.length === 0) return null;
@@ -32,26 +32,28 @@ export function TickerStrip() {
 
   return (
     <div
-      className="marquee-host relative overflow-hidden border-y border-line-soft bg-void-deep"
+      className="marquee-host relative overflow-hidden border-b border-line bg-paper-2"
       aria-hidden
     >
       <div className="flex w-max marquee">
         {doubled.map((cell, i) => (
-          <div key={`${cell.symbol}-${i}`} className="ticker-cell border-r border-line-soft">
-            <span className="text-[12px] font-bold tracking-tight text-chalk">{cell.symbol}</span>
-            <span className="num text-[12px] font-medium text-cyan">${cell.amount}</span>
-            <span className="font-mono text-nano font-medium uppercase text-ghost">EX {cell.note}</span>
+          <div key={`${cell.symbol}-${i}`} className="ticker-cell border-l-2 border-cyan">
+            <span className="text-[12px] font-bold tracking-tight text-ink">{cell.symbol}</span>
+            <span className="num text-[12px] font-medium text-cyan-deep">${cell.amount}</span>
+            <span className="font-mono text-nano font-medium uppercase text-faint">
+              EX {cell.note}
+            </span>
           </div>
         ))}
       </div>
 
       {/* The tape runs out of the frame rather than stopping at it. */}
       <div
-        className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-void-deep to-transparent"
+        className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-paper-2 to-transparent"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-void-deep to-transparent"
+        className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-paper-2 to-transparent"
         aria-hidden
       />
     </div>

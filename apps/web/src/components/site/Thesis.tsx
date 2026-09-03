@@ -38,8 +38,8 @@ export function Thesis() {
               some of it back. The promise still works. The plumbing does not.
             </p>
 
-            <div className="reveal reveal-2 mt-10 max-w-prose space-y-6 text-[16.5px] leading-[1.75] text-dim">
-              <p className="first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:font-sans first-letter:text-[62px] first-letter:font-black first-letter:leading-[0.8] first-letter:tracking-cut first-letter:text-chalk">
+            <div className="reveal reveal-2 mt-10 max-w-prose space-y-6 text-[16.5px] leading-[1.75] text-muted">
+              <p className="first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:font-sans first-letter:text-[62px] first-letter:font-black first-letter:leading-[0.8] first-letter:tracking-cut first-letter:text-ink">
                 The shares go ex on a Monday. The company pays on a Friday three weeks later.
                 In between, the money exists, is owed to you, and does nothing at all. It sits
                 in a ledger at a transfer agent while you wait for it. That gap is not a law of
@@ -62,12 +62,12 @@ export function Thesis() {
 
             {/* The pull quote. Once per essay, and it has to earn it. */}
             <blockquote className="reveal reveal-3 my-12 border-l border-cyan py-2 pl-7">
-              <p className="font-editorial text-[24px] italic leading-[1.35] text-chalk md:text-[30px]">
+              <p className="font-editorial text-[24px] italic leading-[1.35] text-ink md:text-[30px]">
                 Put the stock token onchain and every one of those limits becomes optional.
               </p>
             </blockquote>
 
-            <div className="reveal reveal-3 max-w-prose space-y-6 text-[16.5px] leading-[1.75] text-dim">
+            <div className="reveal reveal-3 max-w-prose space-y-6 text-[16.5px] leading-[1.75] text-muted">
               <p>
                 The ex date snapshot is a checkpoint. The three week wait is a credit problem,
                 and credit is exactly what a vault is for. The lump is an accounting choice, and
@@ -78,14 +78,14 @@ export function Thesis() {
               <p>
                 And once the stock lives onchain it can finally do what collateral has always
                 done on Wall Street: back a loan. This is where the name comes from.{" "}
-                <span className="text-chalk">Aave</span> is Finnish for ghost;{" "}
-                <span className="text-chalk">osinko</span> is Finnish for dividend. Osinko is
+                <span className="text-ink">Aave</span> is Finnish for ghost;{" "}
+                <span className="text-ink">osinko</span> is Finnish for dividend. Osinko is
                 the Aave of dividends — one deposit that streams income and secures credit at
                 once, where the dividends the collateral keeps earning are applied straight
                 against the interest. The oldest private banking product there is, minus the
                 private banker.
               </p>
-              <p className="text-[19px] font-semibold leading-relaxed text-chalk">
+              <p className="text-[19px] font-semibold leading-relaxed text-ink">
                 Nothing here is a new financial instrument. It is the same dividend, finally put
                 to work.
               </p>
@@ -96,7 +96,7 @@ export function Thesis() {
           <aside className="min-w-0 space-y-6 lg:col-span-5">
             <div className="reveal reveal-1 card card-pad lg:sticky lg:top-28">
               <div className="eyebrow">Side by side</div>
-              <h3 className="mt-4 text-title font-bold tracking-tighter text-chalk">
+              <h3 className="mt-4 text-title font-bold tracking-tighter text-ink">
                 The same name, a different machine
               </h3>
 
@@ -114,7 +114,7 @@ export function Thesis() {
                     </div>
                     <div className="min-w-0 border-l border-line-soft pl-4">
                       <div className="font-mono text-nano uppercase text-cyan">Osinko</div>
-                      <div className="mt-2 text-[13px] font-medium leading-snug text-chalk">
+                      <div className="mt-2 text-[13px] font-medium leading-snug text-ink">
                         {row.us}
                       </div>
                     </div>
@@ -162,7 +162,7 @@ export function Closing() {
             <span className="text-lit">Let the dividends</span>
           </span>
           <span className="mask-line">
-            <span className="text-chalk">do the work.</span>
+            <span className="text-ink">do the work.</span>
           </span>
         </h2>
 

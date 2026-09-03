@@ -1,7 +1,7 @@
 "use client";
 
 import "@rainbow-me/rainbowkit/styles.css";
-import { RainbowKitProvider, darkTheme, getDefaultConfig } from "@rainbow-me/rainbowkit";
+import { RainbowKitProvider, getDefaultConfig, lightTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
 import { useState, type ReactNode } from "react";
@@ -26,21 +26,25 @@ const wagmiConfig = getDefaultConfig({
   ssr: false,
 });
 
-/** The connect modal has to belong to the same product as the page behind it. */
+/**
+ * The connect modal has to belong to the same product as the page behind it: paper
+ * chrome, square corners, ink type and the one cyan accent.
+ */
 const rainbowTheme = {
-  ...darkTheme({
-    accentColor: "#35C2DB",
-    accentColorForeground: "#04060A",
+  ...lightTheme({
+    accentColor: "#0A0A0A",
+    accentColorForeground: "#FFFFFF",
     borderRadius: "none",
     fontStack: "system",
   }),
 };
 
-rainbowTheme.colors.modalBackground = "#0B0E11";
-rainbowTheme.colors.modalBorder = "rgba(255,255,255,0.10)";
-rainbowTheme.colors.profileForeground = "#101418";
-rainbowTheme.colors.connectButtonBackground = "#0B0E11";
-rainbowTheme.colors.connectButtonInnerBackground = "#101418";
+rainbowTheme.colors.modalBackground = "#FFFFFF";
+rainbowTheme.colors.modalBorder = "rgba(10,10,10,0.11)";
+rainbowTheme.colors.profileForeground = "#F6F7F8";
+rainbowTheme.colors.connectButtonBackground = "#0A0A0A";
+rainbowTheme.colors.connectButtonInnerBackground = "#0A0A0A";
+rainbowTheme.colors.connectButtonText = "#FFFFFF";
 rainbowTheme.fonts.body = "Archivo, Helvetica Neue, Helvetica, Arial, sans-serif";
 
 export default function WalletProviders({ children }: { children: ReactNode }) {

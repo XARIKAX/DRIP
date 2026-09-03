@@ -11,12 +11,12 @@
 
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
 
-    --void: #06080a;
-    --surface: #0b0e11;
+    --paper: #ffffff;
+    --ink: #0a0a0a;
     --cyan: #35c2db;
-    --line: rgba(255, 255, 255, 0.1);
+    --line: rgba(10, 10, 10, 0.11);
 
     /* Every stagger in the product is a multiple of this. */
     --beat: 70ms;
@@ -31,11 +31,14 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     scroll-behavior: smooth;
-    background: var(--void);
+    background: var(--paper);
+    /* The marquee is a `w-max` row inside an overflow-hidden parent; sub-pixel
+       rounding on its transform still leaked a 1px horizontal scroll at 360px. */
+    overflow-x: clip;
   }
 
   body {
-    @apply bg-void font-sans text-chalk;
+    @apply bg-paper font-sans text-ink;
     font-weight: 500;
     font-synthesis-weight: none;
     overflow-x: clip;
@@ -49,11 +52,11 @@
 
   ::selection {
     background: #35c2db;
-    color: #04060a;
+    color: #0a0a0a;
   }
 
   :focus-visible {
-    outline: 2px solid #35c2db;
+    outline: 2px solid #1899b1;
     outline-offset: 3px;
   }
 
@@ -62,20 +65,19 @@
     outline: none;
   }
 
-  /* The whole product shares one scrollbar. */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: #06080a;
+    background: #f6f7f8;
   }
   ::-webkit-scrollbar-thumb {
-    background: #1d242a;
-    border: 3px solid #06080a;
+    background: #d3d7db;
+    border: 3px solid #f6f7f8;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #35c2db;
+    background: #1899b1;
   }
 }
 
@@ -94,24 +96,18 @@
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(255, 255, 255, 0.13) 12%,
-      rgba(255, 255, 255, 0.13) 88%,
+      rgba(10, 10, 10, 0.16) 12%,
+      rgba(10, 10, 10, 0.16) 88%,
       transparent
     );
   }
 
-  .rule-t {
-    @apply border-t border-line-soft;
-  }
-
-  .rule-b {
-    @apply border-b border-line-soft;
-  }
-
+  .rule-t,
   .hairline-t {
     @apply border-t border-line-soft;
   }
 
+  .rule-b,
   .hairline-b {
     @apply border-b border-line-soft;
   }
@@ -127,50 +123,64 @@
 
   /* Editorial kicker. Once per section, never twice. */
   .kicker {
-    @apply font-editorial text-[15px] italic text-dim md:text-[17px];
+    @apply font-editorial text-[15px] italic text-muted md:text-[17px];
   }
 
-  .panel-title {
-    @apply font-mono text-micro font-medium uppercase text-faint;
-  }
-
-  /* A number that carries a section. Optical sizing is manual on purpose. */
+  /* A number that carries a section. */
   .figure {
-    @apply num font-semibold tracking-cut text-chalk;
+    @apply num font-semibold tracking-cut text-ink;
   }
 
   /* ------------------------------------------------------------------ */
-  /* Surfaces                                                            */
+  /* Paper surfaces                                                      */
   /* ------------------------------------------------------------------ */
 
-  .card,
-  .panel {
-    @apply relative border border-line-soft bg-surface;
-  }
-
-  /* Top edge catches the light, like a milled panel. */
-  .card::before,
-  .panel::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
-    pointer-events: none;
+  .card {
+    @apply relative border border-line bg-paper;
   }
 
   .card-pad {
     @apply p-6 md:p-8;
   }
 
-  .panel-head {
-    @apply flex flex-wrap items-center justify-between gap-3 border-b border-line-soft px-5 py-4;
+  /* A raised object on paper: the hero card, a framed preview, a modal. */
+  .float {
+    @apply relative border border-line bg-paper shadow-float;
   }
 
-  /* A raised object: the hero card, the framed dashboard, a modal. */
-  .float {
-    @apply relative border border-line bg-surface shadow-float;
-    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 42%);
+  /* ------------------------------------------------------------------ */
+  /* Dark data surfaces — the inversion that carries the brand           */
+  /* ------------------------------------------------------------------ */
+
+  .panel {
+    @apply relative border border-panel-line bg-panel text-panel-text shadow-panel;
+  }
+
+  /* Top edge catches the light, like a milled panel. */
+  .panel::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+    pointer-events: none;
+  }
+
+  .panel-head {
+    @apply flex flex-wrap items-center justify-between gap-3 border-b border-panel-line px-5 py-4;
+  }
+
+  .panel-title {
+    @apply font-mono text-micro font-medium uppercase text-panel-faint;
+  }
+
+  /* Inside a panel every type role shifts to its dark counterpart. */
+  .panel .figure {
+    @apply text-panel-text;
+  }
+
+  .panel .eyebrow {
+    @apply text-panel-faint;
   }
 
   /* ------------------------------------------------------------------ */
@@ -178,15 +188,13 @@
   /* ------------------------------------------------------------------ */
 
   .pill {
-    @apply inline-flex items-center gap-2 rounded-full border border-line px-3 py-1.5
-           font-mono text-micro font-medium uppercase text-dim;
-    background: rgba(255, 255, 255, 0.025);
-    backdrop-filter: blur(8px);
+    @apply inline-flex items-center gap-2 rounded-full border border-line bg-paper px-3 py-1.5
+           font-mono text-micro font-medium uppercase text-muted;
   }
 
   .pill-live {
-    @apply pill border-cyan/30 text-cyan;
-    background: rgba(53, 194, 219, 0.07);
+    @apply pill border-cyan-dark/35 text-cyan-deep;
+    background: rgba(53, 194, 219, 0.08);
   }
 
   .tag {
@@ -197,9 +205,22 @@
     @apply pill-live;
   }
 
+  .panel .pill {
+    @apply border-panel-line bg-transparent text-panel-muted;
+  }
+
+  .panel .pill-live {
+    @apply border-cyan/35 text-cyan;
+  }
+
   /* The status dot that says a number is moving. */
   .beacon {
-    @apply relative block h-1.5 w-1.5 shrink-0 rounded-full bg-cyan;
+    @apply relative block h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-dark;
+  }
+
+  .panel .beacon,
+  .beacon-bright {
+    @apply bg-cyan;
   }
 
   .beacon::after {
@@ -207,8 +228,12 @@
     position: absolute;
     inset: -3px;
     border-radius: 9999px;
-    border: 1px solid rgba(53, 194, 219, 0.5);
+    border: 1px solid rgba(24, 153, 177, 0.55);
     animation: beacon 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+
+  .panel .beacon::after {
+    border-color: rgba(53, 194, 219, 0.55);
   }
 
   /* ------------------------------------------------------------------ */
@@ -242,39 +267,72 @@
   }
 
   .btn-primary {
-    @apply btn border-cyan bg-cyan text-void-deep;
+    @apply btn border-ink bg-ink text-paper;
   }
 
   .btn-primary::before {
-    background: #5fd9ee;
+    background: #1899b1;
   }
 
-  .btn-ghost {
-    @apply btn border-line-strong bg-transparent text-chalk;
-  }
-
-  .btn-ghost::before {
-    background: #f3f6f8;
-  }
-
-  .btn-ghost:hover:not(:disabled) {
-    @apply border-chalk text-void-deep;
+  .btn-primary:hover:not(:disabled) {
+    @apply border-cyan-dark;
   }
 
   .btn-accent {
-    @apply btn-primary;
+    @apply btn border-cyan-dark bg-cyan text-ink;
+  }
+
+  .btn-accent::before {
+    background: #0a0a0a;
+  }
+
+  .btn-accent:hover:not(:disabled) {
+    @apply text-paper;
+  }
+
+  .btn-ghost {
+    @apply btn border-line-strong bg-transparent text-ink;
+  }
+
+  .btn-ghost::before {
+    background: #0a0a0a;
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    @apply border-ink text-paper;
   }
 
   .btn-quiet {
-    @apply btn border-line bg-transparent text-dim;
+    @apply btn border-line bg-transparent text-muted;
   }
 
   .btn-quiet::before {
-    background: rgba(255, 255, 255, 0.07);
+    background: rgba(10, 10, 10, 0.05);
   }
 
   .btn-quiet:hover:not(:disabled) {
-    @apply border-line-strong text-chalk;
+    @apply border-line-strong text-ink;
+  }
+
+  /* Buttons sitting on a dark panel invert. */
+  .panel .btn-ghost {
+    @apply border-panel-edge text-panel-text;
+  }
+
+  .panel .btn-ghost::before {
+    background: #f3f6f8;
+  }
+
+  .panel .btn-ghost:hover:not(:disabled) {
+    @apply border-panel-text text-panel;
+  }
+
+  .panel .btn-primary {
+    @apply border-cyan bg-cyan text-panel;
+  }
+
+  .panel .btn-primary::before {
+    background: #5fd9ee;
   }
 
   .btn-sm {
@@ -287,7 +345,7 @@
 
   /* A link that draws its own underline on approach. */
   .link {
-    @apply relative inline-block text-chalk transition-colors duration-200;
+    @apply relative inline-block transition-colors duration-200;
   }
 
   .link::after {
@@ -313,71 +371,122 @@
   /* ------------------------------------------------------------------ */
 
   .field {
-    @apply w-full border border-line bg-surface-2 px-4 py-3.5 font-mono text-chalk outline-none
+    @apply w-full border border-line bg-paper px-4 py-3.5 font-mono text-ink outline-none
            transition-colors duration-200
-           placeholder:text-ghost focus:border-cyan/60 focus:ring-0;
+           placeholder:text-ghost focus:border-cyan-dark focus:ring-0;
   }
 
   .field-lg {
     @apply field px-5 py-4 text-[22px] tracking-tighter;
   }
 
+  .panel .field {
+    @apply border-panel-line bg-panel-2 text-panel-text placeholder:text-panel-faint focus:border-cyan/60;
+  }
+
   /* ------------------------------------------------------------------ */
   /* Tables                                                              */
   /* ------------------------------------------------------------------ */
 
-  .data-table,
+  .data-table {
+    @apply w-full border-collapse text-left;
+  }
+
+  .data-table th {
+    @apply border-b border-line px-4 py-3 font-mono text-micro font-medium uppercase text-faint;
+  }
+
+  .data-table td {
+    @apply border-b border-line-soft px-4 py-4 align-middle;
+  }
+
+  .data-table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  .data-table tbody tr {
+    @apply transition-colors duration-200;
+  }
+
+  .data-table tbody tr:hover {
+    background: #f6f7f8;
+  }
+
   .panel-table {
     @apply w-full border-collapse text-left;
   }
 
-  .data-table th,
   .panel-table th {
-    @apply border-b border-line-soft px-4 py-3 font-mono text-micro font-medium uppercase text-faint;
+    @apply border-b border-panel-line px-4 py-3 font-mono text-micro font-medium uppercase text-panel-faint;
   }
 
-  .data-table td,
   .panel-table td {
-    @apply border-b border-line-soft px-4 py-4 align-middle;
+    @apply border-b border-panel-line px-4 py-4 align-middle;
   }
 
-  .data-table tbody tr:last-child td,
   .panel-table tbody tr:last-child td {
     @apply border-b-0;
   }
 
-  .data-table tbody tr,
   .panel-table tbody tr {
     @apply transition-colors duration-200;
   }
 
-  .data-table tbody tr:hover,
   .panel-table tbody tr:hover {
-    background: rgba(255, 255, 255, 0.022);
+    background: #101419;
+  }
+
+  /* A sortable header: the caret only appears on the active column. */
+  .th-sort {
+    @apply cursor-pointer select-none transition-colors duration-200;
+  }
+
+  .th-sort:hover {
+    @apply text-panel-text;
   }
 
   /* ------------------------------------------------------------------ */
   /* Controls                                                            */
   /* ------------------------------------------------------------------ */
 
-  .seg-dark {
+  .seg {
     @apply inline-flex border border-line;
   }
 
-  .seg-dark button {
+  .seg button {
     @apply px-3 py-2 font-mono text-micro font-medium uppercase text-faint transition-colors duration-200;
   }
 
-  .seg-dark button + button {
+  .seg button + button {
     @apply border-l border-line;
   }
 
+  .seg button[aria-pressed="true"] {
+    @apply bg-ink text-paper;
+  }
+
+  .seg button:not([aria-pressed="true"]):hover {
+    @apply text-ink;
+  }
+
+  .seg-dark {
+    @apply inline-flex border border-panel-line;
+  }
+
+  .seg-dark button {
+    @apply px-3 py-2 font-mono text-micro font-medium uppercase text-panel-faint transition-colors duration-200;
+  }
+
+  .seg-dark button + button {
+    @apply border-l border-panel-line;
+  }
+
   .seg-dark button[aria-pressed="true"] {
-    @apply bg-cyan text-void-deep;
+    @apply bg-cyan text-panel;
   }
 
   .seg-dark button:not([aria-pressed="true"]):hover {
-    @apply text-chalk;
+    @apply text-panel-text;
   }
 
   .ticker-cell {
@@ -388,27 +497,37 @@
   /* Feedback                                                            */
   /* ------------------------------------------------------------------ */
 
-  .flash-light,
-  .flash-dark {
+  .flash-light {
     animation: pulse-cell 0.9s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .skeleton,
-  .skeleton-dark {
-    background-color: #101418;
-    background-image: linear-gradient(90deg, #101418 20%, #1a2027 50%, #101418 80%);
+  .flash-dark {
+    animation: pulse-cell-dark 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .skeleton {
+    background-color: #edeff1;
+    background-image: linear-gradient(90deg, #edeff1 20%, #f6f7f8 50%, #edeff1 80%);
     background-size: 200% 100%;
     animation: shimmer 1.8s linear infinite;
   }
 
-  /* Cards that answer the cursor. A 1px lift and the edge catches light. */
+  .skeleton-dark {
+    background-color: #101419;
+    background-image: linear-gradient(90deg, #101419 20%, #1a2027 50%, #101419 80%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s linear infinite;
+  }
+
+  /* Cards that answer the cursor: a 2px lift and the edge darkens. */
   .lift {
-    @apply transition-[transform,border-color,background-color] duration-500 ease-osk;
+    @apply transition-[transform,border-color,box-shadow] duration-500 ease-osk;
   }
 
   .lift:hover {
     transform: translateY(-3px);
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(10, 10, 10, 0.24);
+    @apply shadow-lift;
   }
 }
 
@@ -422,7 +541,12 @@
   }
 
   @keyframes pulse-cell {
-    0% { background-color: rgba(53, 194, 219, 0.28); }
+    0% { background-color: rgba(53, 194, 219, 0.30); }
+    100% { background-color: transparent; }
+  }
+
+  @keyframes pulse-cell-dark {
+    0% { background-color: rgba(53, 194, 219, 0.26); }
     100% { background-color: transparent; }
   }
 
@@ -453,41 +577,42 @@
 
   @keyframes drift {
     0%, 100% { transform: translate3d(0, 0, 0); }
-    50% { transform: translate3d(0, -14px, 0); }
+    50% { transform: translate3d(0, -10px, 0); }
   }
 
   @keyframes flow {
     to { stroke-dashoffset: -1000; }
   }
 
-  @keyframes scan {
-    0% { transform: translateY(-100%); opacity: 0; }
-    12% { opacity: 1; }
-    88% { opacity: 1; }
-    100% { transform: translateY(1100%); opacity: 0; }
-  }
-
   /* ------------------------------------------------------------------ */
   /* Atmosphere                                                          */
   /* ------------------------------------------------------------------ */
 
-  /* Film grain over the whole page. Kills banding in the big radial washes and is
-     the single largest reason the dark surfaces read as material, not as #000. */
+  /* Paper grain. Barely there, and the reason the white reads as stock rather
+     than as #FFF. Multiply keeps it from lifting the whites. */
   .grain::after {
     content: "";
     position: fixed;
     inset: -50%;
     z-index: 1;
     pointer-events: none;
-    opacity: 0.035;
+    opacity: 0.02;
+    mix-blend-mode: multiply;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   /* Engineering paper, barely there. Anchors the eye to a grid it never sees. */
   .grid-bg {
     background-image:
-      linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+      linear-gradient(rgba(10, 10, 10, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(10, 10, 10, 0.035) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  .grid-bg-dark {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
     background-size: 64px 64px;
   }
 
@@ -496,15 +621,18 @@
   }
 
   .glow-cyan {
-    background: radial-gradient(closest-side, rgba(53, 194, 219, 0.22), transparent 78%);
+    background: radial-gradient(closest-side, rgba(53, 194, 219, 0.28), transparent 78%);
   }
 
-  .vignette {
-    background: radial-gradient(ellipse 120% 80% at 50% 0%, transparent 35%, rgba(3, 4, 5, 0.85) 100%);
-  }
-
-  /* Big type filled with a vertical light gradient. Used once per page, at most. */
+  /* Big type filled with a vertical gradient. Used once per page, at most. */
   .text-lit {
+    background: linear-gradient(178deg, #0a0a0a 18%, #23282c 62%, #565d63 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .text-lit-dark {
     background: linear-gradient(178deg, #ffffff 12%, #b9c4cc 58%, #6c757d 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -512,10 +640,67 @@
   }
 
   .text-cut {
+    background: linear-gradient(180deg, rgba(10, 10, 10, 0.07), rgba(10, 10, 10, 0.015));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .text-cut-dark {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.015));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Interaction                                                         */
+  /* ------------------------------------------------------------------ */
+
+  /* A cold light that follows the cursor across a surface. The element sets
+     --px/--py from JS; the light is a pseudo element so it never repaints text. */
+  .spotlight {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .spotlight::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    background: radial-gradient(
+      420px circle at var(--px, 50%) var(--py, 50%),
+      rgba(53, 194, 219, 0.1),
+      transparent 70%
+    );
+  }
+
+  .spotlight:hover::after {
+    opacity: 1;
+  }
+
+  .panel.spotlight::after {
+    background: radial-gradient(
+      420px circle at var(--px, 50%) var(--py, 50%),
+      rgba(53, 194, 219, 0.14),
+      transparent 70%
+    );
+  }
+
+  /* A button that leans toward the cursor. Translation only — never a scale. */
+  .magnetic {
+    transform: translate3d(var(--mx, 0), var(--my, 0), 0);
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* The hero object, tilted in the pointer's direction. */
+  .tilt {
+    transform: perspective(1400px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   /* ------------------------------------------------------------------ */
@@ -615,17 +800,16 @@
 
   .dark-scroll {
     scrollbar-width: thin;
-    scrollbar-color: #1d242a #0b0e11;
+    scrollbar-color: #2a3138 #0a0c0f;
   }
 
-  .dark-scroll::-webkit-scrollbar {
-    height: 8px;
-    width: 8px;
+  .dark-scroll::-webkit-scrollbar-track {
+    background: #0a0c0f;
   }
 
   .dark-scroll::-webkit-scrollbar-thumb {
-    background: #1d242a;
-    border: 0;
+    background: #2a3138;
+    border: 3px solid #0a0c0f;
   }
 
   .no-scrollbar::-webkit-scrollbar {
@@ -670,6 +854,12 @@
       transition: none !important;
       transform: none !important;
       opacity: 1 !important;
+    }
+
+    .magnetic,
+    .tilt {
+      transform: none !important;
+      transition: none !important;
     }
 
     .btn::before {

@@ -52,11 +52,13 @@ export function Mechanism() {
   const { ref, progress } = useScrollProgress<HTMLDivElement>();
 
   return (
-    <section id="mechanism" className="relative border-t border-line-soft">
+    // A full-bleed black band on the paper page: the section *is* the data surface,
+    // which is the system's one inversion stated at the largest scale it ever gets.
+    <section id="mechanism" className="panel relative border-x-0">
       {/* Pinned scene, large screens only. */}
       <div ref={ref} className="hidden lg:block lg:h-[420vh]">
         <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
-          <div className="pointer-events-none absolute inset-0 grid-bg opacity-60" aria-hidden />
+          <div className="pointer-events-none absolute inset-0 grid-bg-dark opacity-60" aria-hidden />
           <div
             className="pointer-events-none absolute inset-0"
             style={{
@@ -82,20 +84,20 @@ export function Mechanism() {
           {/* The chapter index, held at the foot of the frame: at any moment you can see
               where in the argument you are and what is still coming. */}
           <div className="shell relative mt-16 shrink-0">
-            <div className="grid grid-cols-4 border-t border-line-soft">
+            <div className="grid grid-cols-4 border-t border-panel-line">
               {STAGES.map((s, i) => {
                 const on = Math.min(Math.floor(progress * STAGES.length), STAGES.length - 1) === i;
                 return (
                   <div
                     key={s.index}
-                    className={`min-w-0 border-r border-line-soft px-4 py-4 last:border-r-0 transition-colors duration-500 ${
-                      on ? "text-chalk" : "text-ghost"
+                    className={`min-w-0 border-r border-panel-line px-4 py-4 last:border-r-0 transition-colors duration-500 ${
+                      on ? "text-panel-text" : "text-panel-faint"
                     }`}
                   >
                     <div className="flex items-baseline gap-3">
                       <span
                         className={`num text-nano transition-colors duration-500 ${
-                          on ? "text-cyan" : "text-ghost"
+                          on ? "text-cyan" : "text-panel-faint"
                         }`}
                       >
                         {s.index}
@@ -120,18 +122,18 @@ export function Mechanism() {
       <div className="lg:hidden">
         <div className="shell py-20">
           <div className="eyebrow">The mechanism</div>
-          <h2 className="mt-4 text-display font-black text-lit">A share that never moves</h2>
+          <h2 className="mt-4 text-display font-black text-lit-dark">A share that never moves</h2>
           <div className="mt-10 -mx-2">
             <Scene progress={1} />
           </div>
           <ol className="mt-12 space-y-10">
             {STAGES.map((s) => (
-              <li key={s.index} className="border-t border-line-soft pt-6">
+              <li key={s.index} className="border-t border-panel-line pt-6">
                 <div className="flex items-baseline gap-4">
                   <span className="num text-micro font-medium text-cyan">{s.index}</span>
-                  <h3 className="text-title font-bold tracking-tighter text-chalk">{s.title}</h3>
+                  <h3 className="text-title font-bold tracking-tighter text-panel-text">{s.title}</h3>
                 </div>
-                <p className="mt-3 text-[15px] leading-relaxed text-dim">{s.body}</p>
+                <p className="mt-3 text-[15px] leading-relaxed text-panel-muted">{s.body}</p>
               </li>
             ))}
           </ol>
@@ -156,14 +158,14 @@ function StageText({ progress }: { progress: number }) {
         <span className="num text-[13px] font-medium text-cyan">
           {String(index + 1).padStart(2, "0")}
         </span>
-        <div className="relative h-px flex-1 bg-line-soft">
+        <div className="relative h-px flex-1 bg-panel-line">
           <div
             className="absolute inset-y-0 left-0 bg-cyan"
             style={{ width: `${progress * 100}%` }}
             aria-hidden
           />
         </div>
-        <span className="num text-[13px] font-medium text-ghost">/ 04</span>
+        <span className="num text-[13px] font-medium text-panel-faint">/ 04</span>
       </div>
 
       {/* One stage at a time.
@@ -173,8 +175,8 @@ function StageText({ progress }: { progress: number }) {
       <div className="mt-9 min-h-[340px]">
         <div key={active.index} className="rise-group">
           <div>
-            <h2 className="text-display font-black tracking-cut text-lit">{active.title}</h2>
-            <p className="mt-6 max-w-lg text-[17px] leading-[1.65] text-dim">{active.body}</p>
+            <h2 className="text-display font-black tracking-cut text-lit-dark">{active.title}</h2>
+            <p className="mt-6 max-w-lg text-[17px] leading-[1.65] text-panel-muted">{active.body}</p>
             <div className="mt-8 inline-flex items-center gap-3 border-l border-cyan pl-4">
               <span className="font-mono text-nano uppercase text-cyan">{active.note}</span>
             </div>

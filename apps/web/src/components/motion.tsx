@@ -156,8 +156,9 @@ export function ease(t: number): number {
 }
 
 /**
- * A cold light that follows the cursor across a surface. Applied to the hero only:
- * it is the difference between a flat dark rectangle and a lit one.
+ * A cold light that follows the cursor across a surface, published as --px/--py for
+ * the `.spotlight` pseudo element to consume. Pointer work is rAF-coalesced and only
+ * ever writes custom properties, so it never triggers layout.
  */
 export function usePointerGlow<T extends HTMLElement>() {
   const ref = useRef<T | null>(null);
@@ -185,6 +186,183 @@ export function usePointerGlow<T extends HTMLElement>() {
   }, []);
 
   return ref;
+}
+
+/**
+ * Tilts a surface toward the pointer. Small angles only — past about four degrees a
+ * card stops reading as a lit object and starts reading as a novelty.
+ */
+export function useTilt<T extends HTMLElement>(maxDeg = 3.5) {
+  const ref = useRef<T | null>(null);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || prefersReduced()) return;
+    if (window.matchMedia("(hover: none)").matches) return;
+    let frame = 0;
+
+    const onMove = (e: PointerEvent) => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const rect = node.getBoundingClientRect();
+        const nx = (e.clientX - rect.left) / rect.width - 0.5;
+        const ny = (e.clientY - rect.top) / rect.height - 0.5;
+        node.style.setProperty("--ry", `${nx * maxDeg * 2}deg`);
+        node.style.setProperty("--rx", `${-ny * maxDeg * 2}deg`);
+        node.style.setProperty("--px", `${(nx + 0.5) * 100}%`);
+        node.style.setProperty("--py", `${(ny + 0.5) * 100}%`);
+      });
+    };
+
+    const onLeave = () => {
+      node.style.setProperty("--ry", "0deg");
+      node.style.setProperty("--rx", "0deg");
+    };
+
+    // Tracked on the window so the tilt responds before the cursor arrives.
+    window.addEventListener("pointermove", onMove);
+    node.addEventListener("pointerleave", onLeave);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      node.removeEventListener("pointerleave", onLeave);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [maxDeg]);
+
+  return ref;
+}
+
+/**
+ * Leans an element toward a nearby cursor. The pull falls off with distance and stops
+ * entirely outside `radius`, so a button only reacts when you are actually going for it.
+ */
+export function useMagnetic<T extends HTMLElement>(strength = 6, radius = 130) {
+  const ref = useRef<T | null>(null);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || prefersReduced()) return;
+    if (window.matchMedia("(hover: none)").matches) return;
+    let frame = 0;
+
+    const onMove = (e: PointerEvent) => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const rect = node.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = e.clientX - cx;
+        const dy = e.clientY - cy;
+        const distance = Math.hypot(dx, dy);
+        if (distance > radius) {
+          node.style.setProperty("--mx", "0px");
+          node.style.setProperty("--my", "0px");
+          return;
+        }
+        const pull = (1 - distance / radius) * strength;
+        node.style.setProperty("--mx", `${(dx / (distance || 1)) * pull}px`);
+        node.style.setProperty("--my", `${(dy / (distance || 1)) * pull}px`);
+      });
+    };
+
+    window.addEventListener("pointermove", onMove);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [strength, radius]);
+
+  return ref;
+}
+
+/**
+ * How far down the document the reader is, 0→1. Drives the progress hairline in the
+ * chrome — the cheapest way to tell someone how much argument is left.
+ */
+export function useReadProgress(): number {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let frame = 0;
+    const sample = () => {
+      frame = 0;
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      setProgress(scrollable > 0 ? Math.min(Math.max(window.scrollY / scrollable, 0), 1) : 0);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(sample);
+    };
+    sample();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  return progress;
+}
+
+/**
+ * A figure that counts up to its value the first time it is seen, then stops.
+ *
+ * Reserved for the numbers that carry a section. A page where every digit animates is
+ * a page where nothing is emphasised, so this is used four or five times, never more.
+ */
+export function CountUp({
+  to,
+  decimals = 0,
+  duration = 1100,
+  className = "",
+}: {
+  to: number;
+  decimals?: number;
+  duration?: number;
+  className?: string;
+}) {
+  const { ref, seen } = useInView<HTMLSpanElement>({ threshold: 0.4 });
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (!seen) return;
+    if (prefersReduced()) {
+      setValue(to);
+      return;
+    }
+    const t0 = performance.now();
+    let frame = requestAnimationFrame(function tick(t) {
+      const p = Math.min((t - t0) / duration, 1);
+      setValue(to * ease(p));
+      if (p < 1) frame = requestAnimationFrame(tick);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [seen, to, duration]);
+
+  return (
+    <span ref={ref} className={`num tabular-nums ${className}`}>
+      {value.toFixed(decimals)}
+    </span>
+  );
+}
+
+/** The reading progress hairline. Sits under the chrome, above everything else. */
+export function ReadProgress() {
+  const progress = useReadProgress();
+  return (
+    <div
+      className="pointer-events-none fixed inset-x-0 top-0 z-veil h-[2px]"
+      aria-hidden
+    >
+      <div
+        className="h-full origin-left bg-cyan-dark"
+        style={{ transform: `scaleX(${progress})` }}
+      />
+    </div>
+  );
 }
 
 /** How far the window has scrolled, in pixels. Used by the nav to condense on scroll. */

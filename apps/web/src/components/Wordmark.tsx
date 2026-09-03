@@ -43,7 +43,7 @@ export function Wordmark({
   const glyph = size === "lg" ? 30 : size === "sm" ? 17 : 21;
 
   return (
-    <span className={`inline-flex items-center gap-2.5 text-chalk ${className}`}>
+    <span className={`inline-flex items-center gap-2.5 text-ink ${className}`}>
       <Mark size={glyph} />
       <span className={`${type} font-extrabold leading-none tracking-cut`}>OSINKO</span>
     </span>

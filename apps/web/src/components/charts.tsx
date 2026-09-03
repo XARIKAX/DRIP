@@ -111,7 +111,7 @@ export function AreaChart({
         <path d={line} fill="none" stroke="#35C2DB" strokeWidth="1.75" pathLength={1} className="draw-line" />
       </svg>
       {(labelLeft || labelRight) && (
-        <div className="mt-3 flex justify-between font-mono text-nano uppercase text-ghost">
+        <div className="mt-3 flex justify-between font-mono text-nano uppercase text-panel-faint">
           <span>
             {labelLeft} · <span className="num">{formatValue(min)}</span> low
           </span>
@@ -127,14 +127,14 @@ export function AreaChart({
 /** Thin horizontal meter with an optional cap marker. Used for utilisation and health. */
 export function Meter({ pct, capPct }: { pct: number; capPct?: number; dark?: boolean }) {
   return (
-    <div className="relative h-1.5 w-full bg-surface-3">
+    <div className="relative h-1.5 w-full bg-panel-3">
       <div
         className="h-1.5 bg-cyan transition-[width] duration-700 ease-osk"
         style={{ width: `${Math.min(Math.max(pct, 0), 100)}%` }}
       />
       {capPct !== undefined ? (
         <div
-          className="absolute top-[-4px] h-[14px] w-px bg-chalk"
+          className="absolute top-[-4px] h-[14px] w-px bg-panel-text"
           style={{ left: `${Math.min(capPct, 100)}%` }}
           aria-hidden
         />

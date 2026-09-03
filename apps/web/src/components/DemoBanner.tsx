@@ -34,9 +34,9 @@ export function DemoBanner() {
   };
 
   return (
-    <div className="border-b border-line-soft bg-surface">
+    <div className="border-b border-line-soft bg-paper-2">
       <div className="shell flex items-center justify-between gap-4 py-2.5">
-        <p className="flex items-center gap-3 text-[13px] text-dim">
+        <p className="flex items-center gap-3 text-[13px] text-muted">
           <span className="beacon" aria-hidden />
           Viewing the demo portfolio. Everything works — connect only to make it yours.
         </p>
@@ -56,7 +56,7 @@ export function DemoBanner() {
             type="button"
             onClick={dismiss}
             aria-label="Dismiss demo notice"
-            className="px-1 text-[16px] leading-none text-ghost transition-colors hover:text-chalk"
+            className="px-1 text-[16px] leading-none text-ghost transition-colors hover:text-ink"
           >
             ×
           </button>

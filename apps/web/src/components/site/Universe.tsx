@@ -1,89 +1,181 @@
 "use client";
 
 import Link from "next/link";
-import { Reveal } from "@/components/motion";
+import { useMemo, useState } from "react";
+import { Reveal, usePointerGlow } from "@/components/motion";
 import { TokenMark } from "@/components/TokenMark";
 import { fmt, shortDate } from "@/components/live";
 import { useTokensView } from "@/lib/data/provider";
+import type { TokenInfo } from "@/lib/data/types";
+
+type SortKey = "symbol" | "priceUsd" | "perShare" | "yieldPct" | "nextExDate";
+type Filter = "all" | "paying" | "declared" | "none";
+
+const COLUMNS: { key: SortKey; label: string; align: "left" | "right" }[] = [
+  { key: "symbol", label: "Token", align: "left" },
+  { key: "priceUsd", label: "Price", align: "right" },
+  { key: "perShare", label: "Dividend", align: "right" },
+  { key: "yieldPct", label: "Yield", align: "right" },
+  { key: "nextExDate", label: "Next ex", align: "right" },
+];
+
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "paying", label: "Streaming" },
+  { key: "declared", label: "Declared" },
+  { key: "none", label: "No dividend" },
+];
 
 /**
  * The universe.
  *
  * The one place on the page where density is the point. A landing page that only ever
  * shows three round-numbered stats is hiding the fact that it has no data; a table of
- * every listed name, priced and dated, is the proof. It is also the surface where the
- * listing rules can be stated plainly, which is the part an institution actually reads.
+ * every listed name — sortable, filterable, priced — is the proof. It runs on black
+ * because it is data, and it is the section where the listing rules get stated plainly,
+ * which is the part an institution actually reads.
  */
 export function Universe() {
   const tokens = useTokensView();
-  const listed = [...tokens].sort((a, b) => b.yieldPct - a.yieldPct);
-  const paying = listed.filter((t) => t.payingNow).length;
+  const glow = usePointerGlow<HTMLDivElement>();
+  const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: "yieldPct", desc: true });
+  const [filter, setFilter] = useState<Filter>("all");
+
+  const rows = useMemo(() => {
+    const matches = (t: TokenInfo) =>
+      filter === "all"
+        ? true
+        : filter === "paying"
+          ? t.payingNow
+          : filter === "declared"
+            ? !t.payingNow && t.perShare > 0
+            : t.perShare === 0;
+
+    const value = (t: TokenInfo, key: SortKey): number | string => {
+      if (key === "symbol") return t.symbol;
+      // A name with no scheduled ex date sorts last in either direction rather than
+      // pretending to be at the epoch.
+      if (key === "nextExDate") return t.nextExDate ?? Number.MAX_SAFE_INTEGER;
+      return t[key];
+    };
+
+    return tokens.filter(matches).sort((a, b) => {
+      const av = value(a, sort.key);
+      const bv = value(b, sort.key);
+      const cmp =
+        typeof av === "string" && typeof bv === "string" ? av.localeCompare(bv) : Number(av) - Number(bv);
+      return sort.desc ? -cmp : cmp;
+    });
+  }, [tokens, sort, filter]);
+
+  const paying = tokens.filter((t) => t.payingNow).length;
+
+  const toggle = (key: SortKey) =>
+    setSort((s) => (s.key === key ? { key, desc: !s.desc } : { key, desc: key !== "symbol" }));
 
   return (
-    <section className="relative border-t border-line-soft py-band">
+    <section id="universe" className="relative border-t border-line-soft py-band">
       <Reveal className="shell">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="min-w-0">
             <div className="reveal eyebrow">The universe</div>
             <h2 className="reveal reveal-1 mt-5 text-display font-black tracking-cut text-lit">
-              {listed.length} names, priced by Chainlink
+              {tokens.length} names, priced by Chainlink
             </h2>
           </div>
-          <p className="reveal reveal-2 max-w-sm text-[15px] leading-relaxed text-dim">
-            Every listed token carries its own price feed and its own route. A name without
-            a feed is not listed — there is no manual price anywhere in this system.
+          <p className="reveal reveal-2 max-w-sm text-[15px] leading-relaxed text-muted">
+            Every listed token carries its own price feed and its own route. A name without a
+            feed is not listed — there is no manual price anywhere in this system.
           </p>
         </div>
 
-        <div className="reveal reveal-2 mt-14 border border-line-soft bg-surface">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft px-5 py-3.5">
-            <span className="panel-title">Listed stock tokens</span>
+        <div ref={glow} className="reveal reveal-2 panel spotlight mt-14">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-panel-line px-5 py-4">
+            <div className="seg-dark">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  aria-pressed={filter === f.key}
+                  onClick={() => setFilter(f.key)}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
             <span className="flex items-center gap-2 font-mono text-nano uppercase text-cyan">
               <span className="beacon" aria-hidden />
-              {paying} paying now
+              {paying} streaming now
             </span>
           </div>
 
           <div className="overflow-x-auto dark-scroll">
-            <table className="panel-table min-w-[720px] text-[13px]">
+            <table className="panel-table min-w-[760px] text-[13px]">
               <thead>
                 <tr>
-                  <th>Token</th>
-                  <th className="text-right">Price</th>
-                  <th className="text-right">Dividend</th>
-                  <th className="text-right">Yield</th>
-                  <th className="text-right">Next ex</th>
+                  {COLUMNS.map((c) => {
+                    const on = sort.key === c.key;
+                    return (
+                      <th
+                        key={c.key}
+                        aria-sort={on ? (sort.desc ? "descending" : "ascending") : "none"}
+                        className={c.align === "right" ? "text-right" : ""}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => toggle(c.key)}
+                          className={`th-sort inline-flex items-center gap-1.5 uppercase ${
+                            c.align === "right" ? "flex-row-reverse" : ""
+                          } ${on ? "text-panel-text" : ""}`}
+                        >
+                          {c.label}
+                          <span
+                            className={`transition-opacity duration-200 ${
+                              on ? "text-cyan opacity-100" : "opacity-0"
+                            }`}
+                            aria-hidden
+                          >
+                            {sort.desc ? "↓" : "↑"}
+                          </span>
+                        </button>
+                      </th>
+                    );
+                  })}
                   <th className="text-right">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {listed.map((t) => (
+                {rows.map((t) => (
                   <tr key={t.symbol}>
                     <td>
                       <div className="flex items-center gap-3">
                         <TokenMark symbol={t.symbol} size={26} />
                         <div className="min-w-0">
-                          <div className="font-bold tracking-tight text-chalk">{t.symbol}</div>
-                          <div className="truncate font-mono text-nano uppercase text-ghost">
+                          <div className="font-bold tracking-tight text-panel-text">{t.symbol}</div>
+                          <div className="truncate font-mono text-nano uppercase text-panel-faint">
                             {t.name}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="num text-right text-chalk">${fmt(t.priceUsd)}</td>
-                    <td className="num text-right text-dim">
+                    <td className="num text-right text-panel-text">${fmt(t.priceUsd)}</td>
+                    <td className="num text-right text-panel-muted">
                       {t.perShare > 0 ? `$${fmt(t.perShare)}` : "—"}
                     </td>
                     <td className="num text-right text-cyan">
                       {t.yieldPct > 0 ? `${fmt(t.yieldPct, 2)}%` : "—"}
                     </td>
-                    <td className="num text-right text-dim">
+                    <td className="num text-right text-panel-muted">
                       {t.nextExDate ? shortDate(t.nextExDate) : "—"}
                     </td>
                     <td className="text-right">
                       <span
                         className={`font-mono text-nano uppercase ${
-                          t.payingNow ? "text-cyan" : t.perShare > 0 ? "text-faint" : "text-ghost"
+                          t.payingNow
+                            ? "text-cyan"
+                            : t.perShare > 0
+                              ? "text-panel-muted"
+                              : "text-panel-faint"
                         }`}
                       >
                         {t.payingNow ? "Streaming" : t.perShare > 0 ? "Declared" : "No dividend"}
@@ -91,13 +183,20 @@ export function Universe() {
                     </td>
                   </tr>
                 ))}
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-panel-faint">
+                      Nothing matches that filter.
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
         </div>
 
         {/* The listing rules. Operational rigour, stated rather than implied. */}
-        <div className="reveal reveal-3 mt-6 grid gap-px border border-line-soft bg-line-soft md:grid-cols-3">
+        <div className="reveal reveal-3 mt-6 grid gap-px border border-line bg-line md:grid-cols-3">
           {[
             {
               rule: "No feed, no listing",
@@ -112,9 +211,9 @@ export function Universe() {
               body: "Every swap quotes on chain and every minimum output is bounded against the feed, so a bad route reverts.",
             },
           ].map((r) => (
-            <div key={r.rule} className="bg-surface p-6">
-              <div className="font-mono text-nano uppercase text-cyan">{r.rule}</div>
-              <p className="mt-3 text-[13px] leading-relaxed text-dim">{r.body}</p>
+            <div key={r.rule} className="bg-paper p-6">
+              <div className="font-mono text-nano uppercase text-cyan-deep">{r.rule}</div>
+              <p className="mt-3 text-[13px] leading-relaxed text-muted">{r.body}</p>
             </div>
           ))}
         </div>

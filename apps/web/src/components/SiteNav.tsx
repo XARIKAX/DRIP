@@ -30,7 +30,7 @@ export function SiteNav() {
   return (
     <header
       className={`sticky top-0 z-chrome transition-colors duration-500 ease-osk ${
-        scrolled ? "border-b border-line-soft bg-void/85 backdrop-blur-xl" : "border-b border-transparent bg-void"
+        scrolled ? "border-b border-line bg-paper" : "border-b border-line-soft bg-paper"
       }`}
     >
       <div className="shell flex h-[68px] items-center justify-between gap-8">
@@ -47,7 +47,7 @@ export function SiteNav() {
                 href={link.href}
                 aria-current={active ? "page" : undefined}
                 className={`relative px-3.5 py-2 font-mono text-micro font-medium uppercase transition-colors duration-300 ${
-                  active ? "text-chalk" : "text-faint hover:text-chalk"
+                  active ? "text-ink" : "text-faint hover:text-ink"
                 }`}
               >
                 {link.label}
@@ -81,7 +81,7 @@ export function SiteNav() {
               href={link.href}
               aria-current={active ? "page" : undefined}
               className={`relative shrink-0 px-5 py-3 font-mono text-micro font-medium uppercase transition-colors ${
-                active ? "text-chalk" : "text-faint"
+                active ? "text-ink" : "text-faint"
               }`}
             >
               {link.label}

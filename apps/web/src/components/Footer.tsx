@@ -42,11 +42,11 @@ const COLUMNS = [
  */
 export function Footer() {
   return (
-    <footer className="relative mt-band border-t border-line-soft bg-void-deep">
+    <footer className="relative mt-band border-t border-line-soft bg-paper-2">
       <Reveal className="shell grid gap-12 py-20 md:grid-cols-12 md:py-24">
         <div className="reveal md:col-span-5 lg:col-span-4">
-          <Mark size={30} className="text-chalk" />
-          <p className="mt-7 max-w-xs text-[15px] leading-relaxed text-dim">
+          <Mark size={30} className="text-ink" />
+          <p className="mt-7 max-w-xs text-[15px] leading-relaxed text-muted">
             The Aave of dividends. One deposit streams income per second, advances it at the ex
             date, and secures a credit line the dividends themselves repay.
           </p>
@@ -66,7 +66,7 @@ export function Footer() {
                   <li key={`${col.title}-${link.label}`}>
                     <Link
                       href={link.href}
-                      className="text-[14px] text-dim transition-colors duration-300 hover:text-chalk"
+                      className="text-[14px] text-muted transition-colors duration-300 hover:text-ink"
                     >
                       {link.label}
                     </Link>

@@ -12,7 +12,7 @@ import { DemoBanner } from "@/components/DemoBanner";
  */
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="grain relative min-h-screen bg-void">
+    <div className="grain relative min-h-screen bg-paper">
       <UtilityBar />
       <SiteNav />
       <TickerStrip />

@@ -43,12 +43,12 @@ export function Stat({
       <div className="eyebrow">{label}</div>
       <div
         className={`figure mt-3 text-[clamp(24px,2.6vw,34px)] leading-none ${
-          accent ? "text-cyan" : "text-chalk"
+          accent ? "text-cyan" : "text-ink"
         }`}
       >
         {value}
       </div>
-      {sub ? <div className="mt-2 text-[13px] text-dim">{sub}</div> : null}
+      {sub ? <div className="mt-2 text-[13px] text-muted">{sub}</div> : null}
     </div>
   );
 }
@@ -68,7 +68,7 @@ export function SectionHead({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <Eyebrow className="text-cyan">{eyebrow}</Eyebrow>
-          <h2 className="mt-3 text-headline font-black tracking-cut text-chalk">{title}</h2>
+          <h2 className="mt-3 text-headline font-black tracking-cut text-ink">{title}</h2>
         </div>
         {action}
       </div>
@@ -79,7 +79,7 @@ export function SectionHead({
 /** Never a spinner: the layout is held while the data settles. */
 export function Loading({ label = "Loading" }: { label?: string }) {
   return (
-    <div className="flex items-center gap-3 border border-line-soft bg-surface px-5 py-6">
+    <div className="flex items-center gap-3 border border-line-soft bg-paper-2 px-5 py-6">
       <span className="beacon" aria-hidden />
       <span className="eyebrow">{label}</span>
     </div>
@@ -88,9 +88,9 @@ export function Loading({ label = "Loading" }: { label?: string }) {
 
 export function Empty({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
   return (
-    <div className="border border-line-soft bg-surface px-6 py-14 text-center">
-      <div className="text-title font-bold tracking-tighter text-chalk">{title}</div>
-      <p className="mx-auto mt-3 max-w-md text-[14px] leading-relaxed text-dim">{body}</p>
+    <div className="border border-line-soft bg-paper-2 px-6 py-14 text-center">
+      <div className="text-title font-bold tracking-tighter text-ink">{title}</div>
+      <p className="mx-auto mt-3 max-w-md text-[14px] leading-relaxed text-muted">{body}</p>
       {action ? <div className="mt-7 flex justify-center">{action}</div> : null}
     </div>
   );
@@ -100,7 +100,7 @@ export function ErrorNote({ message, retry }: { message: string; retry?: () => v
   return (
     <div className="border border-down/40 bg-down/5 px-5 py-4">
       <div className="eyebrow text-down">Error</div>
-      <p className="mt-2 text-[14px] text-chalk">{message}</p>
+      <p className="mt-2 text-[14px] text-ink">{message}</p>
       {retry ? (
         <button type="button" className="btn-quiet btn-sm mt-4" onClick={retry}>
           Try again

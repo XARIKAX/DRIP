@@ -24,7 +24,7 @@ const WalletProviders = dynamic(() => import("@/components/WalletProviders"), {
  */
 function BootShell() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-void">
+    <div className="flex min-h-screen items-center justify-center bg-paper">
       <div className="flex flex-col items-center gap-6">
         <Wordmark size="lg" />
         <span className="font-mono text-nano uppercase tracking-widest text-ghost">
