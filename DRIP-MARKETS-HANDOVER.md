@@ -6,14 +6,16 @@ universe"). Nothing after that commit is part of this handover. The later rebran
 the Borrow module, the Split module and the `/docs` site belong to a different product
 and a different developer.
 
-The code you are receiving is exactly the tree at git branch `drip-markets`, also
-tagged `drip-markets-final`. Check it out and you have the whole thing:
+The code you are receiving is exactly the tree on the git branch **`drip-markets`**
+(repo `XARIKAX/DRIP`). Check it out and you have the whole thing:
 
 ```bash
-git clone <repo-url> drip-markets
+git clone https://github.com/XARIKAX/DRIP drip-markets
 cd drip-markets
-git checkout drip-markets-final      # or: git checkout drip-markets
+git checkout drip-markets
 ```
+
+Ignore every other branch in the repo. They contain the later product.
 
 Deep contract notes are in `HANDOFF.md` in the same tree. Setup and run commands are
 in `README.md`. This file is the map that ties them together and says what is real.
