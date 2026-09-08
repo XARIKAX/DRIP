@@ -184,22 +184,49 @@ Production hardening required:
 
 ## 7. Testnet → production delta checklist
 
-- [ ] Replace `MockUSDG` with canonical USDG address (6 decimals — the code assumes it).
-- [ ] Replace `MockStockToken`s with real stock token addresses (18 decimals assumed;
-      verify, and if any differ, audit `ONE_STOCK` math in DripCore and the adapters).
-- [ ] Deploy `UniswapV3SwapAdapter` against the chain's Uniswap router; set fee tiers.
-- [ ] Deploy a real `IPriceOracle`; wire it into the adapter and (per §6) clawback.
-- [ ] Feed `ORACLE_ROLE` from the real dividend source.
-- [ ] Decide the settlement pipe for `DripCore.settleDividend` (who holds KEEPER_ROLE
-      and where the USDG comes from).
-- [ ] Move every admin role to multisig + timelock.
-- [ ] Delete `contracts/src/mocks/` from the production deployment.
-- [ ] Faucet functions exist only on mocks; nothing to strip elsewhere.
-- [ ] Re run the deploy script with real addresses passed in (see `_deployProtocol` —
-      the mock lines are the only testnet specific code in it).
-- [ ] `Seed.s.sol` is testnet furniture: it mints USDG, hands out stock and declares a
-      sample calendar. Production runs `SEED=0 bash scripts/deploy.sh` and feeds the
-      registry from the real dividend source instead.
+`script/DeployProduction.s.sol` does the contract side of this list. It reads every
+address from `listings/<chainid>.json`, deploys protocol code only, and hands all
+roles to `ADMIN`. `test/DeployProduction.t.sol` runs it against the real listing file
+with stand ins etched at every listed address, so a bad listing goes red in CI rather
+than on a chain. Run it with:
+
+```bash
+ADMIN=0xmultisig PRIVATE_KEY=0x... PRODUCTION=1 pnpm deploy:chain robinhood_mainnet
+```
+
+Done by that script, asserted by that test:
+
+- [x] Canonical USDG from the listing; refuses anything but 6 decimals.
+- [x] Real stock tokens from the listing; refuses a `symbol()` mismatch or non-18
+      decimals. If any real token ever differs, audit `ONE_STOCK` math in DripCore
+      and the adapters before enabling it in the listing.
+- [x] `UniswapV3SwapAdapter` against the chain's SwapRouter02, default fee tier from
+      the listing's `infra.defaultFeeTier`.
+- [x] `ChainlinkPriceOracle` deployed and wired into the adapter, one feed per listed
+      token, 1 hour heartbeat. No feed, no listing — refused at load.
+- [x] Every admin role to `ADMIN`; the deployer renounces and the script asserts it
+      holds nothing before it finishes.
+- [x] No mocks deployed. `contracts/src/mocks/` is untouched by that script, and
+      `scripts/deploy.sh` refuses to run the testnet script against a non-testnet
+      chain at all.
+- [x] `Seed.s.sol` is testnet furniture — it mints USDG, hands out stock and declares
+      a sample calendar. Production mode forces `SEED=0`.
+
+Still yours, and none of it is code in this repo:
+
+- [ ] `ADMIN` should be a multisig behind a timelock, not a single key. The script
+      takes whatever address you give it.
+- [ ] Feed `ORACLE_ROLE` from the real dividend source. `script/DeclareDividends.s.sol`
+      is the mechanism and it is idempotent; `contracts/dividends/<chainid>.json` is
+      the input, and **producing that file from real issuer corporate action data is
+      not something this repo can do**. See that directory's README.
+- [ ] Run the pay-day keeper. `script/SettleDividends.s.sol` settles everything past
+      its pay date (`DRY_RUN=1` first, always). The keeper wallet must hold the USDG
+      the settlement pulls — where that comes from is a bank question, not a code one.
+- [ ] Seed the vault with LP capital. `script/FundPool.s.sol`, or `FUND=<usdg>` on the
+      deploy. The USDG has to exist in the funding wallet first.
+- [ ] Audit. The credit side is new code holding LP money and has never been reviewed
+      by anyone but its author.
 
 ## 8. Mainnet listing universe — Robinhood Chain (4663)
 
@@ -303,12 +330,27 @@ additive changes are fine, breaking changes are not.
       activate is possible for an oracle — decide if a minimum notice period is wanted.
 - [ ] `MAX_SETTLEMENT_WINDOW` (90 days) bounds vault duration risk; revisit per market.
 
-## 13. Credit side — LendingPool specification (to build)
+## 13. Credit side — LendingPool (built; this is what shipped)
 
-The web app already ships the Borrow experience in demo mode
-(`apps/web/src/app/app/borrow`, backed by `mock.ts`). The onchain market that
-replaces it should follow Aave's economics with one Osinko twist: dividend income
-on the collateral services the debt.
+`src/LendingPool.sol`, tested in `test/LendingPool.t.sol` (27 tests) and driven by
+the invariant handler alongside everything else. The Borrow page reads it through
+`DripReader.getCreditPosition`; there is no demo-only branch left on the chain path.
+
+Built to the shape below. Four things are worth knowing that the spec did not say:
+
+- **Interest is only an asset once it is cash.** The vault's `loansOutstanding` is
+  principal only. Accrued interest joins `totalFeesAccrued` when a repayment lands,
+  never on accrual — an accrual that lifts the share price before anyone has paid is
+  a way to pay early LPs with later LPs' money.
+- **Servicing takes interest, not principal, by default.** The spec's "principal if
+  the holder opts in" is `setAutoRepayPrincipal`, off unless asked for. The contract
+  exposes it; the Borrow page does not surface a toggle yet.
+- **Borrowing rounds the scaled debt up.** Rounding down let a borrower owe fractionally
+  less than they received, every time, forever, out of the LPs. The invariant suite
+  found it.
+- **Utilisation is shared.** Advances and loans draw on one balance sheet, so
+  `utilizationBps` counts both against one cap. Letting the credit side dodge the cap
+  would have defeated it.
 
 Shape:
 
@@ -331,9 +373,21 @@ Shape:
 - **Liquidation**: repay up to close factor (50%) of debt, seize collateral plus
   bonus, sell through the SwapRouter02 adapter with oracle-bounded minOut. Same
   no-pool-as-oracle rule as everything else.
-- **Invariants to test**: debt of any account ≤ collateral value × liq threshold at
-  action time; vault cash + receivables + loans ≥ obligations; dividend servicing
-  never reduces principal below zero; a stale oracle can never mint debt.
+- **Invariants tested**: `invariant_VaultCoversObligationsIncludingLoans`,
+  `invariant_LoanBookMatchesBorrowerPrincipal` (the vault's loan book and the sum of
+  borrower principal are updated in different contracts on every borrow, repayment,
+  servicing and liquidation — drift is the credit side's missing coin), and
+  `invariant_PrincipalNeverExceedsDebt`.
+
+### Still open on the credit side
+
+- Liquidation hands the seized stock to the liquidator, who sells it themselves. The
+  `swapAdapter` is wired for a future path that sells through SwapRouter02 with an
+  oracle-bounded minOut; nothing calls it yet.
+- `writeOffBadDebt` is admin-only and requires collateral to be fully exhausted. It
+  is the honest floor, not an automated one.
+- No borrow cap per asset and no isolation mode. Every listed stock is collateral at
+  the same 40%.
 
 ## 14. Trade side — SplitVault (already built, here is what to review)
 
@@ -400,7 +454,11 @@ What else production should look at:
 contracts/src/            ten protocol contracts + interfaces + mocks + adapters
 contracts/test/           unit + integration suites, one per contract
 contracts/test/invariant/ handler driven invariant suite
-contracts/script/         Deploy.s.sol (writes deployments/<chainid>.json), Seed.s.sol
+contracts/script/         Deploy.s.sol (testnet, writes deployments/<chainid>.json),
+                          Seed.s.sol, DeployProduction.s.sol (real assets),
+                          VerifyUniverse.s.sol (checks the listing onchain),
+                          FundPool.s.sol, DeclareDividends.s.sol, SettleDividends.s.sol
+contracts/dividends/      corporate action feed per chain — operator supplied
 scripts/deploy.sh         any chain: compile → deploy → seed → sync ABIs → point the app
 scripts/deploy-local.sh   the same, pinned to local anvil (delegates to deploy.sh)
 scripts/sync-abis.mjs     ABIs + address books → packages/sdk/src/generated

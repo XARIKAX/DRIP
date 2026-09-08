@@ -4,13 +4,15 @@ import {
   deployments,
   dividendRegistryAbi,
   dripCoreAbi,
-  mockSwapAdapterAbi,
+  lendingPoolAbi,
   reinvestorAbi,
   streamEngineAbi,
 } from "./generated";
 import {
   DividendStatus,
   Mode,
+  type CreditParameters,
+  type CreditPosition,
   type Deployment,
   type DividendView,
   type PositionView,
@@ -33,9 +35,38 @@ export function getDeployment(chainId: number): Deployment {
   return d;
 }
 
+/**
+ * The one function every swap adapter answers for a price.
+ *
+ * Read through the interface rather than either implementation: this call used to go
+ * through mockSwapAdapterAbi, which exposed priceUsdg only because the mock happened
+ * to declare it as a public mapping. ISwapAdapter declares it now, so both adapters
+ * answer it and neither implementation's ABI is the right thing to depend on.
+ */
+const swapAdapterPriceAbi = [
+  {
+    type: "function",
+    name: "priceUsdg",
+    stateMutability: "view",
+    inputs: [{ name: "stockToken", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+] as const;
+
 /** Every chain the repo has an address book for. */
 export function knownChainIds(): number[] {
   return Object.keys(deployments).map(Number);
+}
+
+/**
+ * True when this deployment runs the testnet stand ins, and so has faucets.
+ *
+ * Books written before the `mocks` field existed were all testnet deploys, so a
+ * missing field means mocks. Production books set it to false explicitly. Read this
+ * rather than the field, so an old book never turns a faucet button into a revert.
+ */
+export function usesMocks(d: Deployment): boolean {
+  return d.mocks !== false;
 }
 
 /**
@@ -80,7 +111,7 @@ export class DripReader {
           this.client.readContract({ address, abi: erc20Abi, functionName: "decimals" }),
           this.client.readContract({
             address: d.swapAdapter,
-            abi: mockSwapAdapterAbi,
+            abi: swapAdapterPriceAbi,
             functionName: "priceUsdg",
             args: [address],
           }),
@@ -158,7 +189,7 @@ export class DripReader {
           this.client.readContract({ address: stockToken, abi: erc20Abi, functionName: "symbol" }),
           this.client.readContract({
             address: d.swapAdapter,
-            abi: mockSwapAdapterAbi,
+            abi: swapAdapterPriceAbi,
             functionName: "priceUsdg",
             args: [stockToken],
           }),
@@ -396,6 +427,75 @@ export class DripReader {
       stocks[t.address] = stockBalances[i]!;
     });
     return { usdg, stocks };
+  }
+
+  // -------------------------------------------------------------------
+  // Credit
+  // -------------------------------------------------------------------
+
+  /** True when this chain's deployment has a credit market. */
+  hasCredit(): boolean {
+    return Boolean(this.deployment.lendingPool);
+  }
+
+  /**
+   * A borrower's whole position, in one call.
+   *
+   * Returns null when no lending pool is deployed on this chain, which is what an
+   * address book written before the credit market existed looks like. Callers render
+   * the Borrow page empty rather than failing.
+   */
+  async getCreditPosition(user: Address): Promise<CreditPosition | null> {
+    const pool = this.deployment.lendingPool;
+    if (!pool) return null;
+
+    const snapshot = (await this.client.readContract({
+      address: pool,
+      abi: lendingPoolAbi,
+      functionName: "accountSnapshot",
+      args: [user],
+    })) as readonly bigint[];
+
+    const [collateralUsdg, borrowingPower, debt, available, accruedInterest, servicedFromDividends, healthFactorBps, borrowRateBps] =
+      snapshot;
+
+    return {
+      collateralUsdg: collateralUsdg!,
+      borrowingPower: borrowingPower!,
+      debt: debt!,
+      available: available!,
+      accruedInterest: accruedInterest!,
+      servicedFromDividends: servicedFromDividends!,
+      healthFactorBps: healthFactorBps!,
+      borrowRateBps: borrowRateBps!,
+    };
+  }
+
+  /** The market's risk parameters as deployed. Constant between admin changes. */
+  async getCreditParameters(): Promise<CreditParameters | null> {
+    const pool = this.deployment.lendingPool;
+    if (!pool) return null;
+
+    const [maxLtvBps, liquidationThresholdBps, liquidationBonusBps, closeFactorBps] = (await Promise.all([
+      this.client.readContract({ address: pool, abi: lendingPoolAbi, functionName: "maxLtvBps" }),
+      this.client.readContract({ address: pool, abi: lendingPoolAbi, functionName: "liquidationThresholdBps" }),
+      this.client.readContract({ address: pool, abi: lendingPoolAbi, functionName: "liquidationBonusBps" }),
+      this.client.readContract({ address: pool, abi: lendingPoolAbi, functionName: "closeFactorBps" }),
+    ])) as [bigint, bigint, bigint, bigint];
+
+    return { maxLtvBps, liquidationThresholdBps, liquidationBonusBps, closeFactorBps };
+  }
+
+  /** Whether this holder has opted into dividends paying down principal too. */
+  async getAutoRepayPrincipal(user: Address): Promise<boolean> {
+    const pool = this.deployment.lendingPool;
+    if (!pool) return false;
+    return (await this.client.readContract({
+      address: pool,
+      abi: lendingPoolAbi,
+      functionName: "autoRepayPrincipal",
+      args: [user],
+    })) as boolean;
   }
 
   // -------------------------------------------------------------------

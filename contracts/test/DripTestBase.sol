@@ -12,6 +12,10 @@ import {AdvanceVault} from "../src/AdvanceVault.sol";
 import {DripCore} from "../src/DripCore.sol";
 import {StreamEngine} from "../src/StreamEngine.sol";
 import {Reinvestor} from "../src/Reinvestor.sol";
+import {LendingPool, ICollateralCustodian, ILendableVault} from "../src/LendingPool.sol";
+import {MockPriceOracle} from "../src/mocks/MockPriceOracle.sol";
+import {ILendingPool} from "../src/interfaces/ILendingPool.sol";
+import {IPriceOracle} from "../src/interfaces/IPriceOracle.sol";
 import {IDividendRegistry} from "../src/interfaces/IDividendRegistry.sol";
 import {IAdvanceVault} from "../src/interfaces/IAdvanceVault.sol";
 import {IStreamEngine} from "../src/interfaces/IStreamEngine.sol";
@@ -40,6 +44,8 @@ abstract contract DripTestBase is Test {
     DripCore internal core;
     StreamEngine internal stream;
     Reinvestor internal reinvestor;
+    LendingPool internal lending;
+    MockPriceOracle internal oracle;
 
     /// @dev AAPL priced at 220 USDG, KO at 62 USDG. Six decimal quote, 18 decimal token.
     uint256 internal constant AAPL_PRICE = 220e6;
@@ -62,6 +68,18 @@ abstract contract DripTestBase is Test {
             IERC20(address(usdg)), IDripCore(address(core)), ISwapAdapter(address(adapter)), admin
         );
 
+        // The credit side prices from an oracle, never from the swap venue. On testnet
+        // that is a mock kept in step with the adapter's prices below.
+        oracle = new MockPriceOracle(admin);
+        lending = new LendingPool(
+            IERC20(address(usdg)),
+            ICollateralCustodian(address(core)),
+            ILendableVault(address(vault)),
+            IPriceOracle(address(oracle)),
+            ISwapAdapter(address(adapter)),
+            admin
+        );
+
         // Wire the modules.
         core.setStreamEngine(IStreamEngine(address(stream)));
         core.setReinvestor(IReinvestor(address(reinvestor)));
@@ -79,9 +97,17 @@ abstract contract DripTestBase is Test {
         core.grantRole(core.KEEPER_ROLE(), keeper);
         registry.grantRole(registry.SETTLER_ROLE(), address(core));
 
+        // Credit side wiring, matching Deploy.s.sol.
+        core.setLendingPool(ILendingPool(address(lending)));
+        core.grantRole(core.LENDER_ROLE(), address(lending));
+        vault.grantRole(vault.LENDER_ROLE(), address(lending));
+        lending.grantRole(lending.CORE_ROLE(), address(core));
+
         // Prices and swap inventory so the reinvest loop can actually fill.
         adapter.setPrice(address(aapl), AAPL_PRICE);
         adapter.setPrice(address(ko), KO_PRICE);
+        oracle.setPrice(address(aapl), AAPL_PRICE);
+        oracle.setPrice(address(ko), KO_PRICE);
         aapl.mint(address(adapter), 1_000_000e18);
         ko.mint(address(adapter), 1_000_000e18);
 

@@ -35,6 +35,19 @@ export interface Deployment {
   chainId: number;
   /** Deploy block timestamp. Used to annualise vault fees into an APY. */
   deployedAt: number;
+  /**
+   * True when this chain runs the testnet stand ins: MockUSDG, MockStockToken and
+   * MockSwapAdapter. Absent on books written before the field existed, which were all
+   * testnet — hence the default in `usesMocks`, never a bare truthiness check.
+   * The app hides its faucets when this is false; a real stock token has none.
+   */
+  mocks?: boolean;
+  /** The multisig holding every role. Production books only. */
+  admin?: Address;
+  /** The price source the credit side values collateral with. */
+  priceOracle?: Address;
+  /** The credit market. Absent on books written before it existed; Borrow needs it. */
+  lendingPool?: Address;
   usdg: Address;
   dividendRegistry: Address;
   advanceVault: Address;
@@ -119,6 +132,34 @@ export interface VaultStats {
   totalSupply: bigint;
   /** Assets per 1e18 shares. */
   sharePrice: bigint;
+}
+
+/** A borrower's position in the credit market. */
+export interface CreditPosition {
+  /** USDG value of every stock this holder has on deposit, 6 decimals. */
+  collateralUsdg: bigint;
+  /** Most they could owe in total, at the max LTV. */
+  borrowingPower: bigint;
+  /** Owed right now, principal plus accrued interest. */
+  debt: bigint;
+  /** Still drawable, bounded by both collateral and pool liquidity. */
+  available: bigint;
+  /** Interest owed on top of principal. */
+  accruedInterest: bigint;
+  /** Dividend income routed at this debt over the loan's life. */
+  servicedFromDividends: bigint;
+  /** Collateral at the liquidation threshold over debt, in bps. 10000 is the line. */
+  healthFactorBps: bigint;
+  /** Current borrow rate from the kinked curve, in bps per year. */
+  borrowRateBps: bigint;
+}
+
+/** The credit market's risk parameters, as deployed. */
+export interface CreditParameters {
+  maxLtvBps: bigint;
+  liquidationThresholdBps: bigint;
+  liquidationBonusBps: bigint;
+  closeFactorBps: bigint;
 }
 
 /** An LP's stake in the vault. */

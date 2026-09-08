@@ -137,7 +137,7 @@ export default function DepositPage() {
                   ≈ <AnimatedNumber value={shares * (token?.priceUsd ?? 0)} prefix="$" flash="light" /> USD
                 </span>
               )}
-              {walletShares === 0 && token ? (
+              {walletShares === 0 && token && actions.canFaucet ? (
                 <button type="button" className="text-micro font-bold uppercase underline decoration-cyan decoration-2 underline-offset-4" onClick={() => void actions.faucet(token.symbol)}>
                   Get test {token.symbol}
                 </button>

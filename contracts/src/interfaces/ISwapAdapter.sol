@@ -7,6 +7,14 @@ pragma solidity ^0.8.24;
 ///      in UniswapV3SwapAdapter pointed at the chain's real router. Reinvestor never
 ///      changes.
 interface ISwapAdapter {
+    /// @notice USDG (6 decimals) per one whole stock token (1e18).
+    /// @dev The reference price for a single token, which `quote` needs an amount and a
+    ///      pair to express. Every consumer wants this shape: the app prices positions
+    ///      with it, and it is the number a holder sees. MockSwapAdapter satisfies it
+    ///      with its admin set price mapping; UniswapV3SwapAdapter reads Chainlink.
+    ///      Never the pool — see the note on `quote` in the production adapter.
+    function priceUsdg(address stockToken) external view returns (uint256);
+
     /// @notice Expected output for an exact input swap, ignoring fees taken outside the pool.
     /// @dev Views only. Never trust this as a price oracle for anything but UI hints and
     ///      slippage floors that the caller also bounds.

@@ -21,8 +21,11 @@ import {
   buildVaultDeposit,
   buildVaultWithdraw,
   buildWithdraw,
+  buildBorrow,
+  buildRepay,
+  buildSetAutoRepayPrincipal,
 } from "@drip-markets/sdk";
-import { isDeployed } from "@/lib/chain.config";
+import { hasFaucets, isDeployed } from "@/lib/chain.config";
 import {
   useActivity as useChainActivity,
   useCalendar as useChainCalendar,
@@ -33,6 +36,9 @@ import {
   useVaultStats as useChainVaultStats,
   useWalletBalances as useChainWallet,
   useActivatable as useChainActivatable,
+  useCredit as useChainCredit,
+  useCreditParameters as useChainCreditParams,
+  useAutoRepayPrincipal as useChainAutoRepay,
   useDeployment,
 } from "@/lib/hooks";
 import { useTxRunner } from "@/lib/tx";
@@ -313,16 +319,75 @@ export function usePendingAdvances(): PendingAdvance[] {
 export function useCreditView(): CreditView {
   const source = useDataSource();
   const version = useMockVersion();
+  const credit = useChainCredit();
+  const params = useChainCreditParams();
+  const { rows: holdings } = useHoldings();
+  const { rows: calendar } = useCalendarRows();
+
   return useMemo(() => {
-    // The lending market exists in demo mode today; the chain deployment follows the
-    // audited LendingPool. Chain mode shows the same shape with nothing drawn.
-    if (source === "chain") {
+    if (source === "demo") return mockStore.credit();
+
+    const c = credit.data;
+    const p = params.data;
+    // No lending pool on this chain, or the read has not landed yet. Render the page
+    // with nothing drawn rather than throwing; the address book may predate the market.
+    if (!c || !p) {
       const empty = mockStore.credit();
-      return { ...empty, borrowedUsd: 0, availableUsd: empty.maxBorrowUsd, healthFactor: Infinity, servicedBaseUsd: 0, servicedRatePerSec: 0 };
+      return {
+        ...empty,
+        collateralValueUsd: 0,
+        maxBorrowUsd: 0,
+        borrowedUsd: 0,
+        availableUsd: 0,
+        healthFactor: Infinity,
+        dividendsPerYearUsd: 0,
+        interestPerYearUsd: 0,
+        netCarryPerYearUsd: 0,
+        servicedBaseUsd: 0,
+        servicedRatePerSec: 0,
+      };
     }
-    return mockStore.credit();
+
+    const borrowedUsd = Number(c.debt) / USDG;
+    const borrowAprPct = Number(c.borrowRateBps) / 100;
+
+    // Annualised from the declared calendar: what each holding's next dividend pays,
+    // four times over. The same quarterly assumption the reference portfolio makes,
+    // and the honest one until a full year of real declarations exists to average.
+    const perShare = new Map(calendar.map((d) => [d.symbol, d.perShare]));
+    const dividendsPerYearUsd = holdings.reduce(
+      (sum, h) => sum + h.amount * (perShare.get(h.symbol) ?? 0) * 4,
+      0
+    );
+    const interestPerYearUsd = (borrowedUsd * borrowAprPct) / 100;
+
+    // Dividends can only service interest that exists, so the rate is bounded by both.
+    const servicedRatePerSec = Math.min(dividendsPerYearUsd, interestPerYearUsd) / (365 * 24 * 3600);
+
+    return {
+      collateralValueUsd: Number(c.collateralUsdg) / USDG,
+      maxBorrowUsd: Number(c.borrowingPower) / USDG,
+      borrowedUsd,
+      availableUsd: Number(c.available) / USDG,
+      healthFactor: borrowedUsd > 0 ? Number(c.healthFactorBps) / 10_000 : Infinity,
+      maxLtvPct: Number(p.maxLtvBps) / 100,
+      liqThresholdPct: Number(p.liquidationThresholdBps) / 100,
+      borrowAprPct,
+      dividendsPerYearUsd,
+      interestPerYearUsd,
+      netCarryPerYearUsd: dividendsPerYearUsd - interestPerYearUsd,
+      servicedBaseUsd: Number(c.servicedFromDividends) / USDG,
+      servicedRatePerSec,
+    } satisfies CreditView;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, version]);
+  }, [source, version, credit.data, params.data, holdings, calendar]);
+}
+
+/** Whether this holder lets dividends pay down principal, not just interest. */
+export function useAutoRepayPrincipal(): boolean {
+  const source = useDataSource();
+  const chain = useChainAutoRepay();
+  return source === "demo" ? false : Boolean(chain.data);
 }
 
 /**
@@ -406,6 +471,12 @@ export function usePortfolioSummary(): PortfolioSummary {
 export interface DataActions {
   source: Source;
   busy: boolean;
+  /**
+   * Whether a faucet exists to offer. The sample portfolio always has one; a chain
+   * only does while it runs the mock stock tokens. On a production book the real
+   * stock token has no faucet() and the button would only ever revert.
+   */
+  canFaucet: boolean;
   setMode: (symbol: string, mode: ModeName) => Promise<void>;
   claimStream: (id: number) => Promise<void>;
   startPending: (dividendId: number) => Promise<void>;
@@ -416,6 +487,8 @@ export interface DataActions {
   vaultWithdraw: (usd: number) => Promise<void>;
   borrow: (usd: number) => Promise<void>;
   repay: (usd: number) => Promise<void>;
+  /** Opt dividend income into paying down principal, not just interest. */
+  setAutoRepayPrincipal: (enabled: boolean) => Promise<void>;
   split: (seriesId: number, amount: number) => Promise<void>;
   merge: (seriesId: number, amount: number) => Promise<void>;
   redeemPrincipal: (seriesId: number, amount: number) => Promise<void>;
@@ -449,6 +522,7 @@ export function useDataActions(): DataActions {
       return {
         source,
         busy: demoBusy,
+        canFaucet: true,
         setMode: (symbol, mode) => demo(() => mockStore.setMode(symbol, mode)),
         claimStream: (id) => demo(() => void mockStore.claimStream(id)),
         startPending: (id) => demo(() => mockStore.startPending(id)),
@@ -463,6 +537,7 @@ export function useDataActions(): DataActions {
         vaultWithdraw: (usd) => demo(() => mockStore.vaultWithdraw(usd)),
         borrow: (usd) => demo(() => mockStore.borrow(usd)),
         repay: (usd) => demo(() => mockStore.repay(usd)),
+        setAutoRepayPrincipal: async () => {},
         split: (seriesId, amount) => demo(() => mockStore.split(seriesId, amount)),
         merge: (seriesId, amount) => demo(() => mockStore.merge(seriesId, amount)),
         redeemPrincipal: (seriesId, amount) => demo(() => mockStore.redeemPrincipal(seriesId, amount)),
@@ -480,6 +555,7 @@ export function useDataActions(): DataActions {
     return {
       source,
       busy,
+      canFaucet: hasFaucets,
       setMode: async (symbol, mode) => {
         const d = need(deployment, "deployment");
         const token = need(addressOf(symbol), symbol);
@@ -507,6 +583,7 @@ export function useDataActions(): DataActions {
         await run([buildWithdraw(d, token, BigInt(Math.round(shares * 1e6)) * 10n ** 12n, symbol)]);
       },
       faucet: async (symbol) => {
+        if (!hasFaucets) throw new Error("This network uses real stock tokens; there is no faucet.");
         const token = need(addressOf(symbol), symbol);
         await run([buildStockFaucet(token, symbol)]);
       },
@@ -521,11 +598,19 @@ export function useDataActions(): DataActions {
         const owner = need(address, "wallet");
         await run([buildVaultWithdraw(d, BigInt(Math.round(usd * 1e6)), owner, owner)]);
       },
-      borrow: async () => {
-        throw new Error("The lending market is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
+      borrow: async (usd) => {
+        const d = need(deployment, "deployment");
+        await run([buildBorrow(d, BigInt(Math.round(usd * 1e6)))]);
       },
-      repay: async () => {
-        throw new Error("The lending market is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
+      repay: async (usd) => {
+        const d = need(deployment, "deployment");
+        const owner = need(address, "wallet");
+        const base = BigInt(Math.round(usd * 1e6));
+        await run([buildApprove(d.usdg, need(d.lendingPool, "lending pool"), base, "USDG"), buildRepay(d, owner, base)]);
+      },
+      setAutoRepayPrincipal: async (enabled) => {
+        const d = need(deployment, "deployment");
+        await run([buildSetAutoRepayPrincipal(d, enabled)]);
       },
       split: async () => {
         throw new Error("SplitVault is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");

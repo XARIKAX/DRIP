@@ -114,6 +114,38 @@ export function useVaultStats() {
   return useQuery(readerQuery(["vaultStats", chainId], reader, (r) => r.getVaultStats()));
 }
 
+export function useCredit() {
+  const reader = useReader();
+  const { address } = useAccount();
+  return useQuery(
+    readerQuery(["credit", chainId, address], reader, (r) => r.getCreditPosition(address!), {
+      enabled: Boolean(address),
+      // Debt accrues every second and the health factor moves with the oracle.
+      refetchInterval: 10_000,
+    })
+  );
+}
+
+export function useCreditParameters() {
+  const reader = useReader();
+  return useQuery(
+    readerQuery(["creditParams", chainId], reader, (r) => r.getCreditParameters(), {
+      // Constant between admin changes; no reason to poll it.
+      staleTime: Infinity,
+    })
+  );
+}
+
+export function useAutoRepayPrincipal() {
+  const reader = useReader();
+  const { address } = useAccount();
+  return useQuery(
+    readerQuery(["autoRepay", chainId, address], reader, (r) => r.getAutoRepayPrincipal(address!), {
+      enabled: Boolean(address),
+    })
+  );
+}
+
 export function useVaultPosition() {
   const reader = useReader();
   const { address } = useAccount();
