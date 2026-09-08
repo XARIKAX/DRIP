@@ -1,0 +1,24 @@
+# The Osinko keeper, for Railway.
+#
+# Built from the repo root rather than apps/keeper, because the keeper imports
+# @drip-markets/sdk as a workspace package and pnpm needs the whole workspace to
+# resolve it. The SDK ships TypeScript source, so there is no build step to run: tsx
+# executes it directly, same as the MCP server does.
+FROM node:22-slim
+
+ENV PNPM_HOME=/usr/local/bin
+RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+
+WORKDIR /app
+
+# Manifests first so a dependency install is cached independently of source edits.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/keeper/package.json ./apps/keeper/
+COPY packages/sdk/package.json ./packages/sdk/
+RUN pnpm install --frozen-lockfile --filter @drip-markets/keeper...
+
+COPY packages/sdk ./packages/sdk
+COPY apps/keeper ./apps/keeper
+
+# Long running, not a request handler: no healthcheck here, Railway polls /health.
+CMD ["pnpm", "--filter", "@drip-markets/keeper", "start"]

@@ -1,0 +1,44 @@
+# The Osinko web app, for Railway.
+#
+# Next.js standalone output would be smaller, but next.config.mjs transpiles the SDK
+# from source and reaches for sharp at request time rather than build time, so the
+# app is run with `next start` against a full install. Built from the repo root: the
+# web app imports @drip-markets/sdk as a workspace package.
+FROM node:22-slim
+
+ENV PNPM_HOME=/usr/local/bin
+RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/sdk/package.json ./packages/sdk/
+RUN pnpm install --frozen-lockfile --filter @drip-markets/web...
+
+COPY packages/sdk ./packages/sdk
+COPY apps/web ./apps/web
+
+# NEXT_PUBLIC_* is inlined at build time, not read at runtime, so these must be set
+# as Railway build variables. A missing one bakes a broken chain id into the bundle
+# and no amount of restarting fixes it — only a rebuild does.
+ARG NEXT_PUBLIC_CHAIN_ID
+ARG NEXT_PUBLIC_CHAIN_NAME
+ARG NEXT_PUBLIC_RPC_URL
+ARG NEXT_PUBLIC_EXPLORER_NAME
+ARG NEXT_PUBLIC_EXPLORER_URL
+ARG NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
+ENV NEXT_PUBLIC_CHAIN_ID=$NEXT_PUBLIC_CHAIN_ID \
+    NEXT_PUBLIC_CHAIN_NAME=$NEXT_PUBLIC_CHAIN_NAME \
+    NEXT_PUBLIC_RPC_URL=$NEXT_PUBLIC_RPC_URL \
+    NEXT_PUBLIC_EXPLORER_NAME=$NEXT_PUBLIC_EXPLORER_NAME \
+    NEXT_PUBLIC_EXPLORER_URL=$NEXT_PUBLIC_EXPLORER_URL \
+    NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=$NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
+
+RUN pnpm --filter @drip-markets/web build
+
+ENV NODE_ENV=production
+EXPOSE 3000
+# Railway assigns the port at runtime; `next start` reads PORT from the environment,
+# so nothing needs to be threaded through here.
+CMD ["pnpm", "--filter", "@drip-markets/web", "start"]
