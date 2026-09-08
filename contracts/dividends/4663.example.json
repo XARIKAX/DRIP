@@ -1,0 +1,31 @@
+{
+  "_comment": [
+    "TEMPLATE. Copy to 4663.json and replace every row with real corporate action data.",
+    "DeclareDividends.s.sol reads 4663.json, never this file. Nothing here is a real",
+    "dividend and no row below should be declared as written.",
+    "",
+    "Every field is load bearing. amountPerToken is USDG per whole share at 6 decimals,",
+    "so 260000 is $0.26 and a misplaced zero is a tenfold advance out of the pool.",
+    "",
+    "fundedBy records who repays the vault at the pay date. 'issuer' means the payment",
+    "arrives from outside. 'reserve' means Osinko pays it out of its own USDG, which is",
+    "a subsidy: the holder is made whole and the protocol carries the cost. The two are",
+    "not interchangeable and the app tells the holder which one they are looking at.",
+    "",
+    "source and retrievedAt exist because whoever holds ORACLE_ROLE is accountable for",
+    "every row, and 'where did this number come from' should be answerable months later",
+    "without asking anyone."
+  ],
+  "dividends": [
+    {
+      "symbol": "AAPL",
+      "amountPerToken": 260000,
+      "exDate": 1790000000,
+      "payDate": 1791800000,
+      "fundedBy": "reserve",
+      "source": "https://investor.apple.com/dividend-history/ — replace with the actual declaration",
+      "retrievedAt": "2026-01-01",
+      "note": "EXAMPLE ROW. Not a real declaration."
+    }
+  ]
+}

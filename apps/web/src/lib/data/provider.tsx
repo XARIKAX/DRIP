@@ -30,8 +30,9 @@ import {
   buildRedeemPrincipal,
   buildHarvestDividend,
   buildClaimYield,
+  listings,
 } from "@drip-markets/sdk";
-import { hasFaucets, isDeployed } from "@/lib/chain.config";
+import { chainId, hasFaucets, isDeployed } from "@/lib/chain.config";
 import {
   useActivity as useChainActivity,
   useCalendar as useChainCalendar,
@@ -180,13 +181,29 @@ const MODE_TO_CHAIN: Record<ModeName, ChainMode> = {
 /**
  * Annualised dividend yield from the declared calendar.
  *
- * Four quarters of the next declared dividend over the current price. Null when
- * nothing is declared for that token, because the honest answer then is "we do not
- * know yet", not zero.
+ * The next declared payment, annualised by how often that stock actually pays, over
+ * the current price. Null when anything needed is missing — nothing declared, no
+ * price, or no stated frequency — because the honest answer then is "we do not know
+ * yet", not zero.
+ *
+ * This multiplied by four unconditionally until it was pointed out that not every
+ * stock is a quarterly payer. Four halves a semi annual payer's yield into looking
+ * right and manufactures one outright for a stock that has never paid a dividend at
+ * all, which is most of a mega cap technology basket.
  */
-function annualYieldPct(perShare: number | undefined, priceUsd: number | null): number | null {
+function annualYieldPct(
+  perShare: number | undefined,
+  priceUsd: number | null,
+  perYear: number | undefined
+): number | null {
   if (perShare === undefined || priceUsd === null || priceUsd <= 0) return null;
-  return ((perShare * 4) / priceUsd) * 100;
+  if (perYear === undefined || perYear <= 0) return null;
+  return ((perShare * perYear) / priceUsd) * 100;
+}
+
+/** How often a stock pays, from the listing. Undefined when the listing does not say. */
+function paymentsPerYear(symbol: string): number | undefined {
+  return listings[chainId]?.tokens.find((t) => t.symbol === symbol)?.dividendsPerYear;
 }
 
 // ---------------------------------------------------------------------------
@@ -213,7 +230,7 @@ export function useTokensView(): TokenInfo[] {
         symbol: t.symbol,
         name: t.name,
         priceUsd,
-        yieldPct: annualYieldPct(perShare, priceUsd),
+        yieldPct: annualYieldPct(perShare, priceUsd, paymentsPerYear(t.symbol)),
         perShare: perShare ?? 0,
         nextExDate: next ? next.exDate : null,
         // Paying now means the calendar has this token between its ex and pay dates.
