@@ -197,6 +197,9 @@ Production hardening required:
 - [ ] Faucet functions exist only on mocks; nothing to strip elsewhere.
 - [ ] Re run the deploy script with real addresses passed in (see `_deployProtocol` —
       the mock lines are the only testnet specific code in it).
+- [ ] `Seed.s.sol` is testnet furniture: it mints USDG, hands out stock and declares a
+      sample calendar. Production runs `SEED=0 bash scripts/deploy.sh` and feeds the
+      registry from the real dividend source instead.
 
 ## 8. Mainnet listing universe — Robinhood Chain (4663)
 
@@ -398,7 +401,8 @@ contracts/src/            ten protocol contracts + interfaces + mocks + adapters
 contracts/test/           unit + integration suites, one per contract
 contracts/test/invariant/ handler driven invariant suite
 contracts/script/         Deploy.s.sol (writes deployments/<chainid>.json), Seed.s.sol
-scripts/deploy-local.sh   anvil → deploy → seed → fast forward → sync ABIs
+scripts/deploy.sh         any chain: compile → deploy → seed → sync ABIs → point the app
+scripts/deploy-local.sh   the same, pinned to local anvil (delegates to deploy.sh)
 scripts/sync-abis.mjs     ABIs + address books → packages/sdk/src/generated
 packages/sdk/             viem SDK: typed reads (DripReader), unsigned write builders
 packages/mcp/             MCP server: 4 read tools, 3 write tools, no keys, stdio
