@@ -1,5 +1,5 @@
 import { chance, mulberry32, randInt } from "@/lib/rand";
-import { blank, get, line, put, type Grid } from "./raster";
+import { blank, get, line, put, trim, type Grid } from "./raster";
 
 /**
  * The grown half of the garden.
@@ -146,7 +146,16 @@ export interface SakuraOptions {
   ground?: boolean;
 }
 
-/** A blossoming tree. Same seed, same tree, on every machine and in every render. */
+/**
+ * A blossoming tree. Same seed, same tree, on every machine and in every render.
+ *
+ * `w` and `h` describe the trunk's room to grow, not the sprite that comes out. The
+ * canvas is padded generously and the result cropped to what actually grew, because a
+ * tree that is cut off by its own canvas edge reads as damaged — a canopy sliced flat
+ * along the top, blossoms shorn down one side. That is a property of the generator, not
+ * of wherever the sprite is later placed, which is why it showed up in every section at
+ * once.
+ */
 export function sakuraGrid(opts: SakuraOptions = {}): Grid {
   const w = opts.w ?? 56;
   const h = opts.h ?? 64;
@@ -155,9 +164,13 @@ export function sakuraGrid(opts: SakuraOptions = {}): Grid {
   const maxDepth = opts.depth ?? 5;
   const rnd = mulberry32(seed);
 
-  const g = blank(w, h);
-  const groundY = opts.ground === false ? h : h - 1;
-  const cx = (w >> 1) + (opts.lean ?? 0);
+  // Room for the widest blossom on the longest branch, plus slack. Cropped back off.
+  const pad = bloomR + 14;
+  const gw = w + pad * 2;
+  const gh = h + pad;
+  const g = blank(gw, gh);
+  const groundY = opts.ground === false ? gh : gh - 1;
+  const cx = (gw >> 1) + (opts.lean ?? 0);
   const baseY = groundY - 1;
 
   const tips: Tip[] = [];
@@ -173,7 +186,7 @@ export function sakuraGrid(opts: SakuraOptions = {}): Grid {
   }
 
   if (opts.ground !== false) {
-    for (let x = 0; x < w; x++) {
+    for (let x = 0; x < gw; x++) {
       // The moss only reaches as far as the roots do.
       const reach = Math.abs(x - cx);
       if (reach > (w >> 2) + (hash(x, seed) % 3)) continue;
@@ -181,7 +194,7 @@ export function sakuraGrid(opts: SakuraOptions = {}): Grid {
     }
   }
 
-  return g;
+  return trim(g);
 }
 
 export interface SandOptions {

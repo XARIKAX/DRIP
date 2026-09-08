@@ -49,11 +49,11 @@ export function Footer() {
   return (
     <footer className="night relative overflow-hidden bg-night text-ink [--cell:2px] md:[--cell:3px]">
       {/* The garden closes over the page. */}
-      <div className="pointer-events-none absolute bottom-[8%] left-[-5%] opacity-35 sm:left-[-2%]" aria-hidden>
-        <SakuraTree seed={2} cell="calc(var(--cell) * 0.9)" />
+      <div className="pointer-events-none absolute bottom-[9%] left-[2%] opacity-35" aria-hidden>
+        <SakuraTree seed={2} cell="calc(var(--cell) * 0.75)" />
       </div>
-      <div className="pointer-events-none absolute bottom-[8%] right-[-6%] opacity-30 sm:right-[-2%]" aria-hidden>
-        <SakuraTree seed={5} cell="calc(var(--cell) * 0.8)" />
+      <div className="pointer-events-none absolute bottom-[9%] right-[2%] opacity-30" aria-hidden>
+        <SakuraTree seed={5} cell="calc(var(--cell) * 0.65)" />
       </div>
 
       <Reveal className="shell relative grid gap-12 py-20 md:grid-cols-12 md:py-24">

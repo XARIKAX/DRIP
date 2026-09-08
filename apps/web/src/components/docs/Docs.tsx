@@ -119,8 +119,8 @@ export function Docs() {
     <header className="relative">
       {/* A tree behind the title, at the opacity of a watermark — the reference is
           visibly grown in the same garden as the product. */}
-      <div className="pointer-events-none absolute -right-8 -top-10 opacity-[0.13] lg:-right-20" aria-hidden>
-        <SakuraTree seed={2} cell="4px" />
+      <div className="pointer-events-none absolute right-0 top-0 opacity-[0.13] lg:right-4" aria-hidden>
+        <SakuraTree seed={2} cell="3px" />
       </div>
       <div className="eyebrow">Start here</div>
       <h1 className="display relative mt-5 text-[clamp(40px,5.4vw,70px)] leading-[0.98] tracking-[-0.03em]">

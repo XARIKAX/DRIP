@@ -58,6 +58,37 @@ export function mirror(half: Grid): Grid {
   return half.map((row) => row + [...row].slice(0, -1).reverse().join(""));
 }
 
+/**
+ * Crop a grid to the cells that actually carry something.
+ *
+ * The generators draw into a working canvas larger than the art they intend, because a
+ * tree does not know how wide it will be until it has grown. Without this the canvas
+ * edge becomes a guillotine: a branch that reaches past row zero is not shortened, it
+ * is cut flat, and a canopy sliced square along the top is the most obvious tell that
+ * something is generated rather than drawn.
+ */
+export function trim(grid: Grid): Grid {
+  const { w, h } = gridSize(grid);
+  let top = h;
+  let bottom = -1;
+  let left = w;
+  let right = -1;
+
+  for (let y = 0; y < h; y++) {
+    const row = grid[y]!;
+    for (let x = 0; x < w; x++) {
+      if (row[x] === TRANSPARENT) continue;
+      if (y < top) top = y;
+      if (y > bottom) bottom = y;
+      if (x < left) left = x;
+      if (x > right) right = x;
+    }
+  }
+
+  if (bottom < 0) return grid;
+  return grid.slice(top, bottom + 1).map((row) => row.slice(left, right + 1));
+}
+
 /** Flip horizontally — for a koi that swims the other way. */
 export function flipX(grid: Grid): Grid {
   return grid.map((row) => [...row].reverse().join(""));

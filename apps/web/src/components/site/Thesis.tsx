@@ -159,14 +159,14 @@ export function Closing() {
   return (
     <section className="night dusk-sky relative overflow-hidden bg-night [--cell:2px] md:[--cell:3px]">
       {/* The gate, in silhouette, and the last of the blossom coming down. */}
-      <div className="pointer-events-none absolute inset-x-0 -bottom-[7%] flex justify-center opacity-[0.22]" aria-hidden>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center opacity-[0.22]" aria-hidden>
         <Torii cell="calc(var(--cell) * 3)" />
       </div>
-      <div className="pointer-events-none absolute bottom-0 left-[-3%] opacity-70" aria-hidden>
-        <SakuraTree seed={0} cell="calc(var(--cell) * 1.1)" />
+      <div className="pointer-events-none absolute bottom-0 left-[2%] opacity-70" aria-hidden>
+        <SakuraTree seed={0} cell="calc(var(--cell) * 0.9)" />
       </div>
-      <div className="pointer-events-none absolute bottom-0 right-[-3%] opacity-65" aria-hidden>
-        <SakuraTree seed={1} cell="calc(var(--cell) * 1)" />
+      <div className="pointer-events-none absolute bottom-0 right-[2%] opacity-65" aria-hidden>
+        <SakuraTree seed={1} cell="calc(var(--cell) * 0.85)" />
       </div>
       <PetalField className="petal-mask absolute inset-0" density={1.5} cell={4} />
 

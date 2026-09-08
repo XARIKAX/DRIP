@@ -43,11 +43,11 @@ export default function OgCard() {
           }}
         />
 
-        <div className="pointer-events-none absolute -bottom-2 right-[2%] opacity-90" aria-hidden>
-          <SakuraTree seed={0} cell="calc(var(--cell) * 1.15)" />
+        <div className="pointer-events-none absolute bottom-0 right-[3%] opacity-90" aria-hidden>
+          <SakuraTree seed={0} cell="calc(var(--cell) * 0.95)" />
         </div>
-        <div className="pointer-events-none absolute -bottom-2 right-[26%] opacity-60" aria-hidden>
-          <SakuraTree seed={1} cell="calc(var(--cell) * 0.8)" />
+        <div className="pointer-events-none absolute bottom-0 right-[28%] opacity-60" aria-hidden>
+          <SakuraTree seed={1} cell="calc(var(--cell) * 0.7)" />
         </div>
         <div className="pointer-events-none absolute bottom-0 right-[23%]" aria-hidden>
           <StoneLantern cell="calc(var(--cell) * 0.75)" />

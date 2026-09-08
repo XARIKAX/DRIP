@@ -56,17 +56,17 @@ export function Hero() {
           aria-hidden
           style={{ transform: `translate3d(0, ${t * -22}px, 0)` }}
         >
-          <div className="absolute bottom-[7%] left-[7%] hidden opacity-55 sm:block">
-            <SakuraTree seed={1} cell="calc(var(--cell) * 0.62)" />
+          <div className="absolute bottom-[9%] left-[9%] hidden opacity-55 sm:block">
+            <SakuraTree seed={1} cell="calc(var(--cell) * 0.6)" />
           </div>
-          <div className="absolute bottom-0 left-[-3%] sm:left-0">
+          <div className="absolute bottom-0 left-[2.5%]">
             <div className="absolute inset-0 -m-14 rounded-full bg-[radial-gradient(closest-side,rgb(255_187_211_/_0.2),transparent)]" />
-            <SakuraTree seed={0} cell="calc(var(--cell) * 0.86)" className="relative" />
+            <SakuraTree seed={0} cell="calc(var(--cell) * 1)" className="relative" />
           </div>
-          <div className="absolute bottom-0 left-[19%] hidden md:block">
+          <div className="absolute bottom-0 left-[26%] hidden md:block">
             <StoneLantern cell="calc(var(--cell) * 0.8)" />
           </div>
-          <div className="absolute bottom-0 left-[14%] hidden sm:block">
+          <div className="absolute bottom-0 left-[21%] hidden sm:block">
             <Stone size={1} cell="calc(var(--cell) * 0.8)" />
           </div>
         </div>
@@ -76,14 +76,14 @@ export function Hero() {
           aria-hidden
           style={{ transform: `translate3d(0, ${t * -34}px, 0)` }}
         >
-          <div className="absolute bottom-[9%] right-[8%] hidden opacity-50 lg:block">
-            <SakuraTree seed={4} cell="calc(var(--cell) * 0.6)" />
+          <div className="absolute bottom-[11%] right-[10%] hidden opacity-50 lg:block">
+            <SakuraTree seed={4} cell="calc(var(--cell) * 0.55)" />
           </div>
-          <div className="absolute bottom-0 right-[-4%] sm:right-0">
+          <div className="absolute bottom-0 right-[2.5%]">
             <div className="absolute inset-0 -m-14 rounded-full bg-[radial-gradient(closest-side,rgb(255_187_211_/_0.18),transparent)]" />
-            <SakuraTree seed={1} cell="calc(var(--cell) * 0.9)" className="relative" />
+            <SakuraTree seed={1} cell="calc(var(--cell) * 1.05)" className="relative" />
           </div>
-          <div className="absolute bottom-[3%] right-[23%] hidden xl:block">
+          <div className="absolute bottom-0 right-[28%] hidden xl:block">
             <Stone size={1} cell="calc(var(--cell) * 0.8)" />
           </div>
         </div>
@@ -121,7 +121,7 @@ export function Hero() {
            */}
           <div
             ref={hand}
-            className="parallax reveal reveal-3 relative -mt-[3vh] w-[min(122vw,660px)] shrink-0 sm:w-[min(96vw,660px)] md:-mt-[4vh] xl:w-[700px]"
+            className="parallax reveal reveal-3 relative -mt-[3vh] w-[min(122vw,660px)] shrink-0 sm:w-[min(96vw,660px)] md:-mt-[4vh] xl:w-[max(700px,70vh)]"
           >
             <Image
               src="/hero-hand.png"
@@ -130,8 +130,20 @@ export function Hero() {
               height={1254}
               priority
               quality={82}
-              sizes="(min-width: 1280px) 700px, (min-width: 640px) 96vw, 122vw"
+              sizes="(min-width: 1280px) 760px, (min-width: 640px) 96vw, 122vw"
               className="drift block h-auto w-full select-none"
+              /*
+               * The photograph ends at the wrist, and on a tall viewport the plate is
+               * deeper than the image so that edge lands above the frame as a hard
+               * horizontal cut. The bottom quarter dissolves instead, into the floor
+               * gradient behind it — the hand goes into shadow rather than stopping.
+               */
+              style={{
+                maskImage:
+                  "linear-gradient(to bottom, #000 68%, rgb(0 0 0 / 0.45) 86%, transparent 100%)",
+                WebkitMaskImage:
+                  "linear-gradient(to bottom, #000 68%, rgb(0 0 0 / 0.45) 86%, transparent 100%)",
+              }}
             />
           </div>
         </Reveal>
