@@ -77,9 +77,15 @@ argument.
 | `SEED=0` | Deploy only. No vault funding, no declared dividends. |
 | `SEED_EX_LEAD` | Seconds until the first dividend goes ex. 60 local, 900 remote. |
 | `VERIFY=1` | Verify sources on the chain's Blockscout. `VERIFIER_URL` overrides the endpoint. |
+| `DEPLOY_MOCKS_TO_MAINNET=1` | Required to target a non-testnet chain. See below. |
 
 It refuses to start rather than half-deploy: no chain answering, no key, or no gas on
-the deployer each stop it before the first transaction.
+the deployer each stop it before the first transaction. It also refuses any chain that
+is not a known testnet, because `Deploy.s.sol` deploys mock USDG and five
+faucet-minting mock stock tokens unconditionally — fine on a testnet, an incident on a
+chain carrying real money. Production swaps the real addresses in first
+(`HANDOFF.md` §7); `DEPLOY_MOCKS_TO_MAINNET=1` overrides the check if you genuinely
+want the mocks there.
 
 Two generated files carry the result into the frontend, and both belong in the commit:
 

@@ -100,6 +100,25 @@ if [ "$BALANCE" = "0" ]; then
   exit 1
 fi
 
+# Deploy.s.sol deploys MockUSDG, five faucet-minting MockStockTokens and a
+# MockSwapAdapter unconditionally — testnet stand ins with free supply and a fixed
+# price. Putting those on a chain that carries real money is not a deploy, it is an
+# incident, and this script made it a one word argument. Production replaces them
+# first: HANDOFF.md section 7.
+case "$CHAIN_ID" in
+  31337|46630|421614) ;;
+  *)
+    if [ -z "${DEPLOY_MOCKS_TO_MAINNET:-}" ]; then
+      echo "Refusing to deploy to chain $CHAIN_ID." >&2
+      echo "Deploy.s.sol deploys mock USDG and mock stock tokens; they belong on a" >&2
+      echo "testnet only. Swap in the real addresses first (HANDOFF.md section 7)." >&2
+      echo "To deploy the mocks anyway: DEPLOY_MOCKS_TO_MAINNET=1" >&2
+      exit 1
+    fi
+    echo "    WARNING: deploying testnet mocks to chain $CHAIN_ID on request"
+    ;;
+esac
+
 # A live chain cannot be time-warped, so the first dividend has to be declared far
 # enough ahead that it survives the gap between simulation and inclusion.
 if [ -z "${SEED_EX_LEAD:-}" ]; then
