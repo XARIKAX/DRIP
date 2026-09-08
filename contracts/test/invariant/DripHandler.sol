@@ -95,14 +95,35 @@ contract DripHandler is Test {
         vm.stopPrank();
     }
 
+    /// @dev Collateral backing a loan cannot walk out of the door, so a run that
+    ///      borrows will draw withdrawals the market is right to refuse. Ask the market
+    ///      the same question first and skip those, rather than spending a fuzz call on
+    ///      a revert.
+    ///
+    ///      Skipping them would quietly drop the only pressure on that guard, so the
+    ///      property it exists to hold is asserted here instead. It is a property of the
+    ///      transition rather than of the state — interest alone may put an account
+    ///      underwater, and liquidation, not this guard, answers that — so it cannot be
+    ///      written as one of the invariant_ functions. What must never happen is a
+    ///      WITHDRAWAL leaving an account underwater, and after a permitted one the
+    ///      account still stands up.
     function holderWithdraw(uint256 actorSeed, uint256 tokenSeed, uint256 amount) public {
         address actor = _actor(actorSeed);
         MockStockToken token = _token(tokenSeed);
         uint256 held = core.balanceOf(actor, address(token));
         if (held == 0) return;
         uint256 amt = bound(amount, 1, held);
+        try lending.requireWithdrawAllowed(actor, address(token), amt) {}
+        catch {
+            return;
+        }
         vm.prank(actor);
         core.withdraw(address(token), amt);
+
+        uint256 debt = lending.debtOf(actor);
+        if (debt > 0) {
+            assertLe(debt, lending.borrowingPower(actor), "withdrawal left the borrower undercollateralised");
+        }
     }
 
     function holderSetMode(uint256 actorSeed, uint256 tokenSeed, uint256 modeSeed) public {
