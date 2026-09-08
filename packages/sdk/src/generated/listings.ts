@@ -13,15 +13,17 @@ export const listings: Record<number, ListingUniverse> = {
       "swapRouter02": "0xcaf681a66d020601342297493863e78c959e5cb2",
       "quoterV2": "0x33e885ed0ec9bf04ecfb19341582aadcb4c8a9e7",
       "ethUsdFeed": "0x78F3556b67E17Df817D51Ef5a990cDaF09E8d3A9",
-      "defaultFeeTier": 3000
+      "defaultFeeTier": 3000,
+      "defaultHeartbeat": 21600
     },
     "rules": [
       "No feed, no listing. Tokens without a Chainlink feed are never listed.",
       "Verify onchain before wiring: token symbol()/decimals(), feed description(), feed liveness. Hard-fail on any mismatch.",
       "Quote every route through QuoterV2 before enabling it; re-check fee tier 3000 per pool.",
       "Path encoding is abi.encodePacked(WETH, uint24(3000), USDG, uint24(3000), token); minOut bounds the FINAL token against the Chainlink price, never the mid leg.",
-      "All feeds are 8-decimal USD via latestRoundData(); guard staleness with a 1 hour heartbeat and refuse to settle on a stale read. Fail closed to refund.",
-      "Stock tokens are Robinhood-issued debt trackers: run a live small receive/hold/transfer test from a contract before real bankroll."
+      "All feeds are 8-decimal USD via latestRoundData(); guard staleness with that feed's heartbeat below and refuse to settle on a stale read. Fail closed to refund.",
+      "Stock tokens are Robinhood-issued debt trackers: run a live small receive/hold/transfer test from a contract before real bankroll.",
+      "Staleness is per feed. Observed update ages spanned 0-74 minutes in one read, so these are deviation-triggered feeds, not tight-heartbeat ones. Set each token's heartbeat from Chainlink's published figure for that feed before carrying real size; the 6 hour default here is derived from observation, not from documentation."
     ],
     "tokens": [
       {
@@ -36,7 +38,8 @@ export const listings: Record<number, ListingUniverse> = {
           "NVDA"
         ],
         "liquidity": "live",
-        "enabled": true
+        "enabled": true,
+        "heartbeat": 21600
       },
       {
         "symbol": "TSLA",
@@ -50,7 +53,8 @@ export const listings: Record<number, ListingUniverse> = {
           "TSLA"
         ],
         "liquidity": "live",
-        "enabled": true
+        "enabled": true,
+        "heartbeat": 21600
       },
       {
         "symbol": "AAPL",
@@ -64,7 +68,8 @@ export const listings: Record<number, ListingUniverse> = {
           "AAPL"
         ],
         "liquidity": "live",
-        "enabled": true
+        "enabled": true,
+        "heartbeat": 21600
       },
       {
         "symbol": "GOOGL",
@@ -78,7 +83,8 @@ export const listings: Record<number, ListingUniverse> = {
           "GOOGL"
         ],
         "liquidity": "live",
-        "enabled": true
+        "enabled": true,
+        "heartbeat": 21600
       },
       {
         "symbol": "MSFT",
@@ -92,7 +98,8 @@ export const listings: Record<number, ListingUniverse> = {
           "MSFT"
         ],
         "liquidity": "live",
-        "enabled": true
+        "enabled": true,
+        "heartbeat": 21600
       },
       {
         "symbol": "AMZN",
@@ -106,7 +113,8 @@ export const listings: Record<number, ListingUniverse> = {
           "AMZN"
         ],
         "liquidity": "live",
-        "enabled": true
+        "enabled": true,
+        "heartbeat": 21600
       },
       {
         "symbol": "META",
@@ -120,7 +128,8 @@ export const listings: Record<number, ListingUniverse> = {
           "META"
         ],
         "liquidity": "live",
-        "enabled": true
+        "enabled": true,
+        "heartbeat": 21600
       },
       {
         "symbol": "COIN",
@@ -133,8 +142,10 @@ export const listings: Record<number, ListingUniverse> = {
           3000,
           "COIN"
         ],
-        "liquidity": "quote_first",
-        "enabled": true
+        "liquidity": "none",
+        "enabled": false,
+        "note": "USDG pool holds 23 units. Verified empty on mainnet, not a market.",
+        "heartbeat": 21600
       },
       {
         "symbol": "ORCL",
@@ -147,8 +158,10 @@ export const listings: Record<number, ListingUniverse> = {
           3000,
           "ORCL"
         ],
-        "liquidity": "quote_first",
-        "enabled": true
+        "liquidity": "none",
+        "enabled": false,
+        "note": "No USDG pool deployed at the routed address.",
+        "heartbeat": 21600
       },
       {
         "symbol": "PLTR",
@@ -162,7 +175,8 @@ export const listings: Record<number, ListingUniverse> = {
           "PLTR"
         ],
         "liquidity": "quote_first",
-        "enabled": true
+        "enabled": true,
+        "heartbeat": 21600
       },
       {
         "symbol": "CRWV",
@@ -175,8 +189,10 @@ export const listings: Record<number, ListingUniverse> = {
           3000,
           "CRWV"
         ],
-        "liquidity": "quote_first",
-        "enabled": true
+        "liquidity": "none",
+        "enabled": false,
+        "note": "No USDG pool deployed at the routed address.",
+        "heartbeat": 21600
       },
       {
         "symbol": "AMD",
@@ -190,7 +206,8 @@ export const listings: Record<number, ListingUniverse> = {
           "AMD"
         ],
         "liquidity": "quote_first",
-        "enabled": true
+        "enabled": true,
+        "heartbeat": 21600
       },
       {
         "symbol": "INTC",
@@ -204,7 +221,8 @@ export const listings: Record<number, ListingUniverse> = {
           "INTC"
         ],
         "liquidity": "live",
-        "enabled": true
+        "enabled": true,
+        "heartbeat": 21600
       },
       {
         "symbol": "MU",
@@ -218,7 +236,8 @@ export const listings: Record<number, ListingUniverse> = {
           "MU"
         ],
         "liquidity": "live",
-        "enabled": true
+        "enabled": true,
+        "heartbeat": 21600
       },
       {
         "symbol": "SNDK",
@@ -231,8 +250,10 @@ export const listings: Record<number, ListingUniverse> = {
           3000,
           "SNDK"
         ],
-        "liquidity": "quote_first",
-        "enabled": true
+        "liquidity": "none",
+        "enabled": false,
+        "note": "USDG pool holds 6 units. Verified empty on mainnet, not a market.",
+        "heartbeat": 21600
       },
       {
         "symbol": "SPCX",
@@ -247,7 +268,8 @@ export const listings: Record<number, ListingUniverse> = {
         ],
         "liquidity": "none",
         "enabled": false,
-        "note": "Never traded. Private-company feed. Review before listing."
+        "note": "Never traded. Private-company feed. Review before listing.",
+        "heartbeat": 21600
       }
     ]
   }

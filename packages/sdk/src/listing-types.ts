@@ -20,8 +20,17 @@ export type LiquidityStatus = "live" | "quote_first" | "none";
 export interface ListedToken {
   symbol: string;
   address: Address;
-  /** Chainlink USD feed, 8 decimals, read via latestRoundData with a 1h heartbeat. */
+  /** Chainlink USD feed, 8 decimals, read via latestRoundData. */
   feed: Address;
+  /**
+   * Seconds before a feed's answer is refused as stale, per feed.
+   *
+   * The deploy wires this into ChainlinkPriceOracle.setFeed and VerifyUniverse checks
+   * against the same number, so the bound that gates listing is the bound that gates
+   * pricing. Absent, both fall back to the oracle's own default of one hour, which a
+   * mainnet read showed is too tight for these deviation triggered feeds.
+   */
+  heartbeat?: number;
   /** Hop sequence, e.g. ["WETH", 3000, "USDG", 3000, "NVDA"]. No direct ETH pools exist. */
   route: (string | number)[];
   liquidity: LiquidityStatus;
@@ -42,6 +51,8 @@ export interface ListingUniverse {
     quoterV2: Address;
     ethUsdFeed: Address;
     defaultFeeTier: number;
+    /** Applied to any token that names no heartbeat of its own. */
+    defaultHeartbeat?: number;
   };
   /** The operating rules that gate every listing. Read them before touching the table. */
   rules: string[];

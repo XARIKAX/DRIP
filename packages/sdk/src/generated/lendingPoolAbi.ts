@@ -447,6 +447,19 @@ export const lendingPoolAbi = [
   },
   {
     "type": "function",
+    "name": "lendableHeadroom",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "liquidate",
     "inputs": [
       {
