@@ -184,22 +184,44 @@ Production hardening required:
 
 ## 7. Testnet → production delta checklist
 
-- [ ] Replace `MockUSDG` with canonical USDG address (6 decimals — the code assumes it).
-- [ ] Replace `MockStockToken`s with real stock token addresses (18 decimals assumed;
-      verify, and if any differ, audit `ONE_STOCK` math in DripCore and the adapters).
-- [ ] Deploy `UniswapV3SwapAdapter` against the chain's Uniswap router; set fee tiers.
-- [ ] Deploy a real `IPriceOracle`; wire it into the adapter and (per §6) clawback.
-- [ ] Feed `ORACLE_ROLE` from the real dividend source.
-- [ ] Decide the settlement pipe for `DripCore.settleDividend` (who holds KEEPER_ROLE
-      and where the USDG comes from).
-- [ ] Move every admin role to multisig + timelock.
-- [ ] Delete `contracts/src/mocks/` from the production deployment.
-- [ ] Faucet functions exist only on mocks; nothing to strip elsewhere.
-- [ ] Re run the deploy script with real addresses passed in (see `_deployProtocol` —
-      the mock lines are the only testnet specific code in it).
-- [ ] `Seed.s.sol` is testnet furniture: it mints USDG, hands out stock and declares a
-      sample calendar. Production runs `SEED=0 bash scripts/deploy.sh` and feeds the
-      registry from the real dividend source instead.
+`script/DeployProduction.s.sol` does the contract side of this list. It reads every
+address from `listings/<chainid>.json`, deploys protocol code only, and hands all
+roles to `ADMIN`. `test/DeployProduction.t.sol` runs it against the real listing file
+with stand ins etched at every listed address, so a bad listing goes red in CI rather
+than on a chain. Run it with:
+
+```bash
+ADMIN=0xmultisig PRIVATE_KEY=0x... PRODUCTION=1 pnpm deploy:chain robinhood_mainnet
+```
+
+Done by that script, asserted by that test:
+
+- [x] Canonical USDG from the listing; refuses anything but 6 decimals.
+- [x] Real stock tokens from the listing; refuses a `symbol()` mismatch or non-18
+      decimals. If any real token ever differs, audit `ONE_STOCK` math in DripCore
+      and the adapters before enabling it in the listing.
+- [x] `UniswapV3SwapAdapter` against the chain's SwapRouter02, default fee tier from
+      the listing's `infra.defaultFeeTier`.
+- [x] `ChainlinkPriceOracle` deployed and wired into the adapter, one feed per listed
+      token, 1 hour heartbeat. No feed, no listing — refused at load.
+- [x] Every admin role to `ADMIN`; the deployer renounces and the script asserts it
+      holds nothing before it finishes.
+- [x] No mocks deployed. `contracts/src/mocks/` is untouched by that script, and
+      `scripts/deploy.sh` refuses to run the testnet script against a non-testnet
+      chain at all.
+- [x] `Seed.s.sol` is testnet furniture — it mints USDG, hands out stock and declares
+      a sample calendar. Production mode forces `SEED=0`.
+
+Still yours, and none of it is code in this repo:
+
+- [ ] `ADMIN` should be a multisig behind a timelock, not a single key. The script
+      takes whatever address you give it.
+- [ ] Feed `ORACLE_ROLE` from the real dividend source. Until someone declares a
+      dividend the calendar is empty and Early has nothing to advance against.
+- [ ] Decide the settlement pipe for `DripCore.settleDividend` — who runs the pay-day
+      keeper, and where the USDG comes from.
+- [ ] Seed the vault with LP capital. No deposits, no advances.
+- [ ] Audit.
 
 ## 8. Mainnet listing universe — Robinhood Chain (4663)
 
@@ -400,7 +422,9 @@ What else production should look at:
 contracts/src/            ten protocol contracts + interfaces + mocks + adapters
 contracts/test/           unit + integration suites, one per contract
 contracts/test/invariant/ handler driven invariant suite
-contracts/script/         Deploy.s.sol (writes deployments/<chainid>.json), Seed.s.sol
+contracts/script/         Deploy.s.sol (testnet, writes deployments/<chainid>.json),
+                          Seed.s.sol, DeployProduction.s.sol (real assets),
+                          VerifyUniverse.s.sol (checks the listing onchain)
 scripts/deploy.sh         any chain: compile → deploy → seed → sync ABIs → point the app
 scripts/deploy-local.sh   the same, pinned to local anvil (delegates to deploy.sh)
 scripts/sync-abis.mjs     ABIs + address books → packages/sdk/src/generated

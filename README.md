@@ -77,7 +77,8 @@ argument.
 | `SEED=0` | Deploy only. No vault funding, no declared dividends. |
 | `SEED_EX_LEAD` | Seconds until the first dividend goes ex. 60 local, 900 remote. |
 | `VERIFY=1` | Verify sources on the chain's Blockscout. `VERIFIER_URL` overrides the endpoint. |
-| `DEPLOY_MOCKS_TO_MAINNET=1` | Required to target a non-testnet chain. See below. |
+| `DEPLOY_MOCKS_TO_MAINNET=1` | Required to target a non-testnet chain with the testnet script. See below. |
+| `PRODUCTION=1` + `ADMIN=0x...` | Run the production deploy instead. See "Robinhood Chain mainnet". |
 
 It refuses to start rather than half-deploy: no chain answering, no key, or no gas on
 the deployer each stop it before the first transaction. It also refuses any chain that
@@ -139,6 +140,95 @@ The public RPC is rate limited; use an Alchemy Robinhood testnet endpoint for re
 work. Arbitrum Sepolia (chain 421614, `--rpc-url arbitrum_sepolia`) remains a drop
 in stand in with the same Orbit stack semantics: change the five env vars and
 nothing else.
+
+## Robinhood Chain mainnet
+
+Chain id 4663. Real USDG, real stock tokens, real money.
+
+The testnet deploy and the mainnet deploy are two different scripts, not one script
+with a flag. `Deploy.s.sol` exists to make a testnet feel alive, and deploys mock
+USDG, five faucet-minting mock stock tokens and a fixed price venue to do it.
+`DeployProduction.s.sol` deploys protocol code only and takes every other address
+from `contracts/listings/4663.json`.
+
+### Before you deploy
+
+1. **The listing universe is the input.** `contracts/listings/4663.json` holds 16
+   stock tokens with their Chainlink USD feeds and Uniswap routes, plus the routing
+   infra. 15 are enabled; SPCX is off, never traded. Nothing outside that file gets
+   deployed, and a token with no feed is refused — the first listing rule.
+
+2. **Verify it onchain.** The deploy runs this for you, and it is worth running alone
+   first:
+
+   ```bash
+   forge script script/VerifyUniverse.s.sol --rpc-url robinhood_mainnet --root contracts
+   ```
+
+   It hard-fails on any mismatch: symbol, decimals, feed liveness inside the 1 hour
+   heartbeat, both swap legs quoted through QuoterV2, and the quote bounded against
+   the Chainlink price.
+
+3. **Decide who ADMIN is.** Every role goes to it — oracle, keepers, pausers, fee
+   setters. `HANDOFF.md` §5 ranks the oracle key as the largest trust assumption in
+   the protocol, so this should be a multisig, ideally behind a timelock. The
+   deployer keeps nothing: the script grants ADMIN everything, renounces the
+   deployer's own roles, and asserts it holds none of them before it finishes.
+
+### Deploy
+
+```bash
+ADMIN=0xYourMultisig PRIVATE_KEY=0x... PRODUCTION=1 pnpm deploy:chain robinhood_mainnet
+```
+
+That verifies the universe, deploys `ChainlinkPriceOracle` and
+`UniswapV3SwapAdapter` against the chain's own SwapRouter02, deploys the six protocol
+contracts against real USDG, registers one Chainlink feed per listed token, wires the
+modules, hands every role to ADMIN, and writes `contracts/deployments/4663.json`.
+
+It refuses to start if ADMIN is unset, if there is no listing file for the chain, if
+USDG is not 6 decimals, if any listed token's `symbol()` disagrees with the file, if
+any token is not 18 decimals, or if any feed is not answering.
+
+Seeding is off and cannot be turned on: a seeded calendar on mainnet would be the
+protocol asserting a dividend no issuer ever declared.
+
+### After
+
+```bash
+pnpm abis          # copy the address book into the SDK
+```
+
+Commit `contracts/deployments/4663.json` and the regenerated
+`packages/sdk/src/generated/deployments.ts`, then set the five vars in Vercel:
+
+| Variable | Value |
+| --- | --- |
+| `NEXT_PUBLIC_CHAIN_ID` | `4663` |
+| `NEXT_PUBLIC_CHAIN_NAME` | `Robinhood Chain` |
+| `NEXT_PUBLIC_RPC_URL` | `https://rpc.mainnet.chain.robinhood.com` |
+| `NEXT_PUBLIC_EXPLORER_NAME` | `Blockscout` |
+| `NEXT_PUBLIC_EXPLORER_URL` | `https://robinhoodchain.blockscout.com` |
+
+The app reads `mocks: false` from the mainnet book and hides its faucets; real stock
+tokens have none. Nothing else in the frontend changes.
+
+### What still has to happen by hand
+
+The deploy leaves a correct but empty protocol. Three operational jobs make it a
+market, and none of them is code in this repo:
+
+- **The dividend oracle.** ADMIN holds `ORACLE_ROLE`. Someone has to call
+  `declareDividend` from real corporate action data, and `voidDividend` when an
+  issuer cancels. Until that happens the calendar is empty and there is nothing to
+  advance against.
+- **The pay-day keeper.** `settleDividend` and `clawback` on `DripCore`, run when the
+  issuer actually pays. `HANDOFF.md` §6 covers what clawback assumes today.
+- **Pool capital.** The vault fronts every advance. With no LP deposits, Early pays
+  nothing.
+
+`LendingPool` is not built (`HANDOFF.md` §13), so Borrow stays on the sample data
+store on mainnet exactly as it does today.
 
 ## Tests
 

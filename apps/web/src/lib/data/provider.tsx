@@ -22,7 +22,7 @@ import {
   buildVaultWithdraw,
   buildWithdraw,
 } from "@drip-markets/sdk";
-import { isDeployed } from "@/lib/chain.config";
+import { hasFaucets, isDeployed } from "@/lib/chain.config";
 import {
   useActivity as useChainActivity,
   useCalendar as useChainCalendar,
@@ -406,6 +406,12 @@ export function usePortfolioSummary(): PortfolioSummary {
 export interface DataActions {
   source: Source;
   busy: boolean;
+  /**
+   * Whether a faucet exists to offer. The sample portfolio always has one; a chain
+   * only does while it runs the mock stock tokens. On a production book the real
+   * stock token has no faucet() and the button would only ever revert.
+   */
+  canFaucet: boolean;
   setMode: (symbol: string, mode: ModeName) => Promise<void>;
   claimStream: (id: number) => Promise<void>;
   startPending: (dividendId: number) => Promise<void>;
@@ -449,6 +455,7 @@ export function useDataActions(): DataActions {
       return {
         source,
         busy: demoBusy,
+        canFaucet: true,
         setMode: (symbol, mode) => demo(() => mockStore.setMode(symbol, mode)),
         claimStream: (id) => demo(() => void mockStore.claimStream(id)),
         startPending: (id) => demo(() => mockStore.startPending(id)),
@@ -480,6 +487,7 @@ export function useDataActions(): DataActions {
     return {
       source,
       busy,
+      canFaucet: hasFaucets,
       setMode: async (symbol, mode) => {
         const d = need(deployment, "deployment");
         const token = need(addressOf(symbol), symbol);
@@ -507,6 +515,7 @@ export function useDataActions(): DataActions {
         await run([buildWithdraw(d, token, BigInt(Math.round(shares * 1e6)) * 10n ** 12n, symbol)]);
       },
       faucet: async (symbol) => {
+        if (!hasFaucets) throw new Error("This network uses real stock tokens; there is no faucet.");
         const token = need(addressOf(symbol), symbol);
         await run([buildStockFaucet(token, symbol)]);
       },

@@ -102,6 +102,15 @@ contract UniswapV3SwapAdapter is ISwapAdapter, Ownable {
     }
 
     /// @inheritdoc ISwapAdapter
+    /// @dev A passthrough to the oracle, which fails closed on a missing feed or a
+    ///      stale round. MockSwapAdapter answers the same call from an admin set
+    ///      mapping, so everything reading a price — the app included — moves from
+    ///      testnet to production without knowing the venue changed.
+    function priceUsdg(address stockToken) external view returns (uint256) {
+        return priceOracle.priceUsdg(stockToken);
+    }
+
+    /// @inheritdoc ISwapAdapter
     /// @dev Oracle math, identical in shape to MockSwapAdapter so behaviour does not
     ///      change when the venue does. The oracle itself enforces feed liveness and
     ///      fails closed on a stale read.

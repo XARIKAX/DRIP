@@ -1,6 +1,6 @@
 import { defineChain, http, type Chain } from "viem";
 import { arbitrumSepolia, foundry } from "viem/chains";
-import { getDeployment, knownChainIds } from "@drip-markets/sdk";
+import { getDeployment, knownChainIds, usesMocks } from "@drip-markets/sdk";
 
 /**
  * The one file that knows about the network.
@@ -69,7 +69,7 @@ export const activeChain: Chain =
     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
     rpcUrls: { default: { http: [envRpc] } },
     blockExplorers: explorerUrl ? { default: { name: explorerName, url: explorerUrl } } : undefined,
-    testnet: true,
+    testnet: envChainId !== 4663,
   });
 
 export const chainId = activeChain.id;
@@ -80,6 +80,20 @@ export const walletConnectProjectId = clean(process.env.NEXT_PUBLIC_WALLETCONNEC
 
 /** True when the deploy script has written an address book for this chain. */
 export const isDeployed = knownChainIds().includes(chainId);
+
+/**
+ * True when this chain's deployment runs the testnet stand ins, so faucets exist.
+ * False on a production book: real stock tokens have no faucet, and offering one
+ * would put a button on screen whose only outcome is a reverted transaction.
+ */
+export const hasFaucets = (() => {
+  try {
+    return usesMocks(getDeployment(chainId));
+  } catch {
+    // No book for this chain. The demo store backs the UI, and it has a faucet.
+    return true;
+  }
+})();
 
 /** Address book for the active chain, or null when nothing is deployed yet. */
 export function deploymentOrNull() {

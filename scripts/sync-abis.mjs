@@ -26,6 +26,11 @@ const CONTRACTS = [
   "MockUSDG",
   "MockStockToken",
   "MockSwapAdapter",
+  // Production adapters. Carried so a mainnet book is readable with the same
+  // generated bundle as a testnet one, and so operations can call setFeed and
+  // setFeeTier from a script rather than hand-encoded calldata.
+  "ChainlinkPriceOracle",
+  "UniswapV3SwapAdapter",
 ];
 
 if (!existsSync(outDir)) {

@@ -4,7 +4,6 @@ import {
   deployments,
   dividendRegistryAbi,
   dripCoreAbi,
-  mockSwapAdapterAbi,
   reinvestorAbi,
   streamEngineAbi,
 } from "./generated";
@@ -33,9 +32,38 @@ export function getDeployment(chainId: number): Deployment {
   return d;
 }
 
+/**
+ * The one function every swap adapter answers for a price.
+ *
+ * Read through the interface rather than either implementation: this call used to go
+ * through mockSwapAdapterAbi, which exposed priceUsdg only because the mock happened
+ * to declare it as a public mapping. ISwapAdapter declares it now, so both adapters
+ * answer it and neither implementation's ABI is the right thing to depend on.
+ */
+const swapAdapterPriceAbi = [
+  {
+    type: "function",
+    name: "priceUsdg",
+    stateMutability: "view",
+    inputs: [{ name: "stockToken", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+] as const;
+
 /** Every chain the repo has an address book for. */
 export function knownChainIds(): number[] {
   return Object.keys(deployments).map(Number);
+}
+
+/**
+ * True when this deployment runs the testnet stand ins, and so has faucets.
+ *
+ * Books written before the `mocks` field existed were all testnet deploys, so a
+ * missing field means mocks. Production books set it to false explicitly. Read this
+ * rather than the field, so an old book never turns a faucet button into a revert.
+ */
+export function usesMocks(d: Deployment): boolean {
+  return d.mocks !== false;
 }
 
 /**
@@ -80,7 +108,7 @@ export class DripReader {
           this.client.readContract({ address, abi: erc20Abi, functionName: "decimals" }),
           this.client.readContract({
             address: d.swapAdapter,
-            abi: mockSwapAdapterAbi,
+            abi: swapAdapterPriceAbi,
             functionName: "priceUsdg",
             args: [address],
           }),
@@ -158,7 +186,7 @@ export class DripReader {
           this.client.readContract({ address: stockToken, abi: erc20Abi, functionName: "symbol" }),
           this.client.readContract({
             address: d.swapAdapter,
-            abi: mockSwapAdapterAbi,
+            abi: swapAdapterPriceAbi,
             functionName: "priceUsdg",
             args: [stockToken],
           }),
