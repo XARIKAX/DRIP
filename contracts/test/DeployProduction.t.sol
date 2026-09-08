@@ -122,19 +122,52 @@ contract DeployProductionTest is Test {
         harness.deployAll();
     }
 
-    /// @dev The listing file says 15 of 16 are enabled; SPCX is off, never traded.
+    /// @dev Counts whatever the listing currently enables rather than a number typed
+    ///      here, so trimming or adding a token is one edit, in the file that owns it.
+    ///      Every disabled token must stay out of the registry.
     function test_deploysEveryEnabledTokenAndSkipsTheDisabledOne() public view {
-        assertEq(harness.tokenCount(), 15, "enabled token count");
+        string memory book = vm.readFile("listings/4663.json");
+
+        uint256 expected;
+        uint256 i;
+        while (vm.keyExistsJson(book, string.concat(".tokens[", vm.toString(i), "].symbol"))) {
+            if (book.readBool(string.concat(".tokens[", vm.toString(i), "].enabled"))) ++expected;
+            unchecked {
+                ++i;
+            }
+        }
+
+        assertGt(expected, 0, "listing enables nothing");
+        assertEq(harness.tokenCount(), expected, "enabled token count");
 
         DeployProduction.Deployment memory d = harness.addresses();
         address[] memory supported = DividendRegistry(d.registry).supportedTokens();
-        assertEq(supported.length, 15, "registered token count");
+        assertEq(supported.length, expected, "registered token count");
 
-        string memory book = vm.readFile("listings/4663.json");
-        address spcx = book.readAddress(".tokens[15].address");
-        for (uint256 i = 0; i < supported.length; ++i) {
-            assertTrue(supported[i] != spcx, "disabled token was listed");
+        // Nothing disabled may reach the registry: COIN, ORCL, CRWV and SNDK have no
+        // USDG pool on mainnet, and SPCX has never traded.
+        for (uint256 j = 0; j < i; ++j) {
+            string memory base = string.concat(".tokens[", vm.toString(j), "]");
+            if (book.readBool(string.concat(base, ".enabled"))) continue;
+            address off = book.readAddress(string.concat(base, ".address"));
+            for (uint256 k = 0; k < supported.length; ++k) {
+                assertTrue(supported[k] != off, "disabled token was listed");
+            }
         }
+    }
+
+    /// @dev Each feed's staleness bound comes from the listing, not one global figure.
+    ///      A mainnet read showed feed ages spanning 0 to 74 minutes, so a single 1 hour
+    ///      bound refuses live feeds in normal operation.
+    function test_eachFeedGetsItsListedHeartbeat() public view {
+        DeployProduction.Deployment memory d = harness.addresses();
+        string memory book = vm.readFile("listings/4663.json");
+        uint256 expected = book.readUint(".infra.defaultHeartbeat");
+        assertGt(expected, 1 hours, "default heartbeat still at the too-tight 1 hour");
+
+        (address token,,) = harness.tokenAt(0);
+        (, , uint48 heartbeat) = ChainlinkPriceOracle(d.oracle).feedOf(token);
+        assertEq(uint256(heartbeat), expected, "heartbeat wired from the listing");
     }
 
     /// @notice The read path the dashboard depends on.

@@ -68,8 +68,14 @@ export interface StockToken {
   symbol: string;
   name: string;
   decimals: number;
-  /** USDG per whole token, 6 decimals. */
-  priceUsdg: bigint;
+  /**
+   * USDG per whole token, 6 decimals, or null when the oracle refuses to price it.
+   *
+   * A Chainlink feed that has not updated inside its heartbeat reverts rather than
+   * answering, which is correct: nobody should trade on a price nobody stands behind.
+   * But that is one token's problem, and reading the list must not fail because of it.
+   */
+  priceUsdg: bigint | null;
 }
 
 /** A declared dividend, enriched for display. */
@@ -94,8 +100,8 @@ export interface PositionView {
   /** Stock tokens on deposit, 18 decimals. */
   amount: bigint;
   mode: Mode;
-  /** Position value in USDG, 6 decimals. */
-  valueUsdg: bigint;
+  /** Position value in USDG, 6 decimals. Null when the stock cannot be priced. */
+  valueUsdg: bigint | null;
 }
 
 /** An open or closed dividend stream. */

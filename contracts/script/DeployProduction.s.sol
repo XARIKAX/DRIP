@@ -58,12 +58,15 @@ contract DeployProduction is Script {
         address usdg;
         address router;
         uint24 defaultFeeTier;
+        uint256 defaultHeartbeat;
     }
 
     struct Listing {
         address token;
         address feed;
         string symbol;
+        /// @dev Seconds a price may go unrefreshed before the oracle refuses it.
+        uint48 heartbeat;
     }
 
     /// @dev Storage, not stack. Same reason as Deploy.s.sol: solc runs out of slots.
@@ -121,7 +124,10 @@ contract DeployProduction is Script {
         infra = Infra({
             usdg: book.readAddress(".infra.usdg"),
             router: book.readAddress(".infra.swapRouter02"),
-            defaultFeeTier: uint24(book.readUint(".infra.defaultFeeTier"))
+            defaultFeeTier: uint24(book.readUint(".infra.defaultFeeTier")),
+            defaultHeartbeat: vm.keyExistsJson(book, ".infra.defaultHeartbeat")
+                ? book.readUint(".infra.defaultHeartbeat")
+                : 1 hours
         });
 
         admin = admin_;
@@ -162,7 +168,16 @@ contract DeployProduction is Script {
                 (, int256 answer,,,) = IAggregatorV3(feed).latestRoundData();
                 require(answer > 0, string.concat("feed not answering for ", symbol));
 
-                listings.push(Listing({token: token, feed: feed, symbol: symbol}));
+                // Per feed, because these feeds are deviation-triggered and their
+                // update cadence varies by an order of magnitude between tickers. One
+                // global bound either trips the slow ones in normal operation or is
+                // too loose to catch a genuinely dead fast one.
+                string memory hbKey = string.concat(base, ".heartbeat");
+                uint48 heartbeat = vm.keyExistsJson(book, hbKey)
+                    ? uint48(book.readUint(hbKey))
+                    : uint48(infra.defaultHeartbeat);
+
+                listings.push(Listing({token: token, feed: feed, symbol: symbol, heartbeat: heartbeat}));
             }
             unchecked {
                 ++i;
@@ -218,7 +233,7 @@ contract DeployProduction is Script {
         adapter.setDefaultFeeTier(infra.defaultFeeTier);
 
         for (uint256 i = 0; i < listings.length; ++i) {
-            oracle.setFeed(listings[i].token, IAggregatorV3(listings[i].feed), 0);
+            oracle.setFeed(listings[i].token, IAggregatorV3(listings[i].feed), listings[i].heartbeat);
             registry.addSupportedToken(listings[i].token);
             console2.log(listings[i].symbol, listings[i].token);
         }
