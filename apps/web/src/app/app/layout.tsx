@@ -11,7 +11,7 @@ import { Footer } from "@/components/Footer";
  */
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="grain relative min-h-screen bg-paper">
+    <div className="grain relative min-h-screen bg-ground">
       <UtilityBar />
       <SiteNav />
       <TickerStrip />

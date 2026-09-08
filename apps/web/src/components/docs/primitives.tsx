@@ -65,7 +65,7 @@ export function Sub({
 /** A note in the margin's voice: one label, a few lines, a cyan rule down the side. */
 export function Callout({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <aside className="max-w-prose border-l-2 border-cyan-dark bg-paper-2 px-5 py-4">
+    <aside className="max-w-prose border-l-2 border-cyan-dark bg-ground-2 px-5 py-4">
       <div className="serial text-cyan-deep">{label}</div>
       <div className="mt-2 text-[14px] leading-relaxed text-muted">{children}</div>
     </aside>
@@ -75,7 +75,7 @@ export function Callout({ label, children }: { label: string; children: ReactNod
 /** An equation or an identity, set in mono on paper so it reads as a rule, not prose. */
 export function Formula({ children, note }: { children: ReactNode; note?: ReactNode }) {
   return (
-    <div className="max-w-prose border border-line bg-paper-2 px-5 py-4">
+    <div className="max-w-prose border border-line bg-ground-2 px-5 py-4">
       <div className="num whitespace-pre-wrap text-[13.5px] leading-[1.7] text-ink">{children}</div>
       {note ? <div className="mt-2 text-[12.5px] leading-relaxed text-faint">{note}</div> : null}
     </div>
@@ -209,7 +209,7 @@ export function Figure({ n, caption, children }: { n: number; caption: ReactNode
 export function Shot({ name, alt, n, caption }: { name: keyof typeof SHOTS; alt: string; n: number; caption: ReactNode }) {
   const dims = SHOTS[name];
   return (
-    <figure className="border border-line bg-paper-2 p-2 md:p-3">
+    <figure className="border border-line bg-ground-2 p-2 md:p-3">
       <Image
         src={`/docs/${name}.webp`}
         width={dims.width}

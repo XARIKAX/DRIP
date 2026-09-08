@@ -41,7 +41,7 @@ export default function SplitPage() {
       {active ? (
         <SplitSeriesPage series={active} />
       ) : (
-        <div className="border border-line-soft bg-paper-2 px-6 py-14 text-center">
+        <div className="border border-line-soft bg-ground-2 px-6 py-14 text-center">
           <div className="display text-title">Nothing to split yet</div>
           <p className="mx-auto mt-3 max-w-md text-[14px] leading-relaxed text-muted">
             Splitting opens one stock at a time, with an end date. None is open right now.

@@ -79,7 +79,7 @@ export function SectionHead({
 /** Never a spinner: the layout is held while the data settles. */
 export function Loading({ label = "Loading" }: { label?: string }) {
   return (
-    <div className="flex items-center gap-3 border border-line-soft bg-paper-2 px-5 py-6">
+    <div className="flex items-center gap-3 border border-line-soft bg-ground-2 px-5 py-6">
       <span className="beacon" aria-hidden />
       <span className="serial">{label}</span>
     </div>
@@ -88,7 +88,7 @@ export function Loading({ label = "Loading" }: { label?: string }) {
 
 export function Empty({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
   return (
-    <div className="border border-line-soft bg-paper-2 px-6 py-14 text-center">
+    <div className="border border-line-soft bg-ground-2 px-6 py-14 text-center">
       <div className="display text-title">{title}</div>
       <p className="mx-auto mt-3 max-w-md text-[14px] leading-relaxed text-muted">{body}</p>
       {action ? <div className="mt-7 flex justify-center">{action}</div> : null}

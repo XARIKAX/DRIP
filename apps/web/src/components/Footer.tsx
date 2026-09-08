@@ -44,7 +44,7 @@ const COLUMNS = [
  */
 export function Footer() {
   return (
-    <footer className="relative mt-band border-t border-line-soft bg-paper-2">
+    <footer className="relative mt-band border-t border-line-soft bg-ground-2">
       <Reveal className="shell grid gap-12 py-20 md:grid-cols-12 md:py-24">
         <div className="reveal md:col-span-5 lg:col-span-4">
           <Mark size={30} className="text-ink" />

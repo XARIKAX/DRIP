@@ -32,7 +32,7 @@ export function TickerStrip() {
 
   return (
     <div
-      className="marquee-host relative overflow-hidden border-b border-line bg-paper-2"
+      className="marquee-host relative overflow-hidden border-b border-line bg-ground-2"
       aria-hidden
     >
       <div className="flex w-max marquee">
@@ -49,11 +49,11 @@ export function TickerStrip() {
 
       {/* The tape runs out of the frame rather than stopping at it. */}
       <div
-        className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-paper-2 to-transparent"
+        className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-ground-2 to-transparent"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-paper-2 to-transparent"
+        className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-ground-2 to-transparent"
         aria-hidden
       />
     </div>

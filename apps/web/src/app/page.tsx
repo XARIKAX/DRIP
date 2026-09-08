@@ -19,7 +19,7 @@ import { Footer } from "@/components/Footer";
  */
 export default function HomePage() {
   return (
-    <div className="grain relative min-h-screen bg-paper">
+    <div className="grain relative min-h-screen bg-ground">
       <ReadProgress />
       <UtilityBar />
       <LandingNav />

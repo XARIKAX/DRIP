@@ -28,7 +28,7 @@ export const metadata: Metadata = {
  */
 export default function DocsLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="grain relative min-h-screen bg-paper">
+    <div className="grain relative min-h-screen bg-ground">
       <ReadProgress />
       <UtilityBar />
       <SiteNav />
