@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { listings } from "@drip-markets/sdk";
 import { fmt, LiveCounter, shortDate } from "@/components/live";
-import { Rosette } from "@/components/Guilloche";
+import { SakuraTree } from "@/components/pixel/Scenery";
 import { TokenMark } from "@/components/TokenMark";
 import { useCreditView, useDataSource, usePortfolioSummary, useTokensView, useVaultView } from "@/lib/data/provider";
 import { DocsShell, type GlanceRow, type QuickLink, type TocGroup } from "@/components/docs/DocsShell";
@@ -111,22 +111,22 @@ export function Docs() {
     { label: "Contracts · tests", value: "10 · 96 passing" },
     {
       label: "Earned while you read",
-      value: <LiveCounter base={0} ratePerSec={summary.streamRatePerSec} decimals={6} prefix="$" className="text-cyan-deep" />,
+      value: <LiveCounter base={0} ratePerSec={summary.streamRatePerSec} decimals={6} prefix="$" className="text-accent" />,
     },
   ];
 
   const hero = (
     <header className="relative">
-      {/* The rose engine, behind the title — the same watermark the certificate carries,
-          so the reference is visibly printed on the same stock as the product. */}
-      <div className="pointer-events-none absolute -right-10 -top-16 text-ink/[0.07] lg:-right-24" aria-hidden>
-        <Rosette size={380} rings={30} R={100} r={28} a={68} drift={0.8} />
+      {/* A tree behind the title, at the opacity of a watermark — the reference is
+          visibly grown in the same garden as the product. */}
+      <div className="pointer-events-none absolute right-0 top-0 opacity-[0.13] lg:right-4" aria-hidden>
+        <SakuraTree seed={2} cell="3px" />
       </div>
-      <div className="serial">Start here</div>
-      <h1 className="display relative mt-5 text-[clamp(40px,5.4vw,70px)] leading-[0.98] tracking-[-0.02em]">
+      <div className="eyebrow">Start here</div>
+      <h1 className="display relative mt-5 text-[clamp(40px,5.4vw,70px)] leading-[0.98] tracking-[-0.03em]">
         The Aave of stocks,
         <br />
-        <span className="italic text-cyan-deep">explained.</span>
+        <span className="font-serif italic text-accent">explained.</span>
       </h1>
       <p className="mt-8 max-w-[62ch] text-[17.5px] leading-[1.65] text-ink">
         Stocks pay dividends. Today the cash shows up weeks after you earned it, then sits
@@ -261,10 +261,10 @@ export function Docs() {
             </li>
           </ul>
           <Shot
-            name="certificate"
+            name="hero"
             n={2}
-            alt="An engraved Osinko share certificate for one hundred and fifty shares of Apple Inc, with a $39.00 dividend coupon attached along a tear-off line and an ex date stamp."
-            caption="The thing Osinko replaces: a paper share certificate with a dividend coupon you tore off along the dotted line. Osinko keeps the certificate whole and does the work on the coupon."
+            alt="The Osinko home page: a hand holding a dark coin whose face carries a lit sphere split down its meridian, under the words The On-Chain Dividend Engine."
+            caption="The mark is the argument. A holding, lit on one side and left whole; the dividend separated along a line that does not cut the thing in two."
           />
         </Sub>
       </Section>
@@ -932,7 +932,7 @@ HANDOFF.md                notes for the developer taking this live`}</Code>
               </span>,
               view?.name ?? "—",
               <span key="p" className="num">{view ? `$${fmt(view.priceUsd)}` : "—"}</span>,
-              <span key="y" className="num text-cyan-deep">{view?.yieldPct ? `${view.yieldPct.toFixed(2)}%` : "—"}</span>,
+              <span key="y" className="num text-accent">{view?.yieldPct ? `${view.yieldPct.toFixed(2)}%` : "—"}</span>,
               <span key="e" className="num">{view?.nextExDate ? shortDate(view.nextExDate) : view?.payingNow ? "paying now" : "—"}</span>,
               <span key="l" className="font-mono text-nano uppercase text-faint">{t.liquidity === "live" ? "proven" : "quote first"}</span>,
             ];
@@ -1074,7 +1074,7 @@ const vault     = await reader.getVaultStats();
           <Shot
             name="calendar"
             n={17}
-            alt="The payout calendar: stocks, dividend per share, ex date, pay date, and a cyan column of days paid early."
+            alt="The payout calendar: stocks, dividend per share, ex date, pay date, and a column of days paid early."
             caption="The payout calendar. Wait for the company and you are paid on the right-hand date. Use Osinko and you are paid on the left-hand one, minus 1%."
           />
           <Shot

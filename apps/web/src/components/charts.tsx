@@ -1,14 +1,17 @@
 "use client";
 
 import { useId } from "react";
+import { PALETTE } from "@/lib/palette";
 
 /**
  * Every chart in the product is an inline SVG built from the same data the tables show.
  * No chart library, no external assets, nothing that cannot draw itself in under a
  * millisecond. Lines draw left to right on first view; fills follow.
  *
- * On a dark canvas the accent carries direction, so a rising series is cyan and only a
- * falling one takes the red — colour is used to say something, not to decorate.
+ * On a dark canvas the accent carries direction, so a rising series is iris and only a
+ * falling one takes the persimmon — colour is used to say something, not to decorate.
+ * Colours are imported rather than read from CSS: a chart is painted from JavaScript,
+ * and `getComputedStyle` on the first client paint is a hydration mismatch waiting.
  */
 
 function toPath(points: number[], w: number, h: number, pad = 2): { line: string; area: string } {
@@ -39,7 +42,7 @@ export function Sparkline({
   dark?: boolean;
 }) {
   const { line } = toPath(points, width, height);
-  const stroke = up ? "#35C2DB" : "#FF6B6B";
+  const stroke = up ? PALETTE.iris[300] : PALETTE.downBright;
   return (
     <svg
       width={width}
@@ -92,8 +95,8 @@ export function AreaChart({
       >
         <defs>
           <linearGradient id={`fill-${id}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#35C2DB" stopOpacity="0.20" />
-            <stop offset="100%" stopColor="#35C2DB" stopOpacity="0" />
+            <stop offset="0%" stopColor={PALETTE.iris[300]} stopOpacity="0.20" />
+            <stop offset="100%" stopColor={PALETTE.iris[300]} stopOpacity="0" />
           </linearGradient>
         </defs>
         {[0.25, 0.5, 0.75].map((p) => (
@@ -108,10 +111,10 @@ export function AreaChart({
           />
         ))}
         <path d={area} fill={`url(#fill-${id})`} className="chart-fill" />
-        <path d={line} fill="none" stroke="#35C2DB" strokeWidth="1.75" pathLength={1} className="draw-line" />
+        <path d={line} fill="none" stroke={PALETTE.iris[300]} strokeWidth="1.75" pathLength={1} className="draw-line" />
       </svg>
       {(labelLeft || labelRight) && (
-        <div className="mt-3 flex justify-between font-mono text-nano uppercase text-panel-faint">
+        <div className="mt-3 flex justify-between font-mono text-nano uppercase text-faint">
           <span>
             {labelLeft} · <span className="num">{formatValue(min)}</span> low
           </span>
@@ -127,14 +130,14 @@ export function AreaChart({
 /** Thin horizontal meter with an optional cap marker. Used for utilisation and health. */
 export function Meter({ pct, capPct }: { pct: number; capPct?: number; dark?: boolean }) {
   return (
-    <div className="relative h-1.5 w-full bg-panel-3">
+    <div className="relative h-1.5 w-full rounded-full bg-ground-4">
       <div
-        className="h-1.5 bg-cyan transition-[width] duration-700 ease-osk"
+        className="h-1.5 rounded-full bg-accent transition-[width] duration-700 ease-osk"
         style={{ width: `${Math.min(Math.max(pct, 0), 100)}%` }}
       />
       {capPct !== undefined ? (
         <div
-          className="absolute top-[-4px] h-[14px] w-px bg-panel-text"
+          className="absolute top-[-4px] h-[14px] w-px bg-ink"
           style={{ left: `${Math.min(capPct, 100)}%` }}
           aria-hidden
         />

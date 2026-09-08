@@ -358,7 +358,7 @@ export function ReadProgress() {
       aria-hidden
     >
       <div
-        className="h-full origin-left bg-cyan-dark"
+        className="h-full origin-left bg-accent"
         style={{ transform: `scaleX(${progress})` }}
       />
     </div>
@@ -387,4 +387,125 @@ export function useScrollY(threshold = 24): boolean {
   }, [threshold]);
 
   return past;
+}
+
+/**
+ * True while the element is on screen, and false again when it leaves.
+ *
+ * `useInView` above latches and never lets go, which is exactly right for a reveal —
+ * nothing should un-reveal — and exactly wrong for anything that has to be switched
+ * off. A parked animation frame loop still costs a wake-up sixty times a second, so
+ * the canvas garden needs a signal that goes both ways.
+ */
+export function useOnScreen<T extends HTMLElement>(rootMargin = "0px") {
+  const ref = useRef<T | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => setVisible(Boolean(entry?.isIntersecting)), {
+      rootMargin,
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [rootMargin]);
+
+  return { ref, visible } as const;
+}
+
+/**
+ * Whether the reader has asked for less motion.
+ *
+ * Starts false and corrects itself after mount, deliberately: the server has no media
+ * query to answer, so assuming the common case and adjusting is the only version that
+ * does not hydrate into a mismatch. Used where CSS cannot reach — a four-viewport
+ * pinned scroll scene has to become an ordinary list, and `animation: none` cannot do
+ * that.
+ */
+export function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setReduced(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  return reduced;
+}
+
+/**
+ * Leans an element toward the pointer, in translation only.
+ *
+ * Deliberately not `useTilt`: the hero's subject is a photograph of a hand, and a
+ * photographed hand rotating in perspective stops reading as an object being held and
+ * starts reading as a sticker on glass. A few pixels of drift is the whole effect.
+ */
+export function useParallax<T extends HTMLElement>(strength = 8) {
+  const ref = useRef<T | null>(null);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || prefersReduced()) return;
+    if (window.matchMedia("(hover: none)").matches) return;
+    let frame = 0;
+
+    const onMove = (e: PointerEvent) => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const nx = e.clientX / window.innerWidth - 0.5;
+        const ny = e.clientY / window.innerHeight - 0.5;
+        node.style.setProperty("--ax", `${nx * strength * 2}px`);
+        node.style.setProperty("--ay", `${ny * strength}px`);
+      });
+    };
+
+    window.addEventListener("pointermove", onMove);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [strength]);
+
+  return ref;
+}
+
+/**
+ * A raw 0..1 of how far the window has scrolled through the first viewport.
+ * Drives the two parallax layers in the hero, and nothing else — the budget for
+ * scroll-linked properties on one screen is about two before it feels seasick.
+ */
+export function useViewportScroll(): number {
+  const [t, setT] = useState(0);
+
+  useEffect(() => {
+    if (prefersReduced()) return;
+    let frame = 0;
+    const sample = () => {
+      frame = 0;
+      const h = window.innerHeight || 1;
+      setT(Math.min(1, Math.max(0, window.scrollY / h)));
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(sample);
+    };
+    sample();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  return t;
 }

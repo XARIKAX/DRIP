@@ -99,7 +99,7 @@ export function DocsShell({
         <span className="serial">Osinko · How it works</span>
         <span className="serial hidden sm:inline">Version 0.1 · Updated September 2026</span>
       </div>
-      <div className="rule-double mt-4" />
+      <div className="rule-sand mt-4" />
 
       <div className="mt-10 grid gap-12 lg:grid-cols-[190px_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[190px_minmax(0,1fr)_240px] xl:gap-12">
         {/* Contents */}
@@ -108,7 +108,7 @@ export function DocsShell({
             <details className="group border border-line lg:hidden">
               <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 font-mono text-micro font-medium uppercase text-ink">
                 Contents
-                <span className="text-ghost transition-transform duration-300 group-open:rotate-90" aria-hidden>
+                <span className="text-faint transition-transform duration-300 group-open:rotate-90" aria-hidden>
                   →
                 </span>
               </summary>
@@ -182,14 +182,14 @@ function Toc({ toc, active, marker = false }: { toc: TocGroup[]; active: string;
     <div ref={listRef} className="docs-toc relative">
       {marker ? (
         <span
-          className="absolute left-0 w-px bg-cyan-dark transition-all duration-500 ease-osk"
+          className="absolute left-0 w-px bg-accent transition-all duration-500 ease-osk"
           style={{ top: bar.top, height: bar.height }}
           aria-hidden
         />
       ) : null}
       {toc.map((g) => (
         <div key={g.label} className={`${marker ? "pl-4" : ""} pt-4 first:pt-2`}>
-          <div className="font-mono text-nano uppercase tracking-mega text-ghost">{g.label}</div>
+          <div className="font-mono text-nano uppercase tracking-mega text-faint">{g.label}</div>
           <div className="mt-1.5">
             {g.entries.map((e) => (
               <Link
@@ -199,7 +199,7 @@ function Toc({ toc, active, marker = false }: { toc: TocGroup[]; active: string;
                 aria-current={active === e.id ? "true" : undefined}
                 className={e.sub ? "pl-4 !text-[12.5px]" : ""}
               >
-                <span className="num w-8 shrink-0 text-[10.5px] text-ghost">{e.index}</span>
+                <span className="num w-8 shrink-0 text-[10.5px] text-faint">{e.index}</span>
                 <span className="min-w-0 leading-snug">{e.title}</span>
               </Link>
             ))}
@@ -258,20 +258,20 @@ function QuickLinks({ links }: { links: QuickLink[] }) {
                 href={l.href}
                 target="_blank"
                 rel="noreferrer"
-                className="group flex items-center justify-between py-2.5 text-[13.5px] text-ink transition-colors hover:text-cyan-deep"
+                className="group flex items-center justify-between py-2.5 text-[13.5px] text-ink transition-colors hover:text-accent"
               >
                 {l.label}
-                <span className="text-ghost transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden>
+                <span className="text-faint transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden>
                   ↗
                 </span>
               </a>
             ) : (
               <Link
                 href={l.href}
-                className="group flex items-center justify-between py-2.5 text-[13.5px] text-ink transition-colors hover:text-cyan-deep"
+                className="group flex items-center justify-between py-2.5 text-[13.5px] text-ink transition-colors hover:text-accent"
               >
                 {l.label}
-                <span className="text-ghost transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden>
+                <span className="text-faint transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden>
                   →
                 </span>
               </Link>

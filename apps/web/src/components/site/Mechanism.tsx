@@ -1,6 +1,11 @@
 "use client";
 
-import { remap, useScrollProgress } from "@/components/motion";
+import { remap, useScrollProgress, usePrefersReducedMotion } from "@/components/motion";
+import { PixelSprite } from "@/components/pixel/Sprite";
+import { Koi, Stone, StoneLantern } from "@/components/pixel/Scenery";
+import { SAND as SAND_PALETTE } from "@/components/pixel/palette";
+import { sandGrid } from "@/components/pixel/generate";
+import { PALETTE, SVG_MONO } from "@/lib/palette";
 
 const STAGES = [
   {
@@ -29,6 +34,7 @@ const STAGES = [
   },
 ];
 
+/** Where the four channels end, in the scene's own 1040 x 600 coordinates. */
 const ENDPOINTS = [
   { y: 104, label: "EARLY", detail: "Cash today, minus 1%" },
   { y: 234, label: "STREAM", detail: "A little every second" },
@@ -36,42 +42,48 @@ const ENDPOINTS = [
   { y: 494, label: "BORROW", detail: "Pays your loan interest" },
 ];
 
+/** Grown once. Regenerating this inside a scroll-driven render would cost it sixty times a second. */
+const SAND = sandGrid({ seed: 3, w: 132, h: 78, pitch: 5, rings: 24, focus: [30, 39] });
+
 /**
- * The mechanism, told by scrolling.
+ * The mechanism, told by scrolling — and told as a dry garden.
  *
- * The section is four viewports tall and pins its own contents, so the page's scroll
- * becomes the transport for a single continuous animation: a share that never moves,
- * a dividend that separates from it, stretches into a stream, and forks four ways.
- * The copy changes with the diagram because they are the same argument.
+ * The section is three viewports tall and pins its own contents, so the page's scroll
+ * becomes the transport for one continuous scene. A stone is set down and never moves
+ * again; the sand around it is raked outward ring by ring as you read; a koi carries the
+ * payment along the channel; and four lanterns light in turn at the far end.
  *
- * Below `lg` the scene is not pinned at all — a phone gets the four stages as an
- * ordinary list with the diagram resolved to its final state, which is honest about
- * the fact that scroll-jacking a small screen is a hostile act.
+ * The metaphor is doing work rather than decorating. A karesansui stone is, by
+ * definition, the element that does not move — which is the whole claim being made
+ * about the share — and rings raked around it are how a garden shows influence
+ * spreading from something that stayed put. The old version drew the same argument in
+ * boxes and arrows and had to caption itself.
+ *
+ * Two things it will not do. Below `lg` the scene is not pinned at all: a phone gets
+ * the four stages as a list with the garden finished, because scroll-jacking a small
+ * screen is a hostile act. And a reader who has asked for reduced motion gets that same
+ * list on every screen — the old version returned a finished progress value but kept
+ * four viewports of empty scroll, which is the worst of both.
  */
 export function Mechanism() {
   const { ref, progress } = useScrollProgress<HTMLDivElement>();
+  const reduced = usePrefersReducedMotion();
 
   return (
-    // The dark surface is a framed instrument now, not a full-bleed band: set back
-    // from the page edge on every side so the paper shows around it, the way a screen
-    // sits inset into its own bezel rather than being the whole device.
     <section id="mechanism" className="relative bg-ground py-10 md:py-16">
-      {/* Pinned scene, large screens only. */}
-      <div ref={ref} className="hidden lg:block lg:h-[420vh]">
+      {/* Pinned scene, large screens only, and only when motion is welcome. */}
+      <div ref={ref} className={reduced ? "hidden" : "hidden lg:block lg:h-[320vh]"}>
         <div className="shell sticky top-8">
-          <div className="panel-frame flex h-[calc(100vh-64px)] flex-col justify-center">
-            <div className="pointer-events-none absolute inset-0 grid-bg-dark opacity-60" aria-hidden />
+          <div className="panel-frame flex h-[calc(100vh-64px)] flex-col justify-center [--cell:3px]">
             <div
               className="pointer-events-none absolute inset-0"
               style={{
                 background:
-                  "radial-gradient(760px 420px at 68% 50%, rgba(53,194,219,0.12), transparent 72%)",
+                  "radial-gradient(760px 420px at 66% 52%, rgb(139 92 246 / 0.16), transparent 72%)",
               }}
               aria-hidden
             />
 
-            {/* Scene and rail are centred as one block. Pinning the rail to the floor of
-                the frame instead leaves a dead band under a composition this compact. */}
             <div className="relative flex items-center px-8 md:px-14">
               <div className="grid w-full grid-cols-12 items-center gap-10">
                 <div className="col-span-5 min-w-0">
@@ -83,31 +95,27 @@ export function Mechanism() {
               </div>
             </div>
 
-            {/* The chapter index, held at the foot of the frame: at any moment you can
-                see where in the argument you are and what is still coming. */}
-            <div className="relative mt-16 shrink-0 px-8 pb-2 md:px-14">
-              <div className="grid grid-cols-4 border-t border-panel-line">
+            {/* The chapter index at the foot: where in the argument you are, and what
+                is still coming. */}
+            <div className="relative mt-14 shrink-0 px-8 pb-2 md:px-14">
+              <div className="grid grid-cols-4 border-t border-line">
                 {STAGES.map((s, i) => {
                   const on = Math.min(Math.floor(progress * STAGES.length), STAGES.length - 1) === i;
                   return (
                     <div
                       key={s.index}
-                      className={`min-w-0 border-r border-panel-line px-4 py-4 last:border-r-0 transition-colors duration-500 ${
-                        on ? "text-panel-text" : "text-panel-faint"
+                      className={`min-w-0 border-r border-line px-4 py-4 last:border-r-0 transition-colors duration-500 ${
+                        on ? "text-ink" : "text-faint"
                       }`}
                     >
                       <div className="flex items-baseline gap-3">
-                        <span
-                          className={`num text-nano transition-colors duration-500 ${
-                            on ? "text-cyan" : "text-panel-faint"
-                          }`}
-                        >
+                        <span className={`num text-nano transition-colors duration-500 ${on ? "text-accent" : "text-faint"}`}>
                           {s.index}
                         </span>
                         <span className="truncate font-mono text-nano uppercase">{s.note}</span>
                       </div>
                       <div
-                        className={`mt-3 h-px origin-left bg-cyan transition-transform duration-700 ease-osk ${
+                        className={`mt-3 h-[3px] w-full origin-left rounded-[1px] bg-accent transition-transform duration-700 ease-osk ${
                           on ? "scale-x-100" : "scale-x-0"
                         }`}
                         aria-hidden
@@ -121,23 +129,25 @@ export function Mechanism() {
         </div>
       </div>
 
-      {/* Unpinned fallback. Same framed instrument, laid out rather than pinned. */}
-      <div className="lg:hidden">
+      {/* Laid out rather than pinned: small screens, and anyone who asked for less motion. */}
+      <div className={reduced ? "block" : "lg:hidden"}>
         <div className="shell">
-          <div className="panel-frame p-6 md:p-10">
-            <div className="serial">How it works</div>
-            <h2 className="mt-4 display text-display text-panel-text">Your stock never moves. Only the dividend does.</h2>
-            <div className="mt-10 -mx-2">
+          <div className="panel-frame p-6 md:p-10 [--cell:2px] md:[--cell:3px]">
+            <div className="eyebrow">How it works</div>
+            <h2 className="mt-4 display text-display text-ink">
+              Your stock never moves. Only the dividend does.
+            </h2>
+            <div className="mt-10">
               <Scene progress={1} />
             </div>
             <ol className="mt-12 space-y-10">
               {STAGES.map((s) => (
-                <li key={s.index} className="border-t border-panel-line pt-6">
+                <li key={s.index} className="border-t border-line pt-6">
                   <div className="flex items-baseline gap-4">
-                    <span className="num text-micro font-medium text-cyan">{s.index}</span>
-                    <h3 className="display text-title text-panel-text">{s.title}</h3>
+                    <span className="num text-micro font-medium text-accent">{s.index}</span>
+                    <h3 className="display text-title text-ink">{s.title}</h3>
                   </div>
-                  <p className="mt-3 text-[15px] leading-relaxed text-panel-muted">{s.body}</p>
+                  <p className="mt-3 text-[15px] leading-relaxed text-muted">{s.body}</p>
                 </li>
               ))}
             </ol>
@@ -152,38 +162,33 @@ export function Mechanism() {
 function StageText({ progress }: { progress: number }) {
   const span = 1 / STAGES.length;
   const index = Math.min(Math.floor(progress / span), STAGES.length - 1);
-  const active = STAGES[index];
+  const active = STAGES[index]!;
 
   return (
     <div>
-      <div className="serial">How it works</div>
+      <div className="eyebrow">How it works</div>
 
-      {/* Chapter marker and the track itself. */}
       <div className="mt-5 flex items-center gap-4">
-        <span className="num text-[13px] font-medium text-cyan">
+        <span className="num text-[13px] font-medium text-accent">
           {String(index + 1).padStart(2, "0")}
         </span>
-        <div className="relative h-px flex-1 bg-panel-line">
-          <div
-            className="absolute inset-y-0 left-0 bg-cyan"
-            style={{ width: `${progress * 100}%` }}
-            aria-hidden
-          />
+        <div className="relative h-px flex-1 bg-line">
+          <div className="absolute inset-y-0 left-0 bg-accent" style={{ width: `${progress * 100}%` }} aria-hidden />
         </div>
-        <span className="num text-[13px] font-medium text-panel-faint">/ 04</span>
+        <span className="num text-[13px] font-medium text-faint">/ 04</span>
       </div>
 
-      {/* One stage at a time.
-          Cross-fading two blocks of display type at the same coordinates makes both
-          illegible for the length of the fade, which is worse than a clean cut — so the
-          active stage is the only one mounted, and the swap is animated by remounting it. */}
+      {/* One stage at a time. Cross-fading two blocks of display type at the same
+          coordinates makes both illegible for the length of the fade, which is worse
+          than a clean cut — so the active stage is the only one mounted, and the swap
+          is animated by remounting it. */}
       <div className="mt-9 min-h-[340px]">
         <div key={active.index} className="rise-group">
           <div>
-            <h2 className="display text-display text-panel-text">{active.title}</h2>
-            <p className="mt-6 max-w-lg text-[17px] leading-[1.65] text-panel-muted">{active.body}</p>
-            <div className="mt-8 inline-flex items-center gap-3 border-l border-cyan pl-4">
-              <span className="font-mono text-nano uppercase text-cyan">{active.note}</span>
+            <h2 className="display text-display text-ink">{active.title}</h2>
+            <p className="mt-6 max-w-lg text-[17px] leading-[1.65] text-muted">{active.body}</p>
+            <div className="mt-8 inline-flex items-center gap-3 border-l-2 border-accent pl-4">
+              <span className="font-mono text-nano uppercase text-accent">{active.note}</span>
             </div>
           </div>
         </div>
@@ -193,227 +198,184 @@ function StageText({ progress }: { progress: number }) {
 }
 
 /**
- * The diagram.
+ * The garden, as one number.
  *
- * Every geometry in here is derived from one number. The share is drawn once and never
- * transformed; the cyan is the only thing that moves, which is the point being made.
+ * Sprites sit in an absolutely positioned layer over an SVG that carries the channels
+ * and the type. The two do not fight: SVG is the right tool for a line that draws
+ * itself and text that has to sit on a baseline, and a sprite is the right tool for an
+ * object. Everything is derived from `p`, and nothing is regenerated per frame — the
+ * sand is a module constant revealed by a growing clip, which is what makes "the reader
+ * rakes it" cost nothing.
  */
 function Scene({ progress: p }: { progress: number }) {
-  // The dividend leaves the share and crosses to the fork.
-  const chipX = remap(p, 0.16, 0.42, 276, 592);
-  const chipOn = remap(p, 0.13, 0.19, 0, 1) * remap(p, 0.44, 0.5, 1, 0.35);
-
-  // The trunk draws itself behind the travelling chip, then starts flowing.
-  const trunkDraw = remap(p, 0.16, 0.44, 0, 1);
-  const flowing = p > 0.42;
-
-  // The seam on the share's edge, where the entitlement separates.
+  // The sand is raked outward from the stone as the argument is made.
+  const rake = remap(p, 0.04, 0.5, 8, 96);
+  // The koi carries the payment down the channel.
+  const koiX = remap(p, 0.16, 0.44, 30, 57.5);
+  const koiOn = remap(p, 0.13, 0.19, 0, 1) * remap(p, 0.46, 0.52, 1, 0.25);
+  const trunkDraw = remap(p, 0.16, 0.46, 0, 1);
+  const flowing = p > 0.44;
   const seam = remap(p, 0.06, 0.2, 0, 1);
 
   return (
-    <svg
-      viewBox="0 0 1040 600"
-      className="h-auto w-full overflow-visible"
-      role="img"
-      aria-label="A stock stays in place while its dividend splits off, pays out every second, and goes one of four ways: cash today, a steady drip, more stock, or paying down a loan."
-    >
-      <defs>
-        <filter id="osk-glow" x="-80%" y="-80%" width="260%" height="260%">
-          <feGaussianBlur stdDeviation="7" result="b" />
-          <feMerge>
-            <feMergeNode in="b" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <linearGradient id="osk-trunk" x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0%" stopColor="#35C2DB" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#35C2DB" stopOpacity="1" />
-        </linearGradient>
-      </defs>
-
-      {/* Registration marks. The graph paper the whole thing is drawn on. */}
-      <g stroke="rgba(255,255,255,0.14)" strokeWidth="1">
-        {[
-          [330, 130],
-          [330, 470],
-          [900, 60],
-          [64, 540],
-        ].map(([x, y]) => (
-          <g key={`${x}-${y}`}>
-            <line x1={x - 6} y1={y} x2={x + 6} y2={y} />
-            <line x1={x} y1={y - 6} x2={x} y2={y + 6} />
-          </g>
-        ))}
-      </g>
-
-      {/* ---- The share. Drawn once, never transformed. ---- */}
-      <g>
-        <rect
-          x="60"
-          y="225"
-          width="216"
-          height="150"
-          fill="#0B0E11"
-          stroke="rgba(255,255,255,0.18)"
-          strokeWidth="1.2"
-        />
-        <rect x="60" y="225" width="216" height="1.2" fill="rgba(255,255,255,0.22)" />
-        <text x="84" y="266" fill="#F3F6F8" fontSize="26" fontWeight="800" letterSpacing="-1">
-          AAPL
-        </text>
-        <text
-          x="84"
-          y="292"
-          fill="#5A636B"
-          fontSize="11"
-          fontFamily="IBM Plex Mono, monospace"
-          letterSpacing="1.6"
-        >
-          STOCK TOKEN
-        </text>
-        <text
-          x="84"
-          y="344"
-          fill="#F3F6F8"
-          fontSize="25"
-          fontFamily="IBM Plex Mono, monospace"
-          fontWeight="500"
-        >
-          150.0000
-        </text>
-
-        {/* The seam: the entitlement separating from the share at the ex date. */}
-        <line
-          x1="276"
-          y1="225"
-          x2="276"
-          y2="375"
-          stroke="#35C2DB"
-          strokeWidth="2"
-          opacity={seam}
-          filter="url(#osk-glow)"
-        />
-        <text
-          x="168"
-          y="410"
-          fill="#5A636B"
-          fontSize="10.5"
-          fontFamily="IBM Plex Mono, monospace"
-          letterSpacing="2"
-          textAnchor="middle"
-        >
-          STAYS PUT
-        </text>
-      </g>
-
-      {/* ---- The trunk: the dividend, in transit, becoming a flow. ---- */}
-      <line x1="276" y1="300" x2="600" y2="300" stroke="rgba(255,255,255,0.09)" strokeWidth="1.2" />
-      <line
-        x1="276"
-        y1="300"
-        x2="600"
-        y2="300"
-        stroke="url(#osk-trunk)"
-        strokeWidth="2"
-        pathLength={1}
-        strokeDasharray={1}
-        strokeDashoffset={1 - trunkDraw}
-      />
-      {flowing ? (
-        <line
-          x1="276"
-          y1="300"
-          x2="600"
-          y2="300"
-          stroke="#35C2DB"
-          strokeWidth="2"
-          className="flow-line"
-          opacity="0.85"
-        />
-      ) : null}
-
-      {/* The dividend itself, crossing. */}
-      <g opacity={chipOn} filter="url(#osk-glow)">
-        <rect x={chipX - 15} y="291" width="30" height="18" fill="#35C2DB" />
-      </g>
-      <text
-        x="438"
-        y="272"
-        fill="#5A636B"
-        fontSize="10.5"
-        fontFamily="IBM Plex Mono, monospace"
-        letterSpacing="2"
-        textAnchor="middle"
+    <div className="relative w-full" style={{ aspectRatio: "1040 / 600" }}>
+      {/* The raked ground. Clipped to a circle that grows with the scroll, so the
+          rings arrive one at a time from the stone outward. */}
+      <div
+        className="pointer-events-none absolute left-[-2%] top-[6%] w-[52%] opacity-[0.55]"
+        style={{ clipPath: `circle(${rake}% at 23% 50%)` }}
+        aria-hidden
       >
-        {p > 0.42 ? "$0.26 A SHARE, PAID OUT EVERY SECOND" : "THE DIVIDEND"}
-      </text>
+        <PixelSprite grid={SAND} palette={SAND_PALETTE} cell="calc(var(--cell) * 1.35)" />
+      </div>
 
-      {/* The fork. */}
-      <circle
-        cx="600"
-        cy="300"
-        r="4"
-        fill="#35C2DB"
-        opacity={remap(p, 0.4, 0.5, 0, 1)}
-      />
+      <svg
+        viewBox="0 0 1040 600"
+        className="absolute inset-0 h-full w-full overflow-visible"
+        role="img"
+        aria-label="A stock stays in place while its dividend splits off, pays out every second, and goes one of four ways: cash today, a steady drip, more stock, or paying down a loan."
+      >
+        <defs>
+          <filter id="osk-glow" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="7" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <linearGradient id="osk-channel" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stopColor={PALETTE.iris[300]} stopOpacity="0.2" />
+            <stop offset="100%" stopColor={PALETTE.iris[300]} stopOpacity="1" />
+          </linearGradient>
+        </defs>
 
-      {/* ---- The four outcomes. ---- */}
-      {ENDPOINTS.map((e, i) => {
-        // The four branches resolve by ~0.86, leaving the last of the track settled
-        // rather than still animating as the section releases.
-        const start = 0.46 + i * 0.07;
-        const draw = remap(p, start, start + 0.13, 0, 1);
-        const lit = remap(p, start + 0.08, start + 0.17, 0, 1);
-        const d = `M600,300 C672,300 684,${e.y} 756,${e.y}`;
+        {/* The holding. A label, not a box — the stone beside it is the object. */}
+        <g>
+          <text x="150" y="252" fill={PALETTE.night.text} fontSize="36" fontWeight="800" letterSpacing="-1.4">
+            AAPL
+          </text>
+          <text x="150" y="284" fill={PALETTE.night.faint} fontSize="14.5" fontFamily={SVG_MONO} letterSpacing="1.6">
+            STOCK TOKEN
+          </text>
+          <text x="150" y="342" fill={PALETTE.night.text} fontSize="33" fontFamily={SVG_MONO} fontWeight="500">
+            150.0000
+          </text>
+          <text x="150" y="556" fill={PALETTE.night.faint} fontSize="14" fontFamily={SVG_MONO} letterSpacing="2">
+            STAYS PUT
+          </text>
 
-        return (
-          <g key={e.label}>
-            <path d={d} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1.2" />
-            <path
-              d={d}
-              fill="none"
-              stroke="#35C2DB"
-              strokeWidth="1.6"
-              pathLength={1}
-              strokeDasharray={1}
-              strokeDashoffset={1 - draw}
-              opacity="0.9"
-            />
-            <g opacity={0.25 + lit * 0.75}>
-              <rect
-                x="756"
-                y={e.y - 38}
-                width="244"
-                height="76"
-                fill="#0B0E11"
-                stroke={lit > 0.5 ? "rgba(53,194,219,0.45)" : "rgba(255,255,255,0.1)"}
-                strokeWidth="1.2"
+          {/* The seam: the entitlement separating at the ex date. */}
+          <line
+            x1="300"
+            y1="228"
+            x2="300"
+            y2="372"
+            stroke={PALETTE.iris[300]}
+            strokeWidth="2"
+            opacity={seam}
+            filter="url(#osk-glow)"
+          />
+        </g>
+
+        {/* The channel the payment runs down. */}
+        <line x1="300" y1="300" x2="620" y2="300" stroke={PALETTE.night.edgeSoft} strokeWidth="1.2" />
+        <line
+          x1="300"
+          y1="300"
+          x2="620"
+          y2="300"
+          stroke="url(#osk-channel)"
+          strokeWidth="2"
+          pathLength={1}
+          strokeDasharray={1}
+          strokeDashoffset={1 - trunkDraw}
+        />
+        {flowing ? (
+          <line
+            x1="300"
+            y1="300"
+            x2="620"
+            y2="300"
+            stroke={PALETTE.iris[300]}
+            strokeWidth="2"
+            className="flow-line"
+            opacity="0.85"
+          />
+        ) : null}
+
+        <text x="460" y="262" fill={PALETTE.night.faint} fontSize="14" fontFamily={SVG_MONO} letterSpacing="2" textAnchor="middle">
+          {p > 0.44 ? "$0.26 A SHARE, PAID OUT EVERY SECOND" : "THE DIVIDEND"}
+        </text>
+
+        <circle cx="620" cy="300" r="4" fill={PALETTE.iris[300]} opacity={remap(p, 0.42, 0.52, 0, 1)} />
+
+        {/* Four channels, four destinations. */}
+        {ENDPOINTS.map((e, i) => {
+          const start = 0.48 + i * 0.06;
+          const draw = remap(p, start, start + 0.11, 0, 1);
+          const lit = remap(p, start + 0.07, start + 0.15, 0, 1);
+          const d = `M620,300 C688,300 700,${e.y} 768,${e.y}`;
+
+          return (
+            <g key={e.label}>
+              <path d={d} fill="none" stroke={PALETTE.night.edgeSoft} strokeWidth="1.2" />
+              <path
+                d={d}
+                fill="none"
+                stroke={PALETTE.iris[300]}
+                strokeWidth="1.6"
+                pathLength={1}
+                strokeDasharray={1}
+                strokeDashoffset={1 - draw}
+                opacity="0.9"
               />
-              <rect x="756" y={e.y - 38} width="3" height="76" fill="#35C2DB" opacity={lit} />
-              <text
-                x="782"
-                y={e.y - 6}
-                fill="#F3F6F8"
-                fontSize="15"
-                fontFamily="IBM Plex Mono, monospace"
-                fontWeight="500"
-                letterSpacing="2.4"
-              >
-                {e.label}
-              </text>
-              <text
-                x="782"
-                y={e.y + 18}
-                fill="#5A636B"
-                fontSize="11.5"
-                fontFamily="IBM Plex Mono, monospace"
-              >
-                {e.detail}
-              </text>
+              <g opacity={0.3 + lit * 0.7}>
+                <text x="836" y={e.y - 5} fill={PALETTE.night.text} fontSize="20" fontFamily={SVG_MONO} fontWeight="500" letterSpacing="2.4">
+                  {e.label}
+                </text>
+                <text x="836" y={e.y + 24} fill={PALETTE.night.faint} fontSize="15" fontFamily={SVG_MONO}>
+                  {e.detail}
+                </text>
+              </g>
             </g>
-          </g>
+          );
+        })}
+      </svg>
+
+      {/* The stone. Drawn once, never transformed — which is the argument. */}
+      <div className="pointer-events-none absolute left-[14%] top-[70%]" aria-hidden>
+        <Stone size={0} cell="calc(var(--cell) * 2.1)" />
+      </div>
+
+      {/* The payment, in transit. */}
+      <div
+        className="pointer-events-none absolute top-[45.5%]"
+        style={{ left: `${koiX}%`, opacity: koiOn }}
+        aria-hidden
+      >
+        <Koi swim={flowing} facing="right" cell="calc(var(--cell) * 1.5)" />
+      </div>
+
+      {/* Four lanterns, lighting in turn as their channel resolves. */}
+      {ENDPOINTS.map((e, i) => {
+        const start = 0.48 + i * 0.06;
+        const lit = remap(p, start + 0.07, start + 0.15, 0, 1) > 0.5;
+        return (
+          <div
+            key={e.label}
+            className="pointer-events-none absolute transition-opacity duration-500"
+            style={{
+              left: "73.2%",
+              top: `${(e.y / 600) * 100}%`,
+              transform: "translateY(-50%)",
+              opacity: lit ? 1 : 0.28,
+            }}
+            aria-hidden
+          >
+            <StoneLantern lit={lit} cell="calc(var(--cell) * 0.55)" />
+          </div>
         );
       })}
-    </svg>
+    </div>
   );
 }

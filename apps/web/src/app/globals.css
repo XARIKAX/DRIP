@@ -3,28 +3,199 @@
 @tailwind utilities;
 
 /*
- * Fonts load at runtime rather than at build time so the app builds in a sandbox with
- * no outbound network. The fallback stacks in tailwind.config.ts carry the layout if
- * Google Fonts never answers.
+ * Type is self-hosted. The previous identity pulled four families from Google Fonts at
+ * runtime, which meant the page's headline width depended on a third party answering —
+ * and a grotesque falling back to Helvetica is nine percent wider, which is the
+ * difference between a two-line hero and a broken one. These ship with the app: no
+ * network at build time, none at runtime, and no flash of a different measure.
  */
-@import url("https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..700&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@1,6..72,300;1,6..72,400&display=swap");
+@font-face { font-family: "Archivo"; font-style: normal; font-weight: 100 900; font-stretch: 62% 125%; font-display: swap; src: url("/fonts/archivo-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Archivo"; font-style: normal; font-weight: 100 900; font-stretch: 62% 125%; font-display: swap; src: url("/fonts/archivo-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Instrument Sans"; font-style: normal; font-weight: 400 700; font-stretch: 75% 100%; font-display: swap; src: url("/fonts/instrument-sans-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Instrument Sans"; font-style: normal; font-weight: 400 700; font-stretch: 75% 100%; font-display: swap; src: url("/fonts/instrument-sans-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Newsreader"; font-style: normal; font-weight: 200 700; font-display: swap; src: url("/fonts/newsreader-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Newsreader"; font-style: normal; font-weight: 200 700; font-display: swap; src: url("/fonts/newsreader-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Newsreader"; font-style: italic; font-weight: 200 600; font-display: swap; src: url("/fonts/newsreader-italic-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Newsreader"; font-style: italic; font-weight: 200 600; font-display: swap; src: url("/fonts/newsreader-italic-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/plex-mono-400-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/plex-mono-400-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/plex-mono-500-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/plex-mono-500-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 600; font-display: swap; src: url("/fonts/plex-mono-600-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 600; font-display: swap; src: url("/fonts/plex-mono-600-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 
 @layer base {
   :root {
     color-scheme: light;
 
-    --ground: #fafaf7;
-    --paper: #ffffff;
-    --ink: #0a0a0a;
-    --cyan: #35c2db;
-    --line: rgba(10, 10, 10, 0.11);
+    /* ------------------------------------------------------------------ */
+    /* Tier 1 — the ramps.                                                 */
+    /* Channel triplets, so `bg-iris-500/20` keeps working. Nothing in a    */
+    /* component should reference these directly; they exist to be aimed    */
+    /* at by tier 2.                                                        */
+    /* ------------------------------------------------------------------ */
+    --iris-50: 243 236 255;
+    --iris-100: 228 214 255;
+    --iris-200: 203 176 255;
+    --iris-300: 172 133 251;
+    --iris-400: 139 92 246;
+    --iris-500: 123 47 247;
+    --iris-600: 99 32 214;
+    --iris-700: 78 23 168;
+    --iris-800: 52 16 112;
+    --iris-900: 31 8 70;
+
+    --blossom-50: 255 241 246;
+    --blossom-100: 255 220 232;
+    --blossom-200: 255 187 211;
+    --blossom-300: 255 147 188;
+    --blossom-400: 245 106 164;
+    --blossom-500: 222 72 134;
+    --blossom-600: 182 47 104;
+    --blossom-700: 138 32 80;
+
+    --night: 10 5 16;
+    --night-1: 15 7 25;
+    --night-2: 21 10 36;
+    --night-3: 29 16 48;
+    --night-4: 42 26 66;
+    --night-text: 241 235 255;
+    --night-muted: 169 155 196;
+    --night-faint: 138 123 168;
+    --night-edge: rgb(233 224 255 / 0.2);
+    --night-edge-soft: rgb(233 224 255 / 0.09);
+
+    /* Direction. Persimmon, not scarlet — a falling number must never read as a
+       blossom, and on a violet page a true red does. */
+    --up-day: 15 116 84;
+    --up-bright: 72 214 160;
+    --down-day: 176 64 42;
+    --down-bright: 255 122 102;
+    --vermilion: 224 83 58;
+
+    /* ------------------------------------------------------------------ */
+    /* Tier 2 — surface context. Everything a component reads.             */
+    /* These are the *only* colour names in the product that flip, and     */
+    /* `.night` below is the one place they flip.                          */
+    /* ------------------------------------------------------------------ */
+    --paper: 255 255 255;
+    --ground: 246 244 251;
+    --ground-2: 239 235 247;
+    --ground-3: 229 223 242;
+    --ground-4: 216 208 233;
+
+    --text: 22 14 34;
+    --text-2: 42 31 61;
+    --text-muted: 91 78 114;
+    --text-faint: 111 98 137;
+    --text-ghost: 179 169 198;
+
+    --accent: var(--iris-600);
+    --accent-quiet: var(--iris-200);
+    --accent-fill: var(--iris-500);
+    --accent-ink: 255 255 255;
+
+    --edge: rgb(22 14 34 / 0.1);
+    --edge-soft: rgb(22 14 34 / 0.055);
+    --edge-strong: rgb(22 14 34 / 0.22);
+
+    /* Direction is contextual for the same reason everything else is: the persimmon
+       that reads on paper is 3.3:1 on a night panel, and the mint that reads on night
+       is far too light on paper. One name, two values, no call site that has to know. */
+    --up: var(--up-day);
+    --down: var(--down-day);
+
+    /* ------------------------------------------------------------------ */
+    /* Tier 3 — the garden.                                                */
+    /* Sprite palettes resolve through these, so one sprite is drawn once   */
+    /* and lit twice: at noon on paper, at dusk on night.                   */
+    /* ------------------------------------------------------------------ */
+    --pk-bark: #4a2f42;
+    --pk-bark-lit: #6b4560;
+    --pk-bloom-1: #ffdce8;
+    --pk-bloom-2: #ffbbd3;
+    --pk-bloom-3: #ff93bc;
+    --pk-bloom-4: #f56aa4;
+    --pk-leaf: #79a292;
+    --pk-moss: #6b9384;
+    --pk-stone: #b9aecb;
+    --pk-stone-dark: #8b7fa3;
+    --pk-stone-line: #6f6289;
+    --pk-sand: #e5dff2;
+    --pk-sand-line: #cfc4e4;
+    --pk-water: #c9b8f0;
+    --pk-flame: #ffb865;
+    --pk-koi: #e0533a;
+    --pk-koi-2: #ffffff;
+    --pk-torii: #e0533a;
 
     /* Every stagger in the product is a multiple of this. */
     --beat: 70ms;
+    /* Every pixel in the product is a multiple of this. Whole steps only — pixel art
+       scales in integers or it stops being pixel art. */
+    --cell: 4px;
+  }
+
+  /*
+   * The night garden.
+   *
+   * Not a theme toggle: a *place*. Anything inside it — a card, a field, a table, a
+   * button — keeps using `text-ink`, `bg-paper`, `border-line`, and gets the right
+   * answer, which is why the twenty-five `.panel .x {}` overrides this file used to
+   * carry are gone. Panels are night by definition, so they opt in here rather than
+   * spelling it out at every call site.
+   */
+  .night,
+  .panel,
+  .panel-frame {
+    color-scheme: dark;
+
+    --paper: var(--night-3);
+    --ground: var(--night-2);
+    --ground-2: var(--night-1);
+    --ground-3: var(--night-3);
+    --ground-4: var(--night-4);
+
+    --text: var(--night-text);
+    --text-2: var(--night-text);
+    --text-muted: var(--night-muted);
+    --text-faint: var(--night-faint);
+    --text-ghost: var(--night-faint);
+
+    --accent: var(--iris-300);
+    --accent-quiet: var(--iris-800);
+    --accent-fill: var(--iris-400);
+    --accent-ink: var(--night);
+
+    --edge: var(--night-edge-soft);
+    --edge-soft: rgb(233 224 255 / 0.05);
+    --edge-strong: var(--night-edge);
+
+    --up: var(--up-bright);
+    --down: var(--down-bright);
+
+    --pk-bark: #2a1a42;
+    --pk-bark-lit: #45296b;
+    --pk-bloom-1: #ffbbd3;
+    --pk-bloom-2: #ff93bc;
+    --pk-bloom-3: #f56aa4;
+    --pk-bloom-4: #b62f68;
+    --pk-leaf: #3f7566;
+    --pk-moss: #35604f;
+    --pk-stone: #3b2a56;
+    --pk-stone-dark: #271640;
+    --pk-stone-line: #55407a;
+    --pk-sand: #1d1030;
+    --pk-sand-line: #2e1d48;
+    --pk-water: #341070;
+    --pk-flame: #ffc978;
+    --pk-koi: #ff7a66;
+    --pk-koi-2: #ffdce8;
+    --pk-torii: #c4432f;
   }
 
   * {
-    border-color: var(--line);
+    border-color: var(--edge);
   }
 
   html {
@@ -32,7 +203,7 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     scroll-behavior: smooth;
-    background: var(--ground);
+    background: rgb(var(--ground));
     /* The marquee is a `w-max` row inside an overflow-hidden parent; sub-pixel
        rounding on its transform still leaked a 1px horizontal scroll at 360px. */
     overflow-x: clip;
@@ -40,7 +211,7 @@
 
   body {
     @apply bg-ground font-sans text-ink;
-    font-weight: 500;
+    font-weight: 450;
     font-synthesis-weight: none;
     overflow-x: clip;
   }
@@ -48,17 +219,22 @@
   /* Numbers are data. Data is mono, tabular, and never reflows as it ticks. */
   .num {
     @apply font-mono tabular-nums;
-    font-feature-settings: "tnum" 1, "zero" 1, "ss01" 1;
+    font-feature-settings: "tnum" 1, "zero" 1;
   }
 
   ::selection {
-    background: #35c2db;
-    color: #0a0a0a;
+    background: rgb(var(--iris-200));
+    color: rgb(22 14 34);
   }
 
   :focus-visible {
-    outline: 2px solid #1899b1;
+    outline: 2px solid rgb(var(--iris-500));
     outline-offset: 3px;
+  }
+
+  .night :focus-visible,
+  .panel :focus-visible {
+    outline-color: rgb(var(--iris-300));
   }
 
   button:focus:not(:focus-visible),
@@ -71,14 +247,15 @@
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: #fafaf7;
+    background: rgb(var(--ground));
   }
   ::-webkit-scrollbar-thumb {
-    background: #d6d6cf;
-    border: 3px solid #fafaf7;
+    background: rgb(var(--ground-4));
+    border: 3px solid rgb(var(--ground));
+    border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #1899b1;
+    background: rgb(var(--iris-400));
   }
 }
 
@@ -94,13 +271,7 @@
   /* A hairline that fades at both ends, so the page never looks boxed in. */
   .rule {
     height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(10, 10, 10, 0.16) 12%,
-      rgba(10, 10, 10, 0.16) 88%,
-      transparent
-    );
+    background: linear-gradient(90deg, transparent, var(--edge-strong) 12%, var(--edge-strong) 88%, transparent);
   }
 
   .rule-t,
@@ -113,18 +284,55 @@
     @apply border-b border-line-soft;
   }
 
+  /*
+   * Raked sand.
+   *
+   * The rule that replaces the old engraved double line, and the one place the pixel
+   * language reaches structure rather than ornament: a band of ticks on the same cell
+   * pitch every sprite is drawn on, so a section break and a garden are measured with
+   * the same ruler. Masked at both ends because a rake stroke has a beginning.
+   */
+  .rule-sand {
+    height: calc(var(--cell) * 2);
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--pk-sand-line) 0,
+      var(--pk-sand-line) var(--cell),
+      transparent var(--cell),
+      transparent calc(var(--cell) * 3)
+    );
+    background-position: 0 50%;
+    background-repeat: repeat-x;
+    background-size: calc(var(--cell) * 3) var(--cell);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+
   /* ------------------------------------------------------------------ */
   /* Type roles                                                          */
   /* ------------------------------------------------------------------ */
 
-  /* Machine label. Mono, uppercase, tracked out. Never a sentence. */
+  /*
+   * The eyebrow is the serif register, not the machine one. It is the line above the
+   * headline that tells you what kind of document this is, and on this page that voice
+   * is a book's, not a terminal's.
+   */
   .eyebrow {
-    @apply font-mono text-micro font-medium uppercase text-faint;
+    @apply font-serif text-[12px] font-medium uppercase leading-none;
+    letter-spacing: 0.22em;
+    color: rgb(var(--accent));
+    font-variation-settings: "opsz" 16;
+  }
+
+  .eyebrow-pill {
+    @apply eyebrow inline-flex items-center gap-2.5 rounded-full border px-4 py-2.5;
+    border-color: rgb(var(--accent-quiet));
   }
 
   /* Editorial kicker. Once per section, never twice. */
   .kicker {
-    @apply font-editorial text-[15px] italic text-muted md:text-[17px];
+    @apply font-serif text-[16px] italic text-muted md:text-[18px];
+    font-variation-settings: "opsz" 30;
   }
 
   /* A number that carries a section. */
@@ -132,75 +340,104 @@
     @apply num font-semibold tracking-cut text-ink;
   }
 
+  /*
+   * A machine string: a serial, a chain id, a label on a control. Mono, because the
+   * thing it names is machine-readable and should look it.
+   */
+  .serial {
+    @apply font-mono text-nano font-medium uppercase text-faint;
+    letter-spacing: 0.2em;
+  }
+
+  /*
+   * Display.
+   *
+   * A grotesque at 800 with the width axis pinned to 100 and the tracking pulled in
+   * hard. The old system ran a didone here and had to *open* the tracking to keep the
+   * hairlines from clogging; this one is the opposite instruction, and setting it on
+   * the class rather than at each call site is what keeps every headline on the site
+   * the same voice.
+   */
+  .display {
+    @apply font-display;
+    font-variation-settings: "wdth" 100;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+
+  .display-light {
+    @apply font-display;
+    font-variation-settings: "wdth" 100;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+
   /* ------------------------------------------------------------------ */
-  /* Paper surfaces                                                      */
+  /* Surfaces                                                            */
   /* ------------------------------------------------------------------ */
 
   .card {
-    @apply relative border border-line bg-paper;
+    @apply relative rounded-lg border border-line bg-paper;
   }
 
   .card-pad {
     @apply p-6 md:p-8;
   }
 
-  /* A raised object on paper: the hero card, a framed preview, a modal. */
+  /* A card inside a card steps down, so nesting reads as depth rather than repetition. */
+  .card .card {
+    @apply rounded-md;
+  }
+
+  /* A raised object: a modal, a framed preview, the one thing on the screen. */
   .float {
-    @apply relative border border-line bg-paper shadow-float;
+    @apply relative rounded-lg border border-line bg-paper shadow-float;
   }
 
-  /* ------------------------------------------------------------------ */
-  /* Dark data surfaces — the inversion that carries the brand           */
-  /* ------------------------------------------------------------------ */
-
+  /*
+   * A panel is a place, not a colour.
+   *
+   * It declares the night context (see @layer base), so everything inside it — fields,
+   * tables, buttons, figures — resolves to its dark counterpart with no second set of
+   * class names and no descendant overrides.
+   */
   .panel {
-    @apply relative border border-panel-line bg-panel text-panel-text shadow-panel;
+    @apply relative overflow-hidden rounded-xl border border-line bg-ground text-ink shadow-panel;
   }
 
-  /* Top edge catches the light, like a milled panel. */
+  /* Top edge catches the light, the way a lacquered surface does. */
   .panel::before {
     content: "";
     position: absolute;
     inset: 0 0 auto 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+    border-radius: inherit;
+    background: linear-gradient(90deg, transparent, rgb(233 224 255 / 0.18), transparent);
     pointer-events: none;
   }
 
   .panel-head {
-    @apply flex flex-wrap items-center justify-between gap-3 border-b border-panel-line px-5 py-4;
+    @apply flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4;
   }
 
   .panel-title {
-    @apply font-mono text-micro font-medium uppercase text-panel-faint;
+    @apply font-mono text-micro font-medium uppercase text-faint;
   }
 
-  /* Inside a panel every type role shifts to its dark counterpart. */
-  .panel .figure {
-    @apply text-panel-text;
-  }
-
-  .panel .eyebrow,
-  .panel .serial {
-    @apply text-panel-faint;
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* The framed data card — the second and last exception to square      */
-  /* corners. A dark surface is presented as an instrument's glass: set  */
-  /* back from the page edge, corners eased, lit from beneath by its own */
-  /* accent colour — a screen inset into the page rather than a section  */
-  /* that runs to the viewport edge. Reserved for full data surfaces     */
-  /* (the mechanism scene, the universe table); never a card, never the  */
-  /* certificate, which stays a document with a document's square cut.   */
-  /* ------------------------------------------------------------------ */
-
+  /*
+   * The instrument.
+   *
+   * A full data surface set back from the page and lit from beneath by its own accent —
+   * a screen inset into the garden rather than a section that runs to the edge.
+   * Reserved for the two places that earn it: the mechanism scene and the universe
+   * table.
+   */
   .panel-frame {
-    @apply relative overflow-hidden rounded-[28px] border border-line-strong bg-panel text-panel-text;
+    @apply relative overflow-hidden rounded-2xl border border-line bg-ground text-ink;
     box-shadow:
-      0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
-      0 44px 100px -36px rgba(10, 10, 10, 0.42),
-      0 0 160px -76px rgba(53, 194, 219, 0.5);
+      0 1px 0 0 rgb(233 224 255 / 0.08) inset,
+      0 44px 100px -36px rgb(10 5 16 / 0.55),
+      0 0 180px -70px rgb(var(--iris-500) / 0.65);
   }
 
   .panel-frame::before {
@@ -208,137 +445,24 @@
     position: absolute;
     inset: 0 0 auto 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.24), transparent);
+    background: linear-gradient(90deg, transparent, rgb(233 224 255 / 0.26), transparent);
     pointer-events: none;
   }
 
-  .panel-frame .figure {
-    @apply text-panel-text;
-  }
-
-  .panel-frame .eyebrow,
-  .panel-frame .serial {
-    @apply text-panel-faint;
-  }
-
   /* ------------------------------------------------------------------ */
-  /* The certificate                                                     */
-  /* ------------------------------------------------------------------ */
-
-  /*
-   * Display type. Bodoni is optically sized, so the weight has to come down as the
-   * size goes up or the hairlines clog; `opsz` is driven from the size itself.
-   */
-  .display {
-    @apply font-display;
-    font-variation-settings: "opsz" 96;
-    font-weight: 600;
-  }
-
-  .display-light {
-    @apply font-display;
-    font-variation-settings: "opsz" 96;
-    font-weight: 500;
-  }
-
-  /* The engraved double rule that frames every document of this kind. */
-  .rule-double {
-    border-top: 1px solid rgba(10, 10, 10, 0.55);
-    box-shadow: 0 3px 0 -2px rgba(10, 10, 10, 0.28);
-  }
-
-  .rule-double-b {
-    border-bottom: 1px solid rgba(10, 10, 10, 0.55);
-    box-shadow: 0 -3px 0 -2px rgba(10, 10, 10, 0.28);
-  }
-
-  /*
-   * A certificate. Brighter than the ground it sits on, framed by a hairline inside a
-   * hairline — the way an engraved border is actually printed — and lifted just enough
-   * that the paper reads as a separate sheet.
-   */
-  .certificate {
-    @apply relative bg-paper;
-    border: 1px solid rgba(10, 10, 10, 0.5);
-    box-shadow:
-      inset 0 0 0 1px #ffffff,
-      inset 0 0 0 2px rgba(10, 10, 10, 0.12),
-      0 1px 1px rgba(10, 10, 10, 0.03),
-      0 22px 48px -26px rgba(10, 10, 10, 0.26);
-  }
-
-  /* An inked stamp: cyan overprint, off-axis, sitting on top of the engraving. */
-  .stamp {
-    @apply inline-flex items-center gap-2 font-mono text-micro font-semibold uppercase;
-    /* Double-ruled like a real rubber stamp, and saturated enough to read as ink that
-       was pressed on rather than a chip that was placed. */
-    border: 1.5px solid #1899b1;
-    outline: 1px solid #1899b1;
-    outline-offset: 2.5px;
-    color: #0b6b7e;
-    background: rgba(53, 194, 219, 0.14);
-    padding: 8px 14px;
-    letter-spacing: 0.26em;
-    transform: rotate(-2.4deg);
-  }
-
-  /*
-   * Foil text: the base glyphs stay solid ink (readable, and the source for the drop
-   * shadow that gives them weight), while a duplicate — set via attr() so the DOM is
-   * not repeated — is clipped to the same glyphs and painted with a moving specular
-   * band. `mix-blend-mode: overlay` means the sweep lightens the ink rather than
-   * replacing it, which is what turns flat type into something that reads as foil
-   * stamped into the page instead of a gradient dropped on top of it.
-   */
-  .foil-text {
-    position: relative;
-    display: inline-block;
-  }
-
-  .foil-text::before {
-    content: attr(data-text);
-    position: absolute;
-    inset: 0;
-    background-image: linear-gradient(
-      115deg,
-      transparent 38%,
-      rgba(53, 194, 219, 0.95) 47%,
-      rgba(255, 255, 255, 0.98) 51%,
-      rgba(53, 194, 219, 0.95) 55%,
-      transparent 64%
-    );
-    background-size: 260% 100%;
-    background-position: 200% 0;
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    /* screen, not overlay: overlay's result is dominated by backdrop luminance, so it
-       barely touches near-black glyphs. screen adds light directly, which is what a
-       specular streak crossing dark ink is supposed to do. */
-    mix-blend-mode: screen;
-    animation: foil-sweep 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    animation-delay: 1.1s;
-    pointer-events: none;
-  }
-
-  /* A serial number. Certificates are numbered; so is every section of this site. */
-  .serial {
-    @apply font-mono text-nano font-medium uppercase text-faint;
-    letter-spacing: 0.32em;
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* Annotations — the one rounded shape in the system                   */
+  /* Annotations                                                         */
   /* ------------------------------------------------------------------ */
 
   .pill {
-    @apply inline-flex items-center gap-2 rounded-full border border-line bg-paper px-3 py-1.5
+    @apply inline-flex items-center gap-2 rounded-full border border-line bg-transparent px-3 py-1.5
            font-mono text-micro font-medium uppercase text-muted;
   }
 
   .pill-live {
-    @apply pill border-cyan-dark/35 text-cyan-deep;
-    background: rgba(53, 194, 219, 0.08);
+    @apply pill;
+    border-color: rgb(var(--accent) / 0.35);
+    color: rgb(var(--accent));
+    background: rgb(var(--accent) / 0.08);
   }
 
   .tag {
@@ -349,22 +473,28 @@
     @apply pill-live;
   }
 
-  .panel .pill {
-    @apply border-panel-line bg-transparent text-panel-muted;
-  }
-
-  .panel .pill-live {
-    @apply border-cyan/35 text-cyan;
+  /*
+   * The hanko.
+   *
+   * A vermilion seal, pressed once. The old system had a rubber stamp rotated off
+   * axis on every other surface; a seal means something precisely because it appears
+   * once on a document, so this one is used exactly once on the page.
+   */
+  .hanko {
+    @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-sm;
+    background: rgb(var(--vermilion));
+    color: rgb(255 255 255);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.25) inset, 0 6px 18px -10px rgb(var(--vermilion) / 0.9);
   }
 
   /* The status dot that says a number is moving. */
   .beacon {
-    @apply relative block h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-dark;
+    @apply relative block h-1.5 w-1.5 shrink-0 rounded-full;
+    background: rgb(var(--accent));
   }
 
-  .panel .beacon,
   .beacon-bright {
-    @apply bg-cyan;
+    background: rgb(var(--iris-300));
   }
 
   .beacon::after {
@@ -372,27 +502,34 @@
     position: absolute;
     inset: -3px;
     border-radius: 9999px;
-    border: 1px solid rgba(24, 153, 177, 0.55);
+    border: 1px solid rgb(var(--accent) / 0.55);
     animation: beacon 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-  }
-
-  .panel .beacon::after {
-    border-color: rgba(53, 194, 219, 0.55);
   }
 
   /* ------------------------------------------------------------------ */
   /* Buttons                                                             */
   /* ------------------------------------------------------------------ */
 
+  /*
+   * Every button is a pill. No exceptions, no variants, no "except this one" — the
+   * single shape that never changes is what stops a system from looking assembled out
+   * of parts. The fill still wipes up from the floor; nothing in this product snaps.
+   */
   .btn {
     @apply relative inline-flex select-none items-center justify-center gap-2.5 overflow-hidden
-           border px-6 py-3.5 font-mono text-micro font-medium uppercase
-           transition-[color,border-color,background-color,transform] duration-300 ease-osk
+           rounded-full border px-6 py-3 font-sans text-[13px] font-semibold
+           transition-[color,border-color,background-color,transform,box-shadow] duration-300 ease-osk
            disabled:pointer-events-none disabled:opacity-35;
+    letter-spacing: -0.006em;
+    /* Instrument Sans draws an unusually tight word space — about 0.16em, against the
+       0.25em a reader expects. At body sizes it passes; at a 12px button label
+       "Open the app" closes up into one word. Opened here rather than in the font
+       stack, because it is only a problem where the type is small and set in caps-ish
+       weight. */
+    word-spacing: 0.08em;
     isolation: isolate;
   }
 
-  /* The fill wipes up from the floor. Nothing in this product snaps. */
   .btn::before {
     content: "";
     position: absolute;
@@ -410,28 +547,35 @@
     transform: translateY(1px);
   }
 
+  /*
+   * The primary call to action is the reference's lavender pill: ink on a pale iris
+   * fill, which is 13.7:1 and reads as an object you may pick up rather than a
+   * warning you must obey.
+   */
   .btn-primary {
-    @apply btn border-ink bg-ink text-paper;
+    @apply btn border-transparent;
+    background: rgb(var(--iris-100));
+    color: rgb(22 14 34);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.55) inset, 0 10px 30px -18px rgb(var(--iris-500) / 0.8);
   }
 
   .btn-primary::before {
-    background: #1899b1;
-  }
-
-  .btn-primary:hover:not(:disabled) {
-    @apply border-cyan-dark;
+    background: rgb(var(--iris-200));
   }
 
   .btn-accent {
-    @apply btn border-cyan-dark bg-cyan text-ink;
+    @apply btn border-transparent;
+    background: rgb(var(--accent-fill));
+    color: rgb(var(--accent-ink));
   }
 
   .btn-accent::before {
-    background: #0a0a0a;
+    background: rgb(var(--iris-600));
   }
 
-  .btn-accent:hover:not(:disabled) {
-    @apply text-paper;
+  .night .btn-accent::before,
+  .panel .btn-accent::before {
+    background: rgb(var(--iris-300));
   }
 
   .btn-ghost {
@@ -439,11 +583,11 @@
   }
 
   .btn-ghost::before {
-    background: #0a0a0a;
+    background: rgb(var(--text) / 0.08);
   }
 
   .btn-ghost:hover:not(:disabled) {
-    @apply border-ink text-paper;
+    border-color: rgb(var(--accent) / 0.55);
   }
 
   .btn-quiet {
@@ -451,40 +595,19 @@
   }
 
   .btn-quiet::before {
-    background: rgba(10, 10, 10, 0.05);
+    background: rgb(var(--text) / 0.05);
   }
 
   .btn-quiet:hover:not(:disabled) {
     @apply border-line-strong text-ink;
   }
 
-  /* Buttons sitting on a dark panel invert. */
-  .panel .btn-ghost {
-    @apply border-panel-edge text-panel-text;
-  }
-
-  .panel .btn-ghost::before {
-    background: #f3f6f8;
-  }
-
-  .panel .btn-ghost:hover:not(:disabled) {
-    @apply border-panel-text text-panel;
-  }
-
-  .panel .btn-primary {
-    @apply border-cyan bg-cyan text-panel;
-  }
-
-  .panel .btn-primary::before {
-    background: #5fd9ee;
-  }
-
   .btn-sm {
-    @apply px-4 py-2.5 text-nano;
+    @apply px-4 py-2 text-[12px];
   }
 
   .btn-lg {
-    @apply px-8 py-4 text-label;
+    @apply px-7 py-3.5 text-[14px];
   }
 
   /* A link that draws its own underline on approach. */
@@ -515,17 +638,17 @@
   /* ------------------------------------------------------------------ */
 
   .field {
-    @apply w-full border border-line bg-paper px-4 py-3.5 font-mono text-ink outline-none
+    @apply w-full rounded-md border border-line bg-ground-2 px-4 py-3 font-mono text-ink outline-none
            transition-colors duration-200
-           placeholder:text-ghost focus:border-cyan-dark focus:ring-0;
+           placeholder:text-ghost focus:ring-0;
+  }
+
+  .field:focus {
+    border-color: rgb(var(--accent) / 0.7);
   }
 
   .field-lg {
     @apply field px-5 py-4 text-[22px] tracking-tighter;
-  }
-
-  .panel .field {
-    @apply border-panel-line bg-panel-2 text-panel-text placeholder:text-panel-faint focus:border-cyan/60;
   }
 
   /* ------------------------------------------------------------------ */
@@ -541,7 +664,7 @@
   }
 
   .data-table td {
-    @apply border-b border-line-soft px-4 py-4 align-middle;
+    @apply border-b border-line-soft px-4 py-4 align-middle text-[14px] text-ink;
   }
 
   .data-table tbody tr:last-child td {
@@ -549,44 +672,19 @@
   }
 
   .data-table tbody tr {
-    @apply transition-colors duration-200;
+    transition: background-color 0.2s ease;
   }
 
   .data-table tbody tr:hover {
-    background: #fafaf7;
+    background: rgb(var(--text) / 0.035);
   }
 
-  .panel-table {
-    @apply w-full border-collapse text-left;
-  }
-
-  .panel-table th {
-    @apply border-b border-panel-line px-4 py-3 font-mono text-micro font-medium uppercase text-panel-faint;
-  }
-
-  .panel-table td {
-    @apply border-b border-panel-line px-4 py-4 align-middle;
-  }
-
-  .panel-table tbody tr:last-child td {
-    @apply border-b-0;
-  }
-
-  .panel-table tbody tr {
-    @apply transition-colors duration-200;
-  }
-
-  .panel-table tbody tr:hover {
-    background: #101419;
-  }
-
-  /* A sortable header: the caret only appears on the active column. */
   .th-sort {
-    @apply cursor-pointer select-none transition-colors duration-200;
+    @apply inline-flex items-center gap-1.5 transition-colors duration-200;
   }
 
   .th-sort:hover {
-    @apply text-panel-text;
+    color: rgb(var(--accent));
   }
 
   /* ------------------------------------------------------------------ */
@@ -594,97 +692,66 @@
   /* ------------------------------------------------------------------ */
 
   .seg {
-    @apply inline-flex border border-line;
+    @apply inline-flex overflow-hidden rounded-full border border-line p-0.5;
   }
 
   .seg button {
-    @apply px-3 py-2 font-mono text-micro font-medium uppercase text-faint transition-colors duration-200;
-  }
-
-  .seg button + button {
-    @apply border-l border-line;
+    @apply rounded-full px-3.5 py-1.5 font-mono text-micro font-medium uppercase text-faint
+           transition-colors duration-200;
   }
 
   .seg button[aria-pressed="true"] {
-    @apply bg-ink text-paper;
+    background: rgb(var(--accent-fill));
+    color: rgb(var(--accent-ink));
   }
 
   .seg button:not([aria-pressed="true"]):hover {
     @apply text-ink;
   }
 
-  .seg-dark {
-    @apply inline-flex border border-panel-line;
-  }
-
-  .seg-dark button {
-    @apply px-3 py-2 font-mono text-micro font-medium uppercase text-panel-faint transition-colors duration-200;
-  }
-
-  .seg-dark button + button {
-    @apply border-l border-panel-line;
-  }
-
-  .seg-dark button[aria-pressed="true"] {
-    @apply bg-cyan text-panel;
-  }
-
-  .seg-dark button:not([aria-pressed="true"]):hover {
-    @apply text-panel-text;
-  }
-
   .ticker-cell {
-    @apply flex shrink-0 items-baseline gap-2.5 px-6 py-2.5;
+    @apply inline-flex shrink-0 items-center gap-2.5 px-5 py-2.5 font-mono text-micro uppercase;
   }
 
   /* ------------------------------------------------------------------ */
   /* Feedback                                                            */
   /* ------------------------------------------------------------------ */
 
-  .flash-light {
-    animation: pulse-cell 0.9s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
+  /* One flash for both surfaces: the accent it pulses is contextual now. */
+  .flash-light,
   .flash-dark {
-    animation: pulse-cell-dark 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: pulse-cell 0.9s ease-out;
   }
 
-  .skeleton {
-    background-color: #edeff1;
-    background-image: linear-gradient(90deg, #edeff1 20%, #f6f7f8 50%, #edeff1 80%);
-    background-size: 200% 100%;
-    animation: shimmer 1.8s linear infinite;
-  }
-
+  /* Never a spinner: the layout is held while the data settles. One rule for both
+     surfaces, because the tint it shimmers is drawn from the text colour. */
+  .skeleton,
   .skeleton-dark {
-    background-color: #101419;
-    background-image: linear-gradient(90deg, #101419 20%, #1a2027 50%, #101419 80%);
-    background-size: 200% 100%;
-    animation: shimmer 1.8s linear infinite;
+    @apply rounded-sm;
+    background: linear-gradient(
+      90deg,
+      rgb(var(--text) / 0.06) 25%,
+      rgb(var(--text) / 0.11) 37%,
+      rgb(var(--text) / 0.06) 63%
+    );
+    background-size: 400% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
   }
 
-  /* Cards that answer the cursor: a 2px lift and the edge darkens. */
   .lift {
-    @apply transition-[transform,border-color,box-shadow] duration-500 ease-osk;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s, box-shadow 0.4s;
   }
 
   .lift:hover {
     transform: translateY(-3px);
-    border-color: rgba(10, 10, 10, 0.24);
-    @apply shadow-lift;
+    border-color: rgb(var(--accent) / 0.4);
+    box-shadow: 0 18px 40px -28px rgb(var(--iris-500) / 0.6);
   }
 
   /* ------------------------------------------------------------------ */
-  /* Documentation prose                                                 */
+  /* Docs prose                                                          */
   /* ------------------------------------------------------------------ */
 
-  /*
-   * Reading type for the docs. A 62ch measure in the UI face; anything that is a
-   * number, an identifier or a unit drops to mono, the way it does everywhere else
-   * in the product. Lists are marked with a cyan square rather than a bullet so the
-   * one accent keeps meaning "this is a point on the ledger", and ordered lists
-   * count in zero-padded mono — the same serial numbering the sections carry.
-   */
   .docs-prose {
     @apply text-[15.5px] leading-[1.75] text-muted;
   }
@@ -702,16 +769,19 @@
   }
 
   .docs-prose em {
-    @apply font-editorial text-[1.06em] italic text-ink;
+    @apply font-serif italic;
   }
 
   .docs-prose a {
-    @apply text-ink underline decoration-line-strong underline-offset-[3px] transition-colors duration-200 hover:decoration-cyan-dark;
+    color: rgb(var(--accent));
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: rgb(var(--accent) / 0.35);
   }
 
   .docs-prose code,
   .docs-code {
-    @apply num border border-line bg-paper-2 px-1.5 py-0.5 text-[12.5px] text-ink;
+    @apply rounded-sm bg-ground-3 px-1.5 py-0.5 font-mono text-[13px] text-ink;
   }
 
   .docs-prose ul,
@@ -720,18 +790,18 @@
   }
 
   .docs-prose ul > li {
-    position: relative;
-    padding-left: 1.25rem;
+    @apply relative pl-6;
   }
 
   .docs-prose ul > li::before {
     content: "";
     position: absolute;
     left: 0;
-    top: 0.72em;
+    top: 11px;
     width: 5px;
     height: 5px;
-    background: #1899b1;
+    border-radius: 1px;
+    background: rgb(var(--accent));
   }
 
   .docs-prose ol {
@@ -739,19 +809,27 @@
   }
 
   .docs-prose ol > li {
-    position: relative;
-    padding-left: 2.25rem;
+    @apply relative pl-9;
     counter-increment: docs;
   }
 
   .docs-prose ol > li::before {
     content: counter(docs, decimal-leading-zero);
-    @apply num absolute left-0 top-[0.3em] text-[11px] font-medium text-cyan-deep;
+    position: absolute;
+    left: 0;
+    top: 2px;
+    @apply font-mono text-[12px] font-medium;
+    color: rgb(var(--accent));
   }
 
-  /* The sidebar table of contents. Rows are hairlines apart; the live row is ink. */
+  /*
+   * A contents row is a number and a title, and it has been rendering as "1What Osinko
+   * is" — the number carried a width but the row was `block`, so the two spans butted
+   * together with nothing to separate them. A flex row with a real gap fixes it once
+   * for every entry, including the indented ones.
+   */
   .docs-toc a {
-    @apply flex items-baseline gap-3 py-1.5 text-[13px] text-faint transition-colors duration-300 hover:text-ink;
+    @apply flex items-baseline gap-2.5 rounded-sm py-1.5 pl-4 pr-2 text-[13px] leading-snug text-faint transition-colors duration-200 hover:text-ink;
   }
 
   .docs-toc a[aria-current="true"] {
@@ -759,27 +837,28 @@
   }
 
   .docs-toc a[aria-current="true"] .num {
-    @apply text-cyan-deep;
+    color: rgb(var(--accent));
   }
 }
 
 @layer utilities {
-  /* Keyframes live here, not in tailwind.config: custom classes reference them
-     directly, and Tailwind only emits config keyframes for its own animate-*
-     utilities. Missing keyframes once left every chart fill at opacity 0. */
+  /* ------------------------------------------------------------------ */
+  /* Keyframes                                                           */
+  /*                                                                     */
+  /* They live here rather than in the Tailwind config because the custom */
+  /* classes below reference them by name, and Tailwind only emits config */
+  /* keyframes that some `animate-*` utility actually used. Missing       */
+  /* keyframes once left every chart fill at opacity 0.                   */
+  /* ------------------------------------------------------------------ */
+
   @keyframes rise {
     from { opacity: 0; transform: translateY(14px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes pulse-cell {
-    0% { background-color: rgba(53, 194, 219, 0.30); }
-    100% { background-color: transparent; }
-  }
-
-  @keyframes pulse-cell-dark {
-    0% { background-color: rgba(53, 194, 219, 0.26); }
-    100% { background-color: transparent; }
+    from { background-color: rgb(var(--iris-400) / 0.28); }
+    to { background-color: transparent; }
   }
 
   @keyframes shimmer {
@@ -799,30 +878,13 @@
 
   @keyframes beacon {
     0% { transform: scale(0.7); opacity: 0.9; }
-    70%, 100% { transform: scale(2.6); opacity: 0; }
+    70% { transform: scale(2.6); opacity: 0; }
+    100% { transform: scale(2.6); opacity: 0; }
   }
 
   @keyframes marquee {
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
-  }
-
-  @keyframes rosette-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  @keyframes stamp-in {
-    from { opacity: 0; transform: rotate(6deg) scale(1.5); }
-    60% { opacity: 1; }
-    to { opacity: 1; transform: rotate(-1.6deg) scale(1); }
-  }
-
-  /* The foil sweep: a specular band of light crossing the engraved quantity, the way
-     a hologram strip on a real certificate catches the light as you tilt it. */
-  @keyframes foil-sweep {
-    0%, 15% { background-position: 200% 0; }
-    65%, 100% { background-position: -120% 0; }
   }
 
   @keyframes drift {
@@ -834,97 +896,240 @@
     to { stroke-dashoffset: -1000; }
   }
 
+  /* The bloom behind the coin breathes. One cycle is six seconds, which is slow
+     enough that you notice it only after you have stopped looking for it. */
+  @keyframes breathe {
+    0%, 100% { opacity: 0.86; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.035); }
+  }
+
+  /* A koi swims by stepping a three-frame sprite. No JS, no rAF. */
+  @keyframes koi-swim {
+    to { transform: translateX(-100%); }
+  }
+
+  /* And crosses a panel on a long loop, entering and leaving off both edges. */
+  @keyframes koi-cross {
+    from { left: -12%; }
+    to { left: 108%; }
+  }
+
+  /* A lantern is a flame, and a flame is never quite steady. Two frames, uneven. */
+  @keyframes flicker {
+    0%, 44% { opacity: 1; }
+    45%, 58% { opacity: 0.62; }
+    59%, 100% { opacity: 1; }
+  }
+
+  /* Petals settle. Used only for the one-shot entrance of static garden art. */
+  @keyframes settle {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
   /* ------------------------------------------------------------------ */
   /* Atmosphere                                                          */
   /* ------------------------------------------------------------------ */
 
-  /* Paper grain. Barely there, and the reason the white reads as stock rather
-     than as #FFF. Multiply keeps it from lifting the whites. */
+  /*
+   * Grain.
+   *
+   * Load bearing, not decoration. The hero runs a seven-stop violet ramp across most
+   * of a viewport, and eight-bit sRGB cannot render that without visible banding on an
+   * OLED phone. This noise is the dither that hides it, which is why it sits at 3.5%
+   * rather than the 2% a texture would want.
+   */
+  .grain {
+    position: relative;
+  }
+
   .grain::after {
     content: "";
     position: fixed;
     inset: -50%;
-    z-index: 1;
     pointer-events: none;
-    opacity: 0.02;
-    mix-blend-mode: multiply;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+    z-index: 1;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  /* Engineering paper, barely there. Anchors the eye to a grid it never sees. */
-  .grid-bg {
-    background-image:
-      linear-gradient(rgba(10, 10, 10, 0.035) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(10, 10, 10, 0.035) 1px, transparent 1px);
-    background-size: 64px 64px;
+  /* The same dither, clipped to its own box — a `fixed` child is not reliably clipped
+     by an `overflow: hidden` ancestor, and the hero frame has to clip it. */
+  .grain-local::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  .grid-bg-dark {
+  /* Raked sand as a ground, on the same cell pitch as every sprite. */
+  .sand-bg {
     background-image:
-      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-    background-size: 64px 64px;
+      repeating-linear-gradient(90deg, var(--pk-sand-line) 0 1px, transparent 1px calc(var(--cell) * 4)),
+      repeating-linear-gradient(0deg, var(--pk-sand-line) 0 1px, transparent 1px calc(var(--cell) * 4));
+    opacity: 0.5;
   }
 
   .grid-fade {
-    mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 25%, transparent 78%);
+    -webkit-mask-image: radial-gradient(ellipse 78% 62% at 50% 40%, #000 40%, transparent 100%);
+    mask-image: radial-gradient(ellipse 78% 62% at 50% 40%, #000 40%, transparent 100%);
   }
 
-  .glow-cyan {
-    background: radial-gradient(closest-side, rgba(53, 194, 219, 0.28), transparent 78%);
+  .glow-iris {
+    background: radial-gradient(closest-side, rgb(var(--iris-500) / 0.3), transparent 78%);
   }
 
-  /* Big type filled with a vertical gradient. Used once per page, at most. */
+  /* A grotesque has enough weight to carry a gradient without greying out, which the
+     didone this replaced did not. */
   .text-lit {
-    /* Solid ink. A gradient across a didone's hairlines turns them to mush, so the
-       display face is never filled with anything but one colour. */
-    color: #0a0a0a;
-  }
-
-  .text-lit-dark {
-    background: linear-gradient(178deg, #ffffff 12%, #b9c4cc 58%, #6c757d 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: rgb(var(--text));
   }
 
   .text-cut {
-    background: linear-gradient(180deg, rgba(10, 10, 10, 0.07), rgba(10, 10, 10, 0.015));
+    background: linear-gradient(180deg, rgb(var(--text) / 0.1) 0%, rgb(var(--text) / 0.02) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
   .text-cut-dark {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.015));
+    background: linear-gradient(180deg, rgb(var(--night-4)) 0%, rgb(var(--night-2)) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
   /* ------------------------------------------------------------------ */
+  /* The hero frame and its sky                                          */
+  /* ------------------------------------------------------------------ */
+
+  /*
+   * A 1px gradient stroke on a rounded rectangle.
+   *
+   * `border-image` silently ignores `border-radius`, and the fill behind this cannot
+   * be opaque because a gradient sits under it, so the only technique left is two
+   * masks composited to leave the padding ring: a real hairline, correctly rounded,
+   * over anything.
+   */
+  .frame-gradient {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      142deg,
+      rgb(var(--blossom-300)) 0%,
+      rgb(var(--blossom-500)) 22%,
+      rgb(var(--iris-500)) 58%,
+      rgb(var(--iris-700)) 100%
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Dawn at the top, midnight at the bottom, and the whole product's argument in
+     between: one day in a garden. */
+  .hero-sky {
+    /* The dawn holds nearly halfway down on purpose: the claim has to be read on
+       near-white, and the violet only arrives with the object it lights. */
+    background-image: linear-gradient(
+      180deg,
+      #fbfaff 0%,
+      #f6f2fd 20%,
+      #ece2fa 38%,
+      #d3bcf5 50%,
+      #9c62e9 62%,
+      #4e1f9b 78%,
+      #1a0c2e 92%,
+      #0a0510 100%
+    );
+  }
+
+  .hero-bloom {
+    background-image: radial-gradient(
+      56% 40% at 50% 64%,
+      rgb(154 110 250 / 0.85) 0%,
+      rgb(123 47 247 / 0.42) 40%,
+      rgb(123 47 247 / 0) 74%
+    );
+  }
+
+  .hero-dawn {
+    background-image: radial-gradient(
+      52% 46% at 3% -10%,
+      rgb(255 255 255 / 1) 0%,
+      rgb(255 255 255 / 0.6) 30%,
+      transparent 66%
+    );
+  }
+
+  /*
+   * The floor. Sits above the bloom rather than in the sky gradient, because the bloom
+   * is what was lifting the bottom of the frame off black — and the name has to be
+   * legible-but-barely, which only works over something close to unlit.
+   */
+  .hero-floor {
+    background-image: linear-gradient(180deg, transparent 48%, rgb(10 5 16 / 0.5) 72%, rgb(10 5 16 / 0.93) 90%, rgb(10 5 16 / 0.99) 100%);
+  }
+
+  /* Petals only fall where there is sky dark enough to see them against. */
+  .petal-mask {
+    -webkit-mask-image: linear-gradient(180deg, transparent 22%, #000 46%, #000 88%, transparent 100%);
+    mask-image: linear-gradient(180deg, transparent 22%, #000 46%, #000 88%, transparent 100%);
+  }
+
+  /*
+   * Dusk. The closing section makes the hero's descent a second time — paper, then
+   * violet, then night — and hands off to a footer that is already dark, so the page
+   * ends where the garden does rather than snapping back to daylight at the seam.
+   */
+  .dusk-sky {
+    background-image: linear-gradient(
+      180deg,
+      #f6f4fb 0%,
+      #d8c2f7 8%,
+      #9b5ee9 20%,
+      #4a1a8f 38%,
+      #1e0e33 66%,
+      #0a0510 100%
+    );
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Pixels                                                              */
+  /* ------------------------------------------------------------------ */
+
+  /* Whole cells only. Anything wearing this must never be scaled fractionally, and
+     must never be blurred — a blurred sprite is just a bad photograph. */
+  .pixel {
+    shape-rendering: crispEdges;
+    image-rendering: pixelated;
+  }
+
+  /* ------------------------------------------------------------------ */
   /* Interaction                                                         */
   /* ------------------------------------------------------------------ */
 
-  /* A cold light that follows the cursor across a surface. The element sets
-     --px/--py from JS; the light is a pseudo element so it never repaints text. */
   .spotlight {
     position: relative;
-    isolation: isolate;
   }
 
   .spotlight::after {
     content: "";
     position: absolute;
     inset: 0;
-    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
     opacity: 0;
-    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    background: radial-gradient(
-      420px circle at var(--px, 50%) var(--py, 50%),
-      rgba(53, 194, 219, 0.1),
-      transparent 70%
-    );
+    transition: opacity 0.4s ease;
+    background: radial-gradient(420px circle at var(--px, 50%) var(--py, 50%), rgb(var(--iris-500) / 0.12), transparent 70%);
   }
 
   .spotlight:hover::after {
@@ -933,31 +1138,29 @@
 
   .panel.spotlight::after,
   .panel-frame.spotlight::after {
-    background: radial-gradient(
-      420px circle at var(--px, 50%) var(--py, 50%),
-      rgba(53, 194, 219, 0.14),
-      transparent 70%
-    );
+    background: radial-gradient(420px circle at var(--px, 50%) var(--py, 50%), rgb(var(--iris-400) / 0.16), transparent 70%);
   }
 
-  /* A button that leans toward the cursor. Translation only — never a scale. */
   .magnetic {
     transform: translate3d(var(--mx, 0), var(--my, 0), 0);
-    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  /* The hero object, tilted in the pointer's direction. */
-  .tilt {
-    transform: perspective(1400px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-    transform-style: preserve-3d;
     transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+  .tilt {
+    transform: perspective(1400px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* A translate, never a rotate. A photographed hand tipping in 3D reads as a sticker. */
+  .parallax {
+    transform: translate3d(var(--ax, 0), var(--ay, 0), 0);
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
   /* ------------------------------------------------------------------ */
-  /* Motion primitives                                                   */
+  /* Motion                                                              */
   /* ------------------------------------------------------------------ */
 
-  /* A line of type wiped up behind its own mask. The luxury reveal. */
   .mask-line {
     display: block;
     overflow: hidden;
@@ -977,7 +1180,6 @@
   .mask-line:nth-child(3) > * { transition-delay: calc(var(--beat) * 2.4); }
   .mask-line:nth-child(4) > * { transition-delay: calc(var(--beat) * 3.6); }
 
-  /* Everything else fades up from below when it enters the frame. */
   .reveal {
     opacity: 0;
     transform: translateY(22px);
@@ -997,7 +1199,6 @@
   .in-view .reveal-5 { transition-delay: calc(var(--beat) * 5); }
   .in-view .reveal-6 { transition-delay: calc(var(--beat) * 6); }
 
-  /* A hairline that draws itself across the section. */
   .rule-draw {
     transform: scaleX(0);
     transform-origin: left;
@@ -1024,13 +1225,12 @@
     animation: drift 9s ease-in-out infinite;
   }
 
-  /* The stamp lands: it arrives rotated and oversized, then sets. */
-  .in-view .stamp-in {
-    animation: stamp-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+  .breathe {
+    animation: breathe 6s ease-in-out infinite;
   }
 
-  .stamp-in {
-    opacity: 0;
+  .flicker {
+    animation: flicker 3.2s steps(1, end) infinite;
   }
 
   .marquee {
@@ -1059,16 +1259,15 @@
 
   .dark-scroll {
     scrollbar-width: thin;
-    scrollbar-color: #2a3138 #0a0c0f;
   }
 
   .dark-scroll::-webkit-scrollbar-track {
-    background: #0a0c0f;
+    background: rgb(var(--ground));
   }
 
   .dark-scroll::-webkit-scrollbar-thumb {
-    background: #2a3138;
-    border: 3px solid #0a0c0f;
+    background: rgb(var(--ground-4));
+    border: 3px solid rgb(var(--ground));
   }
 
   .no-scrollbar::-webkit-scrollbar {
@@ -1080,58 +1279,68 @@
     scrollbar-width: none;
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Reduced motion.                                                     */
+  /*                                                                     */
+  /* Exhaustive, and it has to stay that way: every animation added to    */
+  /* this file joins this list, or it is a bug for somebody. Note that    */
+  /* the canvas petal field and the pinned scroll scene need JS-side      */
+  /* guards too — `animation: none` does not stop a rAF loop.             */
+  /* ------------------------------------------------------------------ */
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
     }
 
-    .marquee,
-    [style*="rosette-spin"],
-    .stamp-in,
-    .foil-text::before,
-    .rise-group > *,
-    .draw-line,
-    .chart-fill,
-    .flow-line,
-    .drift,
+    .beacon::after,
     .skeleton,
     .skeleton-dark,
+    .marquee,
+    .drift,
+    .breathe,
+    .flicker,
+    .flow-line,
+    .rise-group > *,
+    [style*="koi-cross"],
     .flash-light,
     .flash-dark,
-    .beacon::after {
+    [class*="koi-swim"] {
       animation: none !important;
     }
 
     .draw-line {
       stroke-dashoffset: 0;
+      animation: none !important;
     }
 
     .chart-fill {
       opacity: 1;
+      animation: none !important;
     }
 
     .mask-line > *,
     .reveal,
-    .rule-draw {
+    .in-view .reveal,
+    .rule-draw,
+    .in-view .rule-draw {
       transition: none !important;
       transform: none !important;
       opacity: 1 !important;
     }
 
     .magnetic,
-    .tilt {
+    .tilt,
+    .parallax {
       transform: none !important;
       transition: none !important;
     }
 
     .btn::before {
-      transition: none;
+      transition: none !important;
     }
 
-    .lift,
     .lift:hover {
-      transform: none;
-      transition: none;
+      transform: none !important;
     }
   }
 }

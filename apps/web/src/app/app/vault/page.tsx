@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Steps } from "@/components/app/Steps";
 import { AnimatedNumber, fmt } from "@/components/live";
 import { AreaChart, Meter } from "@/components/charts";
 import { useDataActions, useVaultView, useWalletView } from "@/lib/data/provider";
@@ -38,52 +39,52 @@ function HeroStats() {
   const { vault } = useVaultView();
 
   return (
-    <section className="panel" aria-label="Vault statistics">
-      <div className="grid grid-cols-2 gap-px bg-panel-line lg:grid-cols-4">
-        <div className="bg-panel p-6">
+    <section className="panel" aria-label="Vault statistics" data-shot="vault">
+      <div className="grid grid-cols-2 gap-px bg-line lg:grid-cols-4">
+        <div className="bg-ground p-6">
           <div className="panel-title">In the pool</div>
-          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-panel-text">
+          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-ink">
             <AnimatedNumber value={vault.tvlUsd} decimals={0} prefix="$" flash="dark" />
           </div>
-          <div className="mt-1 text-[12px] text-panel-muted">USDG put in by lenders</div>
+          <div className="mt-1 text-[12px] text-muted">USDG put in by lenders</div>
         </div>
-        <div className="bg-panel p-6">
+        <div className="bg-ground p-6">
           <div className="panel-title">Yearly return</div>
-          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-cyan">
+          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-accent">
             <AnimatedNumber value={vault.apyPct} decimals={2} suffix="%" flash="dark" />
           </div>
-          <div className="mt-1 text-[12px] text-panel-muted">From the 1% fee and loan interest</div>
+          <div className="mt-1 text-[12px] text-muted">From the 1% fee and loan interest</div>
         </div>
-        <div className="bg-panel p-6">
+        <div className="bg-ground p-6">
           <div className="panel-title">Lent out</div>
-          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-panel-text">
+          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-ink">
             <AnimatedNumber value={vault.utilizationPct} decimals={1} suffix="%" flash="dark" />
           </div>
           <div className="mt-3">
             <Meter pct={vault.utilizationPct} capPct={vault.capPct} />
           </div>
-          <div className="mt-1.5 flex justify-between text-micro font-bold uppercase text-panel-faint">
+          <div className="mt-1.5 flex justify-between text-micro font-bold uppercase text-faint">
             <span>Of the pool</span>
             <span>Limit {vault.capPct.toFixed(0)}%</span>
           </div>
         </div>
-        <div className="bg-panel p-6">
+        <div className="bg-ground p-6">
           <div className="panel-title">Paid out early</div>
-          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-panel-text">
+          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-ink">
             <AnimatedNumber value={vault.advancesOutstandingUsd} decimals={0} prefix="$" flash="dark" />
           </div>
-          <div className="mt-1 text-[12px] text-panel-muted">Companies pay this back on their pay dates</div>
+          <div className="mt-1 text-[12px] text-muted">Companies pay this back on their pay dates</div>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-px border-t border-panel-line bg-panel-line">
+      <div className="grid grid-cols-3 gap-px border-t border-line bg-line">
         {[
           { label: "Cash available now", value: `$${fmt(vault.freeLiquidityUsd, 0)}` },
           { label: "Fees earned so far", value: `$${fmt(vault.feesEarnedUsd, 0)}` },
           { label: "Value of one pool share", value: fmt(vault.sharePrice, 4) },
         ].map((s) => (
-          <div key={s.label} className="bg-panel px-6 py-4">
+          <div key={s.label} className="bg-ground px-6 py-4">
             <div className="panel-title">{s.label}</div>
-            <div className="num mt-1.5 text-[17px] font-medium text-panel-text">{s.value}</div>
+            <div className="num mt-1.5 text-[17px] font-medium text-ink">{s.value}</div>
           </div>
         ))}
       </div>
@@ -97,7 +98,7 @@ function YieldChart() {
     <section className="panel lg:col-span-2" aria-label="Yield history">
       <div className="panel-head">
         <span className="panel-title">Yearly return · last 90 days</span>
-        <span className="num text-micro font-bold uppercase text-cyan">{vault.apyPct.toFixed(2)}% now</span>
+        <span className="num text-micro font-bold uppercase text-accent">{vault.apyPct.toFixed(2)}% now</span>
       </div>
       <div className="p-5">
         <AreaChart
@@ -141,7 +142,7 @@ function LpPanel() {
             aria-selected={tab === t}
             onClick={() => setTab(t)}
             className={`border-b px-4 py-3 text-micro font-bold uppercase transition-colors ${
-              tab === t ? "border-cyan text-cyan" : "border-panel-line text-panel-muted hover:text-panel-text"
+              tab === t ? "border-accent text-accent" : "border-line text-muted hover:text-ink"
             }`}
           >
             {t}
@@ -150,13 +151,13 @@ function LpPanel() {
       </div>
 
       <div className="space-y-4 p-5">
-        <div className="flex items-baseline justify-between text-micro font-bold uppercase text-panel-muted">
+        <div className="flex items-baseline justify-between text-micro font-bold uppercase text-muted">
           <span>{tab === "deposit" ? "USDG in your wallet" : "You can take out"}</span>
           <span className="num">${fmt(max)}</span>
         </div>
         <div className="flex gap-2">
           <input
-            className="num w-full border border-panel-line bg-panel-2 px-4 py-3 text-[16px] text-panel-text outline-none placeholder:text-panel-faint focus:border-cyan"
+            className="field text-[16px]"
             inputMode="decimal"
             placeholder="0.00"
             aria-label={`USDG to ${tab}`}
@@ -165,7 +166,7 @@ function LpPanel() {
           />
           <button
             type="button"
-            className="border border-panel-line px-3 text-micro font-bold uppercase text-panel-muted hover:text-panel-text"
+            className="border border-line px-3 text-micro font-bold uppercase text-muted hover:text-ink"
             onClick={() => setAmount(max > 0 ? max.toFixed(2) : "")}
           >
             Max
@@ -173,24 +174,24 @@ function LpPanel() {
         </div>
 
         <dl className="text-[13px]">
-          <div className="flex justify-between border-b border-panel-line py-2">
-            <dt className="text-panel-muted">{tab === "deposit" ? "Pool shares you get" : "Pool shares you give back"}</dt>
-            <dd className="num text-panel-text">{fmt(shares, 4)}</dd>
+          <div className="flex justify-between border-b border-line py-2">
+            <dt className="text-muted">{tab === "deposit" ? "Pool shares you get" : "Pool shares you give back"}</dt>
+            <dd className="num text-ink">{fmt(shares, 4)}</dd>
           </div>
-          <div className="flex justify-between border-b border-panel-line py-2">
-            <dt className="text-panel-muted">Your money in the pool</dt>
-            <dd className="num text-panel-text">${fmt(vault.yourAssetsUsd)}</dd>
+          <div className="flex justify-between border-b border-line py-2">
+            <dt className="text-muted">Your money in the pool</dt>
+            <dd className="num text-ink">${fmt(vault.yourAssetsUsd)}</dd>
           </div>
           <div className="flex justify-between py-2">
-            <dt className="text-panel-muted">Your pool shares</dt>
-            <dd className="num text-panel-text">{fmt(vault.yourShares, 4)}</dd>
+            <dt className="text-muted">Your pool shares</dt>
+            <dd className="num text-ink">{fmt(vault.yourShares, 4)}</dd>
           </div>
         </dl>
 
         <button type="button" className="btn-accent w-full" disabled={!valid || actions.busy} onClick={() => void submit()}>
           {tab === "deposit" ? "Put USDG in" : "Take USDG out"}
         </button>
-        <p className="text-[12px] leading-snug text-panel-faint">
+        <p className="text-[12px] leading-snug text-faint">
           Cash that is out paying a dividend early is locked until the company pays it back. Everything else you can take out whenever you like.
         </p>
       </div>
@@ -199,35 +200,24 @@ function LpPanel() {
 }
 
 function HowItEarns() {
-  const rows = [
-    {
-      n: "01",
-      h: "It pays what a company already owes",
-      p: "Once a dividend is announced, the company owes a known amount on a known date. The pool pays the holder today and collects from the company on that date.",
-    },
-    {
-      n: "02",
-      h: "Lenders earn 1% each time",
-      p: "The fee is taken the moment the pool pays someone early. It goes straight to the people who put cash in the pool, so their share of the pool is worth more right away.",
-    },
-    {
-      n: "03",
-      h: "Two limits keep it safe",
-      p: "The pool never lends out more than 80% of what it holds. And it always keeps enough cash on hand to pay everyone it has promised to pay. Boring on purpose.",
-    },
-  ];
   return (
-    <section aria-label="How the pool earns">
-      <div className="eyebrow text-cyan">How the pool earns</div>
-      <div className="mt-4">
-        {rows.map((r) => (
-          <div key={r.n} className="hairline-t grid gap-2 py-5 md:grid-cols-12 md:gap-6">
-            <div className="num text-micro font-bold text-cyan md:col-span-1">{r.n}</div>
-            <h3 className="text-[17px] font-extrabold tracking-tight md:col-span-4">{r.h}</h3>
-            <p className="text-[14px] leading-relaxed text-panel-muted md:col-span-7">{r.p}</p>
-          </div>
-        ))}
-      </div>
-    </section>
+    <Steps
+      label="How the pool earns"
+      title="How the pool earns"
+      steps={[
+        {
+          h: "It pays what a company already owes",
+          p: "Once a dividend is announced, the company owes a known amount on a known date. The pool pays the holder today and collects from the company on that date.",
+        },
+        {
+          h: "Lenders earn 1% each time",
+          p: "The fee is taken the moment the pool pays someone early. It goes straight to the people who put cash in the pool, so their share of the pool is worth more right away.",
+        },
+        {
+          h: "Two limits keep it safe",
+          p: "The pool never lends out more than 80% of what it holds. And it always keeps enough cash on hand to pay everyone it has promised to pay. Boring on purpose.",
+        },
+      ]}
+    />
   );
 }

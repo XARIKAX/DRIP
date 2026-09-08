@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Reveal, usePointerGlow } from "@/components/motion";
 import { Folio } from "@/components/site/Folio";
+import { Koi } from "@/components/pixel/Scenery";
 import { TokenMark } from "@/components/TokenMark";
 import { fmt, shortDate } from "@/components/live";
 import { useTokensView } from "@/lib/data/provider";
@@ -28,7 +29,7 @@ const FILTERS: { key: Filter; label: string }[] = [
 ];
 
 /**
- * The universe.
+ * The universe — the pond.
  *
  * The one place on the page where density is the point. A landing page that only ever
  * shows three round-numbered stats is hiding the fact that it has no data; a table of
@@ -92,9 +93,23 @@ export function Universe() {
           </p>
         </div>
 
-        <div ref={glow} className="reveal reveal-2 panel-frame spotlight mt-14">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-panel-line px-5 py-4">
-            <div className="seg-dark">
+        <div ref={glow} data-shot="universe" className="reveal reveal-2 panel-frame spotlight mt-14 [--cell:2px]">
+          {/* One koi crosses the header on a long loop. The pond has something living
+              in it, and it costs a single CSS keyframe on a three-frame sprite. */}
+          <div
+            className="pointer-events-none absolute inset-x-0 top-2 h-6 overflow-hidden opacity-40"
+            aria-hidden
+          >
+            <span
+              className="absolute"
+              style={{ animation: "koi-cross 26s linear infinite" }}
+            >
+              <Koi facing="right" cell="calc(var(--cell) * 1.2)" />
+            </span>
+          </div>
+
+          <div className="relative flex flex-wrap items-center justify-between gap-4 border-b border-line px-5 py-4">
+            <div className="seg">
               {FILTERS.map((f) => (
                 <button
                   key={f.key}
@@ -106,14 +121,14 @@ export function Universe() {
                 </button>
               ))}
             </div>
-            <span className="flex items-center gap-2 font-mono text-nano uppercase text-cyan">
+            <span className="flex items-center gap-2 font-mono text-nano uppercase text-accent">
               <span className="beacon" aria-hidden />
               {paying} paying right now
             </span>
           </div>
 
           <div className="overflow-x-auto dark-scroll">
-            <table className="panel-table min-w-[760px] text-[13px]">
+            <table className="data-table min-w-[760px] text-[13px]">
               <thead>
                 <tr>
                   {COLUMNS.map((c) => {
@@ -129,12 +144,12 @@ export function Universe() {
                           onClick={() => toggle(c.key)}
                           className={`th-sort inline-flex items-center gap-1.5 uppercase ${
                             c.align === "right" ? "flex-row-reverse" : ""
-                          } ${on ? "text-panel-text" : ""}`}
+                          } ${on ? "text-ink" : ""}`}
                         >
                           {c.label}
                           <span
                             className={`transition-opacity duration-200 ${
-                              on ? "text-cyan opacity-100" : "opacity-0"
+                              on ? "text-accent opacity-100" : "opacity-0"
                             }`}
                             aria-hidden
                           >
@@ -154,31 +169,31 @@ export function Universe() {
                       <div className="flex items-center gap-3">
                         <TokenMark symbol={t.symbol} size={26} />
                         <div className="min-w-0">
-                          <div className="font-bold tracking-tight text-panel-text">{t.symbol}</div>
-                          <div className="truncate font-mono text-nano uppercase text-panel-faint">
+                          <div className="font-bold tracking-tight text-ink">{t.symbol}</div>
+                          <div className="truncate font-mono text-nano uppercase text-faint">
                             {t.name}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="num text-right text-panel-text">${fmt(t.priceUsd)}</td>
-                    <td className="num text-right text-panel-muted">
+                    <td className="num text-right text-ink">${fmt(t.priceUsd)}</td>
+                    <td className="num text-right text-muted">
                       {t.perShare > 0 ? `$${fmt(t.perShare)}` : "—"}
                     </td>
-                    <td className="num text-right text-cyan">
+                    <td className="num text-right text-accent">
                       {t.yieldPct ? `${fmt(t.yieldPct, 2)}%` : "—"}
                     </td>
-                    <td className="num text-right text-panel-muted">
+                    <td className="num text-right text-muted">
                       {t.nextExDate ? shortDate(t.nextExDate) : "—"}
                     </td>
                     <td className="text-right">
                       <span
                         className={`font-mono text-nano uppercase ${
                           t.payingNow
-                            ? "text-cyan"
+                            ? "text-accent"
                             : t.perShare > 0
-                              ? "text-panel-muted"
-                              : "text-panel-faint"
+                              ? "text-muted"
+                              : "text-faint"
                         }`}
                       >
                         {t.payingNow ? "Paying now" : t.perShare > 0 ? "Announced" : "No dividend"}
@@ -188,7 +203,7 @@ export function Universe() {
                 ))}
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-panel-faint">
+                    <td colSpan={6} className="py-12 text-center text-faint">
                       Nothing matches that filter.
                     </td>
                   </tr>
@@ -215,7 +230,7 @@ export function Universe() {
             },
           ].map((r) => (
             <div key={r.rule} className="bg-paper p-6">
-              <div className="font-mono text-nano uppercase text-cyan-deep">{r.rule}</div>
+              <div className="font-mono text-nano uppercase text-accent">{r.rule}</div>
               <p className="mt-3 text-[13px] leading-relaxed text-muted">{r.body}</p>
             </div>
           ))}

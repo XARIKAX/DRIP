@@ -12,7 +12,7 @@ type View = "table" | "month";
 
 /**
  * The screenshotable asset. A table where one column is the product: the days you
- * get paid early, in cyan. Filters, a month grid, and a set-a-rule shortcut on hover.
+ * get paid early, in the accent. Filters, a month grid, and a set-a-rule shortcut on hover.
  */
 export default function CalendarPage() {
   const { rows } = useCalendarRows();
@@ -59,22 +59,22 @@ export default function CalendarPage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-3 gap-px border border-panel-line bg-panel-2">
+      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-line bg-line">
         {[
           { label: "Dividends coming up", value: String(filtered.length) },
           { label: "Added up, per share", value: `$${fmt(totalPerShare)}` },
           { label: "Days early, on average", value: String(avgEarly), accent: true },
         ].map((s) => (
           <div key={s.label} className="bg-paper p-5">
-            <div className="eyebrow text-panel-muted">{s.label}</div>
-            <div className={`num mt-2 text-3xl font-semibold tracking-tighter ${s.accent ? "text-cyan" : ""}`}>
+            <div className="eyebrow text-muted">{s.label}</div>
+            <div className={`num mt-2 text-3xl font-semibold tracking-tighter ${s.accent ? "text-accent" : ""}`}>
               {s.value}
             </div>
           </div>
         ))}
       </div>
 
-      <section className="space-y-5" aria-label="Declared dividends">
+      <section className="space-y-5" aria-label="Declared dividends" data-shot="calendar">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2" role="group" aria-label="Filter">
             {FILTERS.map((f) => (
@@ -83,25 +83,25 @@ export default function CalendarPage() {
                 type="button"
                 aria-pressed={filter === f.key}
                 onClick={() => setFilter(f.key)}
-                className={`border px-3 py-1.5 text-micro font-bold uppercase transition-colors ${
+                className={`rounded-full border px-3.5 py-1.5 text-micro font-bold uppercase transition-colors ${
                   filter === f.key
-                    ? "border-cyan bg-cyan text-void-deep"
-                    : "border-panel-line text-panel-muted hover:border-panel-line hover:text-panel-text"
+                    ? "border-transparent bg-accent-fill text-accent-ink"
+                    : "border-line text-muted hover:text-ink"
                 }`}
               >
                 {f.label}
               </button>
             ))}
           </div>
-          <div className="inline-flex border border-panel-line" role="group" aria-label="View">
+          <div className="inline-flex overflow-hidden rounded-full border border-line p-0.5" role="group" aria-label="View">
             {(["table", "month"] as View[]).map((v, i) => (
               <button
                 key={v}
                 type="button"
                 aria-pressed={view === v}
                 onClick={() => setView(v)}
-                className={`px-3 py-1.5 text-micro font-bold uppercase ${i > 0 ? "border-l border-panel-line" : ""} ${
-                  view === v ? "bg-cyan text-void-deep" : "bg-transparent text-panel-muted hover:text-panel-text"
+                className={`rounded-full px-3.5 py-1.5 text-micro font-bold uppercase transition-colors ${
+                  view === v ? "bg-accent-fill text-accent-ink" : "bg-transparent text-muted hover:text-ink"
                 }`}
               >
                 {v === "table" ? "Table" : "Month"}
@@ -112,7 +112,7 @@ export default function CalendarPage() {
 
         {view === "table" ? <CalendarTable rows={filtered} held={held} /> : <MonthGrid rows={filtered} />}
 
-        <p className="text-[13px] text-panel-muted">
+        <p className="text-[13px] text-muted">
           “Paid early by” is the gap between the two dates. Wait for the company and you get paid on
           the pay date. Use Osinko and you get paid on the ex date, minus 1%.
         </p>
@@ -124,15 +124,15 @@ export default function CalendarPage() {
 function CalendarTable({ rows, held }: { rows: DividendRow[]; held: Set<string> }) {
   if (rows.length === 0) {
     return (
-      <div className="border border-panel-line bg-panel-2 px-6 py-12 text-center">
+      <div className="rounded-lg border border-line bg-ground-2 px-6 py-12 text-center">
         <p className="text-[15px] font-bold">Nothing in this range</p>
-        <p className="mt-1 text-[13px] text-panel-muted">Try a wider one.</p>
+        <p className="mt-1 text-[13px] text-muted">Try a wider one.</p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto border border-panel-line">
+    <div className="overflow-x-auto border border-line">
       <table className="data-table min-w-[760px] text-[14px]">
         <thead>
           <tr>
@@ -140,13 +140,13 @@ function CalendarTable({ rows, held }: { rows: DividendRow[]; held: Set<string> 
             <th>Per share</th>
             <th>Ex date</th>
             <th>Pay date</th>
-            <th className="text-cyan">Paid early by</th>
+            <th className="text-accent">Paid early by</th>
             <th aria-label="Actions" />
           </tr>
         </thead>
         <tbody>
           {rows.map((d) => (
-            <tr key={d.id} className="group transition-colors hover:bg-panel-2">
+            <tr key={d.id} className="group transition-colors hover:bg-ground-2">
               <td>
                 <div className="flex items-center gap-3">
                   <TokenMark symbol={d.symbol} size={28} />
@@ -157,11 +157,11 @@ function CalendarTable({ rows, held }: { rows: DividendRow[]; held: Set<string> 
               <td className="num font-semibold">${fmt(d.perShare)}</td>
               <td className="num">
                 {shortDate(d.exDate)}
-                <span className="ml-2 text-micro font-bold uppercase text-panel-muted">{relativeTime(d.exDate)}</span>
+                <span className="ml-2 text-micro font-bold uppercase text-muted">{relativeTime(d.exDate)}</span>
               </td>
-              <td className="num text-panel-muted">{shortDate(d.payDate)}</td>
+              <td className="num text-muted">{shortDate(d.payDate)}</td>
               <td>
-                <span className="num text-[17px] font-extrabold text-cyan">{d.daysEarly} days</span>
+                <span className="num text-[17px] font-extrabold text-accent">{d.daysEarly} days</span>
               </td>
               <td className="text-right">
                 <Link
@@ -179,7 +179,7 @@ function CalendarTable({ rows, held }: { rows: DividendRow[]; held: Set<string> 
   );
 }
 
-/** A month of squares; ex dates land as cyan blocks. */
+/** A month of squares; ex dates land as accent blocks. */
 function MonthGrid({ rows }: { rows: DividendRow[] }) {
   const today = new Date();
   const year = today.getFullYear();
@@ -201,30 +201,30 @@ function MonthGrid({ rows }: { rows: DividendRow[] }) {
   const monthName = today.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
   return (
-    <div className="border border-panel-line">
-      <div className="flex items-baseline justify-between border-b border-panel-line px-4 py-3">
+    <div className="border border-line">
+      <div className="flex items-baseline justify-between border-b border-line px-4 py-3">
         <span className="text-[15px] font-extrabold tracking-tight">{monthName}</span>
-        <span className="text-micro font-bold uppercase text-panel-muted">Ex dates this month</span>
+        <span className="text-micro font-bold uppercase text-muted">Ex dates this month</span>
       </div>
-      <div className="grid grid-cols-7 gap-px bg-panel-3 p-px">
+      <div className="grid grid-cols-7 gap-px bg-ground-3 p-px">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-          <div key={d} className="bg-paper px-2 py-1.5 text-center text-micro font-bold uppercase text-panel-muted">
+          <div key={d} className="bg-paper px-2 py-1.5 text-center text-micro font-bold uppercase text-muted">
             {d}
           </div>
         ))}
         {Array.from({ length: leadBlanks }).map((_, i) => (
-          <div key={`b${i}`} className="min-h-[72px] bg-panel-2" />
+          <div key={`b${i}`} className="min-h-[72px] bg-ground-2" />
         ))}
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1;
           const events = byDay.get(day) ?? [];
           const isToday = day === today.getDate();
           return (
-            <div key={day} className={`min-h-[72px] bg-paper p-1.5 ${isToday ? "outline outline-1 outline-cyan" : ""}`}>
-              <div className={`num text-[11px] ${isToday ? "font-bold text-cyan" : "text-panel-muted"}`}>{day}</div>
+            <div key={day} className={`min-h-[72px] bg-ground p-1.5 ${isToday ? "outline outline-1 outline-accent" : ""}`}>
+              <div className={`num text-[11px] ${isToday ? "font-bold text-accent" : "text-muted"}`}>{day}</div>
               <div className="mt-1 space-y-1">
                 {events.map((e) => (
-                  <div key={e.id} className="bg-cyan px-1.5 py-0.5 text-[11px] font-bold tracking-tight text-panel-text">
+                  <div key={e.id} className="rounded-sm bg-iris-100 px-1.5 py-0.5 text-[11px] font-bold tracking-tight text-iris-900">
                     {e.symbol} <span className="num">${fmt(e.perShare)}</span>
                   </div>
                 ))}

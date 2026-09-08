@@ -7,7 +7,7 @@ import { streamClaimable, type StreamRow } from "@/lib/data/types";
  * Everything on screen that moves, moves through this file.
  *
  * The rules: numbers never jump, they interpolate; anything that accrues ticks
- * continuously at the display's frame rate; a value that changes flashes cyan once;
+ * continuously at the display's frame rate; a value that changes flashes once;
  * and prefers-reduced-motion turns interpolation into a snap without turning the
  * data stale.
  */

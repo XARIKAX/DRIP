@@ -1,140 +1,190 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Osinko design system — the engraved certificate.
+ * Osinko design system — the night garden.
  *
- * The concept is not a mood, it is an argument. Osinko replaces the oldest paperwork in
- * finance: the share certificate with a dividend coupon attached along a perforation.
- * So the product is built in the visual language of that document — didone display type,
- * guilloché engine-turning, serial numbers, engraved rules, and an inked stamp — with
- * mono data as the modern half. Every ornament here is load bearing; nothing is applied
- * because it looked nice.
+ * The concept is a garden, and the argument is the same one the product makes: a garden
+ * pays you without being cut down. You plant (deposit), the tree blossoms on a schedule
+ * nobody negotiates (the ex date), petals fall continuously (the stream), and the ground
+ * compounds (reinvest). Every ornament in here is that idea; nothing is applied because
+ * it looked nice.
  *
- * The page is warm stock and stays warm stock. Structure is drawn with hairlines rather
- * than boxes inside boxes. One accent, cyan, behaves as stamp ink: a live value, a state
- * change, one call to action per screen. Colour is never decoration.
+ * The page is one vertical journey from a lavender dawn to a violet night, the same
+ * journey the hero background makes, repeated at page scale. Prose is read in daylight;
+ * data is read after dark. Which surface you are on is a *context*, not a second set of
+ * class names — see `.night` in globals.css.
  *
- * Black appears rarely and only where it means something. Anything that is *data* — the
- * mechanism scene, the universe table, the dashboard — runs on a near-black panel; prose
- * never does. That restraint is what stops the inversion reading as dark components
- * dropped onto a blank document.
+ * Colour has one accent, iris, and one secondary, blossom. Iris is structure and state:
+ * a live value, a call to action, the thing the cursor is about to touch. Blossom is the
+ * garden itself and never carries a control. Neither is ever decoration.
  *
- * Geometry has one rule and one exception. The rule: rectangles are structure, so every
- * panel, field, table and button is square cornered. The exception: pills are
- * annotations — status chips, floating labels, metadata. Nothing else is ever rounded.
+ * Geometry is soft everywhere. Hierarchy comes from the radius scale — a field is 12, a
+ * card is 16, a panel is 20, an instrument is 28 — not from a square/round binary. Every
+ * button is a pill, with no exceptions, because the one shape that is always the same is
+ * how a system stops looking assembled.
  *
- * Type has four roles that never trade places. Bodoni Moda sets display. Archivo sets UI
- * and body. IBM Plex Mono sets every number, label and machine-readable string.
- * Newsreader italic appears only as an editorial kicker, at most once per section.
+ * Type has four roles that never trade places. Archivo sets display. Instrument Sans sets
+ * UI and body. Newsreader sets the serif register — the eyebrow, the kicker, the pull
+ * quote, the drop cap. IBM Plex Mono sets every number, label and machine-readable
+ * string, and is the one face carried over from the previous identity because it was
+ * already doing its job.
+ *
+ * Fonts are self-hosted in /public/fonts. Nothing here reaches the network at build time
+ * or at runtime.
  */
+
+/** A channel-triplet variable, so Tailwind's `<alpha-value>` modifier keeps working. */
+const ch = (v: string) => `rgb(var(${v}) / <alpha-value>)`;
+
 const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
+    /*
+     * A closed set, deliberately, and it lives in `theme` rather than `theme.extend` so
+     * Tailwind's defaults do not merge back in and quietly redefine `rounded-sm` as 2px.
+     */
     borderRadius: {
       none: "0",
-      DEFAULT: "0",
+      sm: "6px",
+      DEFAULT: "10px",
+      md: "12px",
+      lg: "16px",
+      xl: "20px",
+      "2xl": "28px",
+      "3xl": "40px",
       full: "9999px",
     },
     extend: {
       colors: {
-        // Paper. The page is warm stock; raised surfaces are brighter, so a certificate
-        // sits *on* the ground rather than being cut out of it. Pure #FFF as a canvas is
-        // the single loudest tell of a page nobody art-directed.
-        ground: "#FAFAF7",
-        paper: "#FFFFFF",
-        "paper-2": "#F4F4F1",
-        "paper-3": "#EBEBE7",
-        "paper-4": "#E1E1DC",
-
-        // Ink.
-        ink: "#0A0A0A",
-        muted: "#5B6167",
-        faint: "#8A9098",
-        ghost: "#B7BCC1",
-
-        // Structure. Hairlines only — the system has no heavy borders.
-        line: "rgba(10, 10, 10, 0.11)",
-        "line-soft": "rgba(10, 10, 10, 0.06)",
-        "line-strong": "rgba(10, 10, 10, 0.24)",
-
-        // The accent. Bright cyan fills and rules; the deeper steps carry small type,
-        // because #35C2DB on white is a 1.9:1 contrast and unreadable at label sizes.
-        cyan: {
-          DEFAULT: "#35C2DB",
-          bright: "#5FD9EE",
-          dark: "#1899B1",
-          deep: "#0B6B7E",
-          soft: "rgba(53, 194, 219, 0.10)",
+        /* ---- Contextual. These flip under `.night`; most components use only these. --
+           `paper` and the `ground` scale ARE the surface scale — there is deliberately
+           no second `surface-*` vocabulary, because two names for one colour is how a
+           design system rots, and because every existing screen already speaks this one. */
+        paper: ch("--paper"),
+        ground: {
+          DEFAULT: ch("--ground"),
+          2: ch("--ground-2"),
+          3: ch("--ground-3"),
+          4: ch("--ground-4"),
+        },
+        ink: ch("--text"),
+        "ink-2": ch("--text-2"),
+        muted: ch("--text-muted"),
+        faint: ch("--text-faint"),
+        ghost: ch("--text-ghost"),
+        accent: {
+          DEFAULT: ch("--accent"),
+          quiet: ch("--accent-quiet"),
+          ink: ch("--accent-ink"),
+          fill: ch("--accent-fill"),
         },
 
-        // Dark data surfaces.
-        panel: "#0A0C0F",
-        "panel-2": "#101419",
-        "panel-3": "#171C22",
-        "panel-line": "rgba(255, 255, 255, 0.09)",
-        "panel-edge": "rgba(255, 255, 255, 0.18)",
-        "panel-text": "#F3F6F8",
-        "panel-muted": "#8B949C",
-        "panel-faint": "#5A636B",
+        /* Hairlines carry a baked alpha, so they cannot also take an opacity modifier.
+           That is a discipline, not a loss: a hairline has one weight. */
+        line: "var(--edge)",
+        "line-soft": "var(--edge-soft)",
+        "line-strong": "var(--edge-strong)",
 
-        up: "#0E8A5F",
-        down: "#C0392B",
+        /* ---- Absolute ramps. For art, gradients, and anything that must NOT flip. ---- */
+        iris: {
+          50: ch("--iris-50"),
+          100: ch("--iris-100"),
+          200: ch("--iris-200"),
+          300: ch("--iris-300"),
+          400: ch("--iris-400"),
+          500: ch("--iris-500"),
+          600: ch("--iris-600"),
+          700: ch("--iris-700"),
+          800: ch("--iris-800"),
+          900: ch("--iris-900"),
+        },
+        blossom: {
+          50: ch("--blossom-50"),
+          100: ch("--blossom-100"),
+          200: ch("--blossom-200"),
+          300: ch("--blossom-300"),
+          400: ch("--blossom-400"),
+          500: ch("--blossom-500"),
+          600: ch("--blossom-600"),
+          700: ch("--blossom-700"),
+        },
+        night: {
+          DEFAULT: ch("--night"),
+          1: ch("--night-1"),
+          2: ch("--night-2"),
+          3: ch("--night-3"),
+          4: ch("--night-4"),
+          text: ch("--night-text"),
+          muted: ch("--night-muted"),
+          faint: ch("--night-faint"),
+        },
+        /* Direction. Persimmon rather than a true red, so a falling number can never be
+           mistaken for a blossom. */
+        up: { DEFAULT: ch("--up"), bright: ch("--up-bright") },
+        down: { DEFAULT: ch("--down"), bright: ch("--down-bright") },
+        vermilion: ch("--vermilion"),
+
       },
+
       fontFamily: {
-        // Bodoni is not a style choice, it is the concept. A didone is the typeface of
-        // engraved share certificates, bank notes and share ledgers — the documents this
-        // product replaces. It does every piece of display work and nothing else.
-        display: ["Bodoni Moda", "Didot", "Times New Roman", "serif"],
-        sans: ["Archivo", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
+        /* Archivo is the only grotesque on the shelf with both a true 900 and a width
+           axis, which is what lets a 96px headline and a condensed table header come
+           from one family instead of two. */
+        display: ["Archivo", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
+        sans: ["Instrument Sans", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
+        /* Newsreader is optically sized, so it stays crisp at a 12px eyebrow and turns
+           elegant at a 30px pull quote without a second cut. */
+        serif: ["Newsreader", "Iowan Old Style", "Georgia", "Times New Roman", "serif"],
         mono: ["IBM Plex Mono", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
+        /* Alias kept so `.kicker` and the docs keep resolving during the rename pass. */
         editorial: ["Newsreader", "Iowan Old Style", "Georgia", "serif"],
       },
+
       letterSpacing: {
-        cut: "-0.035em",
-        tightest: "-0.025em",
-        tighter: "-0.015em",
+        cut: "-0.04em",
+        tightest: "-0.032em",
+        tighter: "-0.02em",
         wide: "0.08em",
         widest: "0.18em",
-        mega: "0.32em",
+        mega: "0.24em",
       },
+
       fontSize: {
-        // Machine labels. Small, tracked wide, always uppercase mono.
-        nano: ["9px", { lineHeight: "1.1", letterSpacing: "0.24em" }],
-        micro: ["10px", { lineHeight: "1.2", letterSpacing: "0.18em" }],
-        label: ["11px", { lineHeight: "1.3", letterSpacing: "0.14em" }],
-        // Display, set in Bodoni. A didone needs looser tracking and more leading than
-        // a grotesque — the thin strokes need air or the whole line greys out.
-        colossal: ["clamp(70px, 13vw, 210px)", { lineHeight: "0.86", letterSpacing: "-0.03em" }],
-        hero: ["clamp(52px, 8.4vw, 128px)", { lineHeight: "0.94", letterSpacing: "-0.025em" }],
-        display: ["clamp(36px, 4.8vw, 72px)", { lineHeight: "1.02", letterSpacing: "-0.02em" }],
-        headline: ["clamp(27px, 3.3vw, 44px)", { lineHeight: "1.1", letterSpacing: "-0.015em" }],
-        title: ["clamp(20px, 1.9vw, 26px)", { lineHeight: "1.2", letterSpacing: "-0.01em" }],
+        /* Machine labels. Small, tracked out, always uppercase. */
+        nano: ["9px", { lineHeight: "1.1", letterSpacing: "0.2em" }],
+        micro: ["10px", { lineHeight: "1.2", letterSpacing: "0.16em" }],
+        label: ["11px", { lineHeight: "1.3", letterSpacing: "0.12em" }],
+        /* Display, set in a grotesque. A grotesque wants tighter leading and tracking
+           than the didone this system used to run on — the old values leave holes. */
+        colossal: ["clamp(64px, 12vw, 190px)", { lineHeight: "0.82", letterSpacing: "-0.04em" }],
+        hero: ["clamp(48px, 6.5vw, 96px)", { lineHeight: "0.95", letterSpacing: "-0.032em" }],
+        display: ["clamp(34px, 4.4vw, 64px)", { lineHeight: "1.0", letterSpacing: "-0.025em" }],
+        headline: ["clamp(26px, 3.2vw, 42px)", { lineHeight: "1.08", letterSpacing: "-0.02em" }],
+        title: ["clamp(19px, 1.8vw, 25px)", { lineHeight: "1.2", letterSpacing: "-0.012em" }],
       },
-      maxWidth: {
-        shell: "1440px",
-        prose: "62ch",
-      },
+
+      maxWidth: { shell: "1440px", prose: "62ch" },
       spacing: {
         gut: "clamp(20px, 4vw, 56px)",
-        band: "clamp(72px, 10vw, 148px)",
+        band: "clamp(76px, 10vw, 152px)",
       },
+
       transitionTimingFunction: {
-        // The house curve. Everything decelerates; nothing bounces.
+        /* The house curve. Everything decelerates; nothing bounces. */
         osk: "cubic-bezier(0.16, 1, 0.3, 1)",
         swift: "cubic-bezier(0.4, 0, 0.2, 1)",
       },
+
       boxShadow: {
-        // Light falls from above. On paper the shadow is the only depth cue there is,
-        // so it is soft, cool and never larger than the object casting it.
-        lift: "0 1px 2px rgba(10,10,10,0.04), 0 8px 24px -12px rgba(10,10,10,0.10)",
-        float: "0 1px 2px rgba(10,10,10,0.05), 0 24px 60px -24px rgba(10,10,10,0.22)",
-        panel: "0 1px 0 0 rgba(255,255,255,0.06) inset, 0 18px 44px -28px rgba(10,10,10,0.28)",
-        glow: "0 0 0 1px rgba(53,194,219,0.45), 0 0 30px -6px rgba(53,194,219,0.40)",
+        /* Light falls from above, and it is faintly violet, because everything on this
+           page is lit by the same bloom. */
+        lift: "0 1px 2px rgb(22 14 34 / 0.04), 0 8px 24px -12px rgb(22 14 34 / 0.12)",
+        float: "0 1px 2px rgb(22 14 34 / 0.05), 0 24px 60px -24px rgb(22 14 34 / 0.24)",
+        panel: "0 1px 0 0 rgb(255 255 255 / 0.06) inset, 0 18px 44px -28px rgb(10 5 16 / 0.5)",
+        glow: "0 0 0 1px rgb(var(--iris-500) / 0.45), 0 0 30px -6px rgb(var(--iris-500) / 0.4)",
       },
-      zIndex: {
-        chrome: "60",
-        veil: "70",
-      },
+
+      zIndex: { chrome: "60", veil: "70" },
     },
   },
   plugins: [],

@@ -19,7 +19,7 @@ const MODES: ModeName[] = ["CASH_EARLY", "STREAM", "REINVEST"];
 
 export default function DashboardPage() {
   return (
-    <div className="rise-group space-y-8">
+    <div className="rise-group space-y-8" data-shot="dashboard">
       <Header />
       <TopStrip />
       <div className="grid gap-8 xl:grid-cols-3">
@@ -73,41 +73,41 @@ function TopStrip() {
   }, [summary.valueUsd, summary.streamRatePerSec]);
 
   return (
-    <section className="panel grid grid-cols-2 gap-px bg-panel-line lg:grid-cols-4" aria-label="Portfolio summary">
-      <div className="bg-panel p-6">
+    <section className="panel grid grid-cols-2 gap-px bg-line lg:grid-cols-4" aria-label="Portfolio summary">
+      <div className="bg-ground p-6">
         <div className="panel-title">Portfolio value</div>
-        <div className="mt-3 text-[clamp(26px,2.6vw,38px)] font-semibold tracking-tighter text-panel-text">
+        <div className="mt-3 text-[clamp(26px,2.6vw,38px)] font-semibold tracking-tighter text-ink">
           <LiveCounter base={summary.valueUsd} ratePerSec={summary.streamRatePerSec} decimals={2} prefix="$" />
         </div>
-        <div className="mt-1 text-[12px] text-panel-muted">Your stock plus everything it has earned</div>
+        <div className="mt-1 text-[12px] text-muted">Your stock plus everything it has earned</div>
       </div>
-      <div className="bg-panel p-6">
+      <div className="bg-ground p-6">
         <div className="panel-title">Earned this week</div>
-        <div className="mt-3 text-[clamp(26px,2.6vw,38px)] font-semibold tracking-tighter text-cyan">
+        <div className="mt-3 text-[clamp(26px,2.6vw,38px)] font-semibold tracking-tighter text-accent">
           <AnimatedNumber value={summary.earnedThisWeekUsd} decimals={2} prefix="$" flash="dark" />
         </div>
-        <div className="mt-1 text-[12px] text-panel-muted">Paid early, collected, and reinvested</div>
+        <div className="mt-1 text-[12px] text-muted">Paid early, collected, and reinvested</div>
       </div>
-      <div className="bg-panel p-6">
+      <div className="bg-ground p-6">
         <div className="panel-title">Stocks on deposit</div>
-        <div className="mt-3 text-[clamp(26px,2.6vw,38px)] font-semibold tracking-tighter text-panel-text">
+        <div className="mt-3 text-[clamp(26px,2.6vw,38px)] font-semibold tracking-tighter text-ink">
           <AnimatedNumber value={summary.activeRules} decimals={0} flash="dark" />
         </div>
-        <div className="mt-1 text-[12px] text-panel-muted">Each one has a rule for its dividends</div>
+        <div className="mt-1 text-[12px] text-muted">Each one has a rule for its dividends</div>
       </div>
-      <div className="bg-panel p-6">
+      <div className="bg-ground p-6">
         <div className="panel-title">Next dividend</div>
         {summary.nextDividend ? (
           <>
-            <div className="mt-3 text-[clamp(26px,2.6vw,38px)] font-semibold tracking-tighter text-panel-text">
+            <div className="mt-3 text-[clamp(26px,2.6vw,38px)] font-semibold tracking-tighter text-ink">
               <Countdown to={summary.nextDividend.exDate} />
             </div>
-            <div className="mt-1 text-[12px] text-panel-muted">
+            <div className="mt-1 text-[12px] text-muted">
               {summary.nextDividend.symbol} goes ex {shortDate(summary.nextDividend.exDate)}
             </div>
           </>
         ) : (
-          <div className="mt-3 text-[15px] text-panel-muted">Nothing scheduled</div>
+          <div className="mt-3 text-[15px] text-muted">Nothing scheduled</div>
         )}
       </div>
     </section>
@@ -122,7 +122,7 @@ function PendingAdvances() {
   if (pending.length === 0) return null;
 
   return (
-    <section className="border border-cyan/30 bg-cyan-soft" aria-label="Pending advances">
+    <section className="border border-accent/30 bg-accent/10" aria-label="Pending advances">
       {pending.map((p) => (
         <div key={p.dividendId} className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
           <div className="flex items-center gap-4">
@@ -131,7 +131,7 @@ function PendingAdvances() {
               <div className="text-[15px] font-extrabold tracking-tight">
                 {p.symbol} went ex {relativeTime(p.exDate)}
               </div>
-              <div className="text-[13px] text-panel-muted">
+              <div className="text-[13px] text-muted">
                 <span className="num font-semibold">${fmt(p.grossUsd)}</span> is yours. Take it now instead of
                 waiting until {shortDate(p.payDate)}.
               </div>
@@ -161,7 +161,7 @@ function StreamsPanel() {
     <section className="panel" aria-label="Your streams">
       <div className="panel-head">
         <span className="panel-title">Dividends paying out</span>
-        <span className="text-micro font-bold uppercase text-panel-faint">
+        <span className="text-micro font-bold uppercase text-faint">
           A little every second, until pay day
         </span>
       </div>
@@ -170,8 +170,8 @@ function StreamsPanel() {
 
       {!loading && open.length === 0 ? (
         <div className="px-5 py-10 text-center">
-          <p className="text-[15px] font-bold text-panel-text">Nothing paying out yet</p>
-          <p className="mx-auto mt-2 max-w-sm text-[13px] text-panel-muted">
+          <p className="text-[15px] font-bold text-ink">Nothing paying out yet</p>
+          <p className="mx-auto mt-2 max-w-sm text-[13px] text-muted">
             Deposit a stock and pick Stream or Reinvest. Its next dividend will show up here, paying a little every second.
           </p>
           <Link href="/app/deposit" className="btn-accent btn-sm mt-5">
@@ -199,33 +199,33 @@ function StreamRowView({ stream }: { stream: StreamRow }) {
   }
 
   return (
-    <div className="border-b border-panel-line px-5 py-5 last:border-b-0">
+    <div className="border-b border-line px-5 py-5 last:border-b-0">
       <div className="flex flex-wrap items-center gap-x-5 gap-y-4">
         <div className="flex w-[132px] items-center gap-3">
           <TokenMark symbol={stream.symbol} dark />
           <div>
-            <div className="text-[15px] font-extrabold tracking-tight text-panel-text">{stream.symbol}</div>
-            <div className="text-micro font-bold uppercase text-panel-muted">{MODE_LABEL[stream.mode]}</div>
+            <div className="text-[15px] font-extrabold tracking-tight text-ink">{stream.symbol}</div>
+            <div className="text-micro font-bold uppercase text-muted">{MODE_LABEL[stream.mode]}</div>
           </div>
         </div>
 
         <div className="w-[104px]">
           <div className="panel-title">Rate</div>
-          <div className="num mt-1 text-[13px] font-medium text-panel-muted">
+          <div className="num mt-1 text-[13px] font-medium text-muted">
             ${(stream.ratePerSec * 3600).toFixed(4)}/hr
           </div>
         </div>
 
         <div className="min-w-[150px]">
           <div className="panel-title">Ready to collect</div>
-          <div className={`mt-1 text-[22px] font-semibold tracking-tighter text-cyan ${justClaimed ? "flash-dark" : ""}`}>
+          <div className={`mt-1 text-[22px] font-semibold tracking-tighter text-accent ${justClaimed ? "flash-dark" : ""}`}>
             <StreamTicker stream={stream} />
           </div>
         </div>
 
         <div className="w-[96px]">
           <div className="panel-title">Total</div>
-          <div className="num mt-1 text-[15px] font-medium text-panel-text">${fmt(stream.totalUsd)}</div>
+          <div className="num mt-1 text-[15px] font-medium text-ink">${fmt(stream.totalUsd)}</div>
         </div>
 
         <button
@@ -239,13 +239,13 @@ function StreamRowView({ stream }: { stream: StreamRow }) {
       </div>
 
       <div className="mt-4">
-        <div className="flex justify-between text-micro font-bold uppercase text-panel-faint">
+        <div className="flex justify-between text-micro font-bold uppercase text-faint">
           <span>Ex {shortDate(stream.start)}</span>
           <span className="num">{progressPct.toFixed(0)}%</span>
           <span>Pay {shortDate(stream.end)}</span>
         </div>
-        <div className="mt-1.5 h-1 w-full bg-panel-line">
-          <div className="h-1 bg-cyan transition-[width] duration-700 ease-osk" style={{ width: `${progressPct}%` }} />
+        <div className="mt-1.5 h-1 w-full bg-line">
+          <div className="h-1 bg-accent-fill transition-[width] duration-700 ease-osk" style={{ width: `${progressPct}%` }} />
         </div>
       </div>
     </div>
@@ -275,13 +275,13 @@ function HoldingsPanel() {
     <section className="panel" aria-label="Holdings">
       <div className="panel-head">
         <span className="panel-title">Your stocks</span>
-        <Link href="/app/deposit" className="text-micro font-bold uppercase text-cyan hover:text-panel-text">
+        <Link href="/app/deposit" className="text-micro font-bold uppercase text-accent hover:text-ink">
           Add or take out
         </Link>
       </div>
 
       <div className="dark-scroll max-w-full overflow-x-auto">
-        <table className="panel-table min-w-[680px] text-[14px]">
+        <table className="data-table min-w-[680px] text-[14px]">
           <thead>
             <tr>
               <th>Stock</th>
@@ -305,17 +305,17 @@ function HoldingsPanel() {
                     <td>
                       <div className="flex items-center gap-3">
                         <TokenMark symbol={h.symbol} dark size={28} />
-                        <span className="font-extrabold tracking-tight text-panel-text">{h.symbol}</span>
+                        <span className="font-extrabold tracking-tight text-ink">{h.symbol}</span>
                       </div>
                     </td>
                     <td>
-                      <AnimatedNumber value={h.amount} decimals={4} className="text-panel-muted" flash="dark" />
+                      <AnimatedNumber value={h.amount} decimals={4} className="text-muted" flash="dark" />
                     </td>
                     <td>
-                      <AnimatedNumber value={h.valueUsd} decimals={2} prefix="$" className="font-medium text-panel-text" flash="dark" />
+                      <AnimatedNumber value={h.valueUsd} decimals={2} prefix="$" className="font-medium text-ink" flash="dark" />
                     </td>
                     <td>
-                      <div className="seg-dark" role="group" aria-label={`${h.symbol} dividend mode`}>
+                      <div className="seg" role="group" aria-label={`${h.symbol} dividend mode`}>
                         {MODES.map((m) => (
                           <button
                             key={m}
@@ -335,11 +335,11 @@ function HoldingsPanel() {
                         {h.movePct === null ? (
                           // No intraday price history to read on this chain. A dash is
                           // the honest answer; a drawn line would be invented.
-                          <span className="num w-[58px] text-right text-[12px] text-panel-muted">—</span>
+                          <span className="num w-[58px] text-right text-[12px] text-muted">—</span>
                         ) : (
                           <>
                             <Sparkline points={h.spark} width={76} up={h.movePct >= 0} dark />
-                            <span className={`num w-[58px] text-right text-[12px] font-medium ${h.movePct >= 0 ? "text-cyan" : "text-down"}`}>
+                            <span className={`num w-[58px] text-right text-[12px] font-medium ${h.movePct >= 0 ? "text-accent" : "text-down"}`}>
                               {h.movePct >= 0 ? "+" : ""}
                               {h.movePct.toFixed(2)}%
                             </span>
@@ -378,9 +378,9 @@ function ActivityFeed() {
 
   return (
     <section className="panel min-w-0 self-start" aria-label="Activity">
-      <div className="flex items-center justify-between border-b border-panel-line px-5 py-4">
+      <div className="flex items-center justify-between border-b border-line px-5 py-4">
         <span className="serial">History</span>
-        <span className="text-micro font-bold uppercase text-panel-muted">Everything so far</span>
+        <span className="text-micro font-bold uppercase text-muted">Everything so far</span>
       </div>
 
       {loading ? (
@@ -392,15 +392,15 @@ function ActivityFeed() {
       ) : null}
 
       {!loading && rows.length === 0 ? (
-        <p className="px-5 py-8 text-[13px] text-panel-muted">Deposits, payouts and purchases show up here.</p>
+        <p className="px-5 py-8 text-[13px] text-muted">Deposits, payouts and purchases show up here.</p>
       ) : null}
 
       <ul>
         {rows.slice(0, 14).map((row) => (
-          <li key={row.id} className="hairline-b border-l-2 border-l-cyan px-4 py-3 last:border-b-0">
+          <li key={row.id} className="hairline-b border-l-2 border-l-accent px-4 py-3 last:border-b-0">
             <div className="flex items-baseline justify-between gap-3">
-              <span className="text-micro font-bold uppercase text-panel-muted">{KIND_LABEL[row.kind] ?? row.kind}</span>
-              <span className="text-micro font-bold uppercase text-panel-muted">{relativeTime(row.ts)}</span>
+              <span className="text-micro font-bold uppercase text-muted">{KIND_LABEL[row.kind] ?? row.kind}</span>
+              <span className="text-micro font-bold uppercase text-muted">{relativeTime(row.ts)}</span>
             </div>
             <div className="mt-1 flex items-baseline justify-between gap-3">
               <span className="text-[13px]">{row.summary}</span>

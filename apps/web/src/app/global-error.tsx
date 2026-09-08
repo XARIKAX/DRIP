@@ -21,21 +21,22 @@ export default function GlobalError({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#06080A",
-          color: "#F3F6F8",
-          fontFamily: "Archivo, 'Helvetica Neue', Arial, sans-serif",
+          background: "#0A0510",
+          color: "#F1EBFF",
+          fontFamily: "'Instrument Sans', 'Helvetica Neue', Arial, sans-serif",
         }}
       >
         <div
           style={{
             maxWidth: 560,
             width: "100%",
-            border: "1px solid rgba(255,255,255,0.10)",
-            background: "#0B0E11",
+            border: "1px solid rgba(233,224,255,0.12)",
+            borderRadius: 20,
+            background: "#150A24",
             padding: 32,
           }}
         >
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", color: "#35C2DB" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", color: "#AC85FB" }}>
             SOMETHING BROKE
           </div>
           <h1 style={{ margin: "12px 0 0", fontSize: 30, letterSpacing: "-0.03em" }}>
@@ -45,9 +46,10 @@ export default function GlobalError({
             style={{
               marginTop: 20,
               padding: 16,
-              border: "1px solid rgba(255,255,255,0.06)",
-              background: "#101418",
-              color: "#8B949C",
+              border: "1px solid rgba(233,224,255,0.08)",
+              borderRadius: 12,
+              background: "#1D1030",
+              color: "#A99BC4",
               fontFamily: "'IBM Plex Mono', Menlo, monospace",
               fontSize: 13,
               wordBreak: "break-word",
@@ -61,9 +63,10 @@ export default function GlobalError({
             onClick={reset}
             style={{
               marginTop: 24,
-              border: "1px solid #35C2DB",
-              background: "#35C2DB",
-              color: "#04060A",
+              border: "1px solid #AC85FB",
+              borderRadius: 9999,
+              background: "#AC85FB",
+              color: "#0A0510",
               padding: "12px 20px",
               fontSize: 13,
               fontWeight: 700,

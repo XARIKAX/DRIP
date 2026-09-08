@@ -36,6 +36,10 @@ Three terminals, or one if you background the first two:
 
 ```bash
 # 0. prerequisites: node 22+, pnpm 9+, foundry
+#    forge-std and openzeppelin are git submodules, so a plain clone has neither and
+#    `forge build` fails with "Source not found". Either clone with --recursive or:
+git submodule update --init --recursive
+
 pnpm install
 
 # 1. a local chain
@@ -321,11 +325,38 @@ Point an MCP client at it with:
 
 ```
 apps/web/          Next.js app — home, dashboard, deposit, borrow, split, vault, calendar, agent, docs
-contracts/         Foundry — 10 protocol contracts, mocks, tests, deploy + seed scripts
+contracts/         Foundry — 11 protocol contracts, mocks, tests, deploy + keeper scripts
 packages/sdk/      TypeScript SDK (viem) — typed reads, unsigned write builders
 packages/mcp/      MCP server wrapping the SDK
-scripts/           deploy.sh (any chain), deploy-local.sh, sync-abis.mjs
+scripts/           deploy.sh (any chain), deploy-local.sh, sync-abis.mjs, capture-shots.mjs
 HANDOFF.md         for the Solidity developer taking this to mainnet
+```
+
+## The design system
+
+The concept is a garden: a garden pays you without being cut down, which is the same
+thing the protocol says about a share. It is documented where it lives — read the
+header of `apps/web/tailwind.config.ts` first, then `apps/web/src/app/globals.css`.
+
+Three things about it are worth knowing before changing anything:
+
+- **Surface is a context, not a second vocabulary.** `.night` redeclares a dozen
+  semantic variables and panels opt into it by definition, so `text-ink`, `bg-paper`
+  and `border-line` are correct on both light and dark surfaces. There is no
+  `text-panel-muted`.
+- **The garden is drawn in code.** `apps/web/src/components/pixel/` renders sprites as
+  run-length-merged SVG rectangles at whole multiples of a `--cell` unit. The
+  generators are integer-only and seeded from literals, because they run on the server
+  and again in the browser and one differing bit is a torn tree. `/dev/pixel` shows
+  every sprite at three scales.
+- **Type is self-hosted** in `apps/web/public/fonts`. Nothing reaches the network at
+  build time or at runtime.
+
+Documentation screenshots and the social card are generated, not taken by hand:
+
+```bash
+pnpm --filter @drip-markets/web build
+pnpm shots        # rewrites public/docs/*.webp, shots.ts, and opengraph-image.png
 ```
 
 ## Where things stand

@@ -369,30 +369,30 @@ export default function AgentPage() {
           <div className="serial">Say it in plain words</div>
           <h1 className="mt-4 display text-display">Agent</h1>
         </div>
-        <p className="max-w-sm text-[13px] text-panel-muted">
+        <p className="max-w-sm text-[13px] text-muted">
           An outside AI agent can use these same six commands through MCP. It can plan. Only you can sign.
         </p>
       </header>
 
-      <section className="panel flex flex-col" aria-label="Agent console">
+      <section className="panel flex flex-col" aria-label="Agent console" data-shot="agent">
         <div className="panel-head">
           <span className="panel-title">osinko · agent</span>
-          <span className="num text-micro font-bold uppercase text-panel-faint">{source === "demo" ? "portfolio session" : "wallet session"}</span>
+          <span className="num text-micro font-bold uppercase text-faint">{source === "demo" ? "portfolio session" : "wallet session"}</span>
         </div>
 
         <div ref={logRef} className="dark-scroll min-h-[280px] flex-1 space-y-5 overflow-y-auto px-5 py-5" style={{ maxHeight: 560 }}>
           {messages.map((m) =>
             m.role === "user" ? (
               <div key={m.id} className="flex justify-end">
-                <div className="max-w-[85%] border border-panel-line bg-panel-2 px-4 py-2.5">
-                  <span className="num text-[13px] text-panel-text">{m.text}</span>
+                <div className="max-w-[85%] rounded-lg border border-line bg-ground-2 px-4 py-2.5">
+                  <span className="num text-[13px] text-ink">{m.text}</span>
                 </div>
               </div>
             ) : (
               <div key={m.id} className="max-w-[92%] space-y-2.5">
                 {m.toolLines?.map((line, i) => (
-                  <div key={i} className="num text-[12px] text-panel-faint">
-                    <span className="text-cyan">▸</span> {line}
+                  <div key={i} className="num text-[12px] text-faint">
+                    <span className="text-accent">▸</span> {line}
                   </div>
                 ))}
                 {m.text ? <TypeText text={m.text} /> : null}
@@ -410,14 +410,14 @@ export default function AgentPage() {
           )}
         </div>
 
-        <div className="border-t border-panel-line p-4">
+        <div className="border-t border-line p-4">
           <div className="mb-3 flex flex-wrap gap-2">
             {EXAMPLE_PROMPTS.slice(0, 6).map((p) => (
               <button
                 key={p}
                 type="button"
                 onClick={() => send(p)}
-                className="border border-panel-line px-2.5 py-1 text-[12px] text-panel-muted transition-colors hover:border-cyan hover:text-cyan"
+                className="border border-line px-2.5 py-1 text-[12px] text-muted transition-colors hover:border-accent hover:text-accent"
               >
                 {p}
               </button>
@@ -430,11 +430,11 @@ export default function AgentPage() {
               send(input);
             }}
           >
-            <span className="num self-center text-[15px] text-cyan" aria-hidden>
+            <span className="num self-center text-[15px] text-accent" aria-hidden>
               ❯
             </span>
             <input
-              className="num w-full border border-panel-line bg-panel-2 px-3 py-2.5 text-[14px] text-panel-text outline-none placeholder:text-panel-faint focus:border-cyan"
+              className="field py-2.5 text-[14px]"
               placeholder="reinvest all my MSFT dividends"
               aria-label="Agent command"
               value={input}
@@ -444,7 +444,7 @@ export default function AgentPage() {
               Run
             </button>
           </form>
-          <p className="mt-3 text-[11px] text-panel-faint">
+          <p className="mt-3 text-[11px] text-faint">
             Nothing happens until you click confirm, and on chain until you sign. The agent cannot move your money on its own.
           </p>
         </div>
@@ -473,7 +473,7 @@ function TypeText({ text }: { text: string }) {
     return () => clearInterval(id);
   }, [text, reduced]);
 
-  return <p className="whitespace-pre-line text-[14px] leading-relaxed text-panel-text">{text.slice(0, shown)}</p>;
+  return <p className="whitespace-pre-line text-[14px] leading-relaxed text-ink">{text.slice(0, shown)}</p>;
 }
 
 function PlanCard({
@@ -490,31 +490,31 @@ function PlanCard({
   onDismiss: () => void;
 }) {
   return (
-    <div className="border border-panel-line bg-panel-2">
-      <div className="flex items-center justify-between border-b border-panel-line px-4 py-2.5">
-        <span className="text-[13px] font-extrabold tracking-tight text-panel-text">{plan.title}</span>
-        <span className="text-micro font-bold uppercase text-panel-faint">
+    <div className="rounded-lg border border-line bg-ground-2">
+      <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
+        <span className="text-[13px] font-extrabold tracking-tight text-ink">{plan.title}</span>
+        <span className="text-micro font-bold uppercase text-faint">
           {state === "done" ? "Executed" : state === "dismissed" ? "Dismissed" : "Plan"}
         </span>
       </div>
       <dl className="px-4 py-2">
         {plan.rows.map((r, i) => (
-          <div key={i} className="flex items-baseline justify-between gap-4 border-b border-panel-line py-2 last:border-b-0">
-            <dt className="text-micro font-bold uppercase text-panel-muted">{r.label}</dt>
-            <dd className="num text-right text-[13px] text-panel-text">{r.value}</dd>
+          <div key={i} className="flex items-baseline justify-between gap-4 border-b border-line py-2 last:border-b-0">
+            <dt className="text-micro font-bold uppercase text-muted">{r.label}</dt>
+            <dd className="num text-right text-[13px] text-ink">{r.value}</dd>
           </div>
         ))}
       </dl>
-      <p className="px-4 pb-3 text-[12px] leading-snug text-panel-muted">{plan.effect}</p>
+      <p className="px-4 pb-3 text-[12px] leading-snug text-muted">{plan.effect}</p>
       {state === "done" && result ? (
-        <p className="border-t border-panel-line px-4 py-3 text-[13px] text-cyan">{result}</p>
+        <p className="border-t border-line px-4 py-3 text-[13px] text-accent">{result}</p>
       ) : null}
       {state === "proposed" && plan.confirmLabel ? (
-        <div className="flex gap-2 border-t border-panel-line p-3">
+        <div className="flex gap-2 border-t border-line p-3">
           <button type="button" className="btn-accent btn-sm" onClick={onConfirm}>
             {plan.confirmLabel}
           </button>
-          <button type="button" className="border border-panel-line px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-panel-muted hover:text-panel-text" onClick={onDismiss}>
+          <button type="button" className="border border-line px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-muted hover:text-ink" onClick={onDismiss}>
             Dismiss
           </button>
         </div>
