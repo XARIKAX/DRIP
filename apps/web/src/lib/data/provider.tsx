@@ -52,7 +52,7 @@ import {
   useDeployment,
 } from "@/lib/hooks";
 import { useTxRunner } from "@/lib/tx";
-import { mockStore } from "./mock";
+import { demoStore, mockStore, type MockStore } from "./mock";
 import type {
   ActivityRow,
   CreditView,
@@ -83,12 +83,33 @@ import type {
 
 type Source = "demo" | "chain";
 
-const DataContext = createContext<{ source: Source }>({ source: "demo" });
+const DataContext = createContext<{ source: Source; showcase: boolean }>({
+  source: "demo",
+  showcase: false,
+});
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const { isConnected } = useAccount();
   const source: Source = isConnected && isDeployed ? "chain" : "demo";
-  const value = useMemo(() => ({ source }), [source]);
+  const value = useMemo(() => ({ source, showcase: false }), [source]);
+  return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
+}
+
+/**
+ * Opt a subtree into the seeded portfolio.
+ *
+ * The product and the pitch want opposite things from the same components. A visitor
+ * opening the dashboard should see their own account, which on arrival is empty. A
+ * visitor reading the landing page or the docs should see the thing working, which
+ * needs an account with something in it. Same hooks, same components; the surface
+ * decides which store answers.
+ *
+ * It overrides the store only, never the source: with a wallet connected on a
+ * deployed chain these surfaces still read the chain, exactly as before.
+ */
+export function ShowcaseData({ children }: { children: ReactNode }) {
+  const { source } = useContext(DataContext);
+  const value = useMemo(() => ({ source, showcase: true }), [source]);
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }
 
@@ -96,9 +117,16 @@ export function useDataSource(): Source {
   return useContext(DataContext).source;
 }
 
-/** Re-renders on every mock mutation. Cheap: the version is one integer. */
-function useMockVersion(): number {
-  return useSyncExternalStore(mockStore.subscribe, mockStore.getVersion, mockStore.getVersion);
+/** The store this subtree reads: the visitor's own, or the seeded showcase one. */
+function useStore(): MockStore {
+  return useContext(DataContext).showcase ? demoStore : mockStore;
+}
+
+/** The store plus a version that re-renders on every mutation of it. Cheap: one integer. */
+function useMockData(): { store: MockStore; version: number } {
+  const store = useStore();
+  const version = useSyncExternalStore(store.subscribe, store.getVersion, store.getVersion);
+  return { store, version };
 }
 
 // ---------------------------------------------------------------------------
@@ -138,12 +166,12 @@ function annualYieldPct(perShare: number | undefined, priceUsd: number): number 
 
 export function useTokensView(): TokenInfo[] {
   const source = useDataSource();
-  const version = useMockVersion();
+  const { store, version } = useMockData();
   const chainTokens = useChainTokens();
   const chainCalendar = useChainCalendar();
 
   return useMemo(() => {
-    if (source === "demo") return mockStore.tokens();
+    if (source === "demo") return store.tokens();
     return (chainTokens.data ?? []).map((t) => {
       const next = (chainCalendar.data ?? [])
         .filter((d) => d.symbol === t.symbol && d.exDate * 1000 > Date.now())
@@ -170,12 +198,12 @@ export function useTokensView(): TokenInfo[] {
 
 export function useHoldings(): { rows: Holding[]; loading: boolean } {
   const source = useDataSource();
-  const version = useMockVersion();
+  const { store, version } = useMockData();
   const positions = useChainPositions();
   const tokens = useChainTokens();
 
   const rows = useMemo(() => {
-    if (source === "demo") return mockStore.holdings();
+    if (source === "demo") return store.holdings();
     return (positions.data ?? []).map((p) => {
       return {
         symbol: p.symbol,
@@ -197,11 +225,11 @@ export function useHoldings(): { rows: Holding[]; loading: boolean } {
 
 export function useStreamRows(): { rows: StreamRow[]; loading: boolean } {
   const source = useDataSource();
-  const version = useMockVersion();
+  const { store, version } = useMockData();
   const streams = useChainStreams();
 
   const rows = useMemo(() => {
-    if (source === "demo") return mockStore.streams();
+    if (source === "demo") return store.streams();
     return (streams.data ?? []).map((s) => ({
       id: Number(s.id),
       symbol: s.symbol,
@@ -222,11 +250,11 @@ export function useStreamRows(): { rows: StreamRow[]; loading: boolean } {
 
 export function useCalendarRows(): { rows: DividendRow[]; loading: boolean } {
   const source = useDataSource();
-  const version = useMockVersion();
+  const { store, version } = useMockData();
   const calendar = useChainCalendar();
 
   const rows = useMemo(() => {
-    if (source === "demo") return mockStore.calendar();
+    if (source === "demo") return store.calendar();
     return (calendar.data ?? []).map((d) => ({
       id: Number(d.id),
       symbol: d.symbol,
@@ -244,11 +272,11 @@ export function useCalendarRows(): { rows: DividendRow[]; loading: boolean } {
 
 export function useActivityRows(): { rows: ActivityRow[]; loading: boolean } {
   const source = useDataSource();
-  const version = useMockVersion();
+  const { store, version } = useMockData();
   const activity = useChainActivity();
 
   const rows = useMemo(() => {
-    if (source === "demo") return mockStore.activity();
+    if (source === "demo") return store.activity();
     return (activity.data ?? []).map((a, i) => ({
       id: i,
       kind:
@@ -273,13 +301,13 @@ export function useActivityRows(): { rows: ActivityRow[]; loading: boolean } {
 
 export function useVaultView(): { vault: VaultView; loading: boolean } {
   const source = useDataSource();
-  const version = useMockVersion();
+  const { store, version } = useMockData();
   const stats = useChainVaultStats();
   const position = useChainVaultPosition();
   const deployedAt = useDeployment()?.deployedAt ?? 0;
 
   const vault = useMemo(() => {
-    if (source === "demo" || !stats.data) return mockStore.vault();
+    if (source === "demo" || !stats.data) return store.vault();
     const s = stats.data;
     const p = position.data;
 
@@ -313,12 +341,12 @@ export function useVaultView(): { vault: VaultView; loading: boolean } {
 
 export function useWalletView(): WalletBalances {
   const source = useDataSource();
-  const version = useMockVersion();
+  const { store, version } = useMockData();
   const wallet = useChainWallet();
   const tokens = useChainTokens();
 
   return useMemo(() => {
-    if (source === "demo") return mockStore.wallet();
+    if (source === "demo") return store.wallet();
     const stocks: Record<string, number> = {};
     for (const t of tokens.data ?? []) {
       stocks[t.symbol] = Number(wallet.data?.stocks[t.address] ?? 0n) / STOCK;
@@ -330,11 +358,11 @@ export function useWalletView(): WalletBalances {
 
 export function usePendingAdvances(): PendingAdvance[] {
   const source = useDataSource();
-  const version = useMockVersion();
+  const { store, version } = useMockData();
   const activatable = useChainActivatable();
 
   return useMemo(() => {
-    if (source === "demo") return mockStore.pendingAdvances();
+    if (source === "demo") return store.pendingAdvances();
     return (activatable.data ?? []).map(({ dividend, gross }) => ({
       dividendId: Number(dividend.id),
       symbol: dividend.symbol,
@@ -348,21 +376,21 @@ export function usePendingAdvances(): PendingAdvance[] {
 
 export function useCreditView(): CreditView {
   const source = useDataSource();
-  const version = useMockVersion();
+  const { store, version } = useMockData();
   const credit = useChainCredit();
   const params = useChainCreditParams();
   const { rows: holdings } = useHoldings();
   const { rows: calendar } = useCalendarRows();
 
   return useMemo(() => {
-    if (source === "demo") return mockStore.credit();
+    if (source === "demo") return store.credit();
 
     const c = credit.data;
     const p = params.data;
     // No lending pool on this chain, or the read has not landed yet. Render the page
     // with nothing drawn rather than throwing; the address book may predate the market.
     if (!c || !p) {
-      const empty = mockStore.credit();
+      const empty = store.credit();
       return {
         ...empty,
         collateralValueUsd: 0,
@@ -427,11 +455,11 @@ export function useAutoRepayPrincipal(): boolean {
  */
 export function useSplitSeries(): SplitSeries[] {
   const source = useDataSource();
-  const version = useMockVersion();
+  const { store, version } = useMockData();
   const chain = useChainSplitSeries();
 
   return useMemo(() => {
-    if (source === "demo") return mockStore.splitSeriesList();
+    if (source === "demo") return store.splitSeriesList();
     return (chain.data ?? []).map((s) => {
       const priceUsd = Number(s.priceUsdg) / USDG;
       return {
@@ -454,11 +482,11 @@ export function useSplitSeries(): SplitSeries[] {
 
 export function useSplitPosition(seriesId: number): SplitPosition | null {
   const source = useDataSource();
-  const version = useMockVersion();
+  const { store, version } = useMockData();
   const chain = useChainSplitPosition(seriesId);
 
   return useMemo(() => {
-    if (source === "demo") return mockStore.splitPosition(seriesId);
+    if (source === "demo") return store.splitPosition(seriesId);
     const p = chain.data;
     if (!p) return null;
     return {
@@ -472,11 +500,11 @@ export function useSplitPosition(seriesId: number): SplitPosition | null {
 
 export function useSplitDividendRows(seriesId: number): SplitDividendRow[] {
   const source = useDataSource();
-  const version = useMockVersion();
+  const { store, version } = useMockData();
   const chain = useChainSplitDividends(seriesId);
 
   return useMemo(() => {
-    if (source === "demo") return mockStore.splitDividendRows(seriesId);
+    if (source === "demo") return store.splitDividendRows(seriesId);
     return (chain.data ?? []).map((d) => ({
       seriesId: Number(d.seriesId),
       dividendId: Number(d.dividendId),
@@ -495,12 +523,12 @@ export function useSplitDividendRows(seriesId: number): SplitDividendRow[] {
 
 export function useSplitWalletBalance(symbol: string): number {
   const source = useDataSource();
-  const version = useMockVersion();
+  const { store, version } = useMockData();
   const wallet = useChainWalletBalances();
   const tokens = useChainTokens();
 
   return useMemo(() => {
-    if (source === "demo") return mockStore.splitWalletBalance(symbol);
+    if (source === "demo") return store.splitWalletBalance(symbol);
     const token = (tokens.data ?? []).find((t) => t.symbol === symbol);
     if (!token) return 0;
     return Number(wallet.data?.stocks[token.address] ?? 0n) / STOCK;
@@ -510,21 +538,22 @@ export function useSplitWalletBalance(symbol: string): number {
 
 export function usePortfolioSummary(): PortfolioSummary {
   const source = useDataSource();
-  const version = useMockVersion();
+  const { store, version } = useMockData();
   const { rows: holdings } = useHoldings();
   const { rows: streams } = useStreamRows();
   const { rows: calendar } = useCalendarRows();
 
   return useMemo(() => {
-    if (source === "demo") return mockStore.summary();
+    if (source === "demo") return store.summary();
     const nowMs = Date.now();
     let value = holdings.reduce((sum, h) => sum + h.valueUsd, 0);
     let rate = 0;
     for (const s of streams) {
       if (!s.closed && nowMs >= s.start * 1000 && nowMs < s.end * 1000) rate += s.ratePerSec;
     }
+    const held = new Set(holdings.map((h) => h.symbol));
     const next = calendar
-      .filter((d) => d.status === "DECLARED" && d.exDate * 1000 > nowMs)
+      .filter((d) => d.status === "DECLARED" && d.exDate * 1000 > nowMs && held.has(d.symbol))
       .sort((x, y) => x.exDate - y.exDate)[0];
     return {
       valueUsd: value,

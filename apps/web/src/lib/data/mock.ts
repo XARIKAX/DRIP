@@ -18,16 +18,21 @@ import {
 import { mulberry32 } from "@/lib/rand";
 
 /**
- * The demo portfolio. Seeded, deterministic, and alive.
+ * The off-chain portfolio. Seeded, deterministic, and alive.
  *
- * This store is the app's default data source. A visitor with no wallet lands on a
- * complete working product: five positions, two streams accruing by the wall clock,
- * a pending advance waiting to be started, three weeks of history, a funded vault.
- * Every action mutates this store and every page reads from it, so the numbers
- * agree everywhere. State lives for the browser session and nothing more.
+ * Two instances come out of this file, and the difference between them is the whole
+ * point. `mockStore` is the visitor's own account: it starts empty, every action in
+ * the app writes to it, and it lives for the browser session and nothing more. A
+ * dashboard is a statement of what you hold, so before you hold anything it has to
+ * say nothing — not somebody else's six positions.
  *
- * The demo IS the marketing. Most visitors never connect. They still leave having
- * watched a dividend accrue per second and become stock.
+ * `demoStore` is the same world with a portfolio already in it, and it is read by the
+ * surfaces that are selling the product rather than being it: the landing page's live
+ * dashboard and the docs' worked examples. Those need a populated account, and
+ * neither of them claims the account is yours.
+ *
+ * Both are wall-clock alive — streams accrue while the page is open — so the pitch is
+ * a running product rather than a screenshot.
  */
 
 /** Deterministic PRNG so sparklines and history are identical on every load. */
@@ -104,13 +109,40 @@ interface MockState {
 
 type Listener = () => void;
 
-class MockStore {
+export class MockStore {
   private state: MockState;
   private listeners = new Set<Listener>();
   private version = 0;
 
-  constructor() {
-    this.state = this.seed();
+  constructor(seeded: boolean) {
+    this.state = seeded ? this.seed() : this.fresh();
+  }
+
+  /**
+   * The same world, with nobody in it yet.
+   *
+   * Identical market — the same universe of tokens, the same declared dividends, the
+   * same pool — and no visitor: no positions, no streams, no history, no debt, an
+   * empty wallet. This is what the app boots into, because someone arriving for the
+   * first time should be shown what they actually hold, which is nothing, rather than
+   * a portfolio that turns out not to be theirs the moment they connect.
+   *
+   * Derived from the seed rather than written out beside it, so the market half can
+   * never drift between the two.
+   */
+  private fresh(): MockState {
+    const s = this.seed();
+    return {
+      ...s,
+      holdings: new Map(),
+      streams: [],
+      activity: [],
+      pending: [],
+      wallet: { usdg: 0, stocks: {} },
+      credit: { borrowedUsd: 0, sinceMs: BOOT * 1000 },
+      vault: { ...s.vault, yourShares: 0 },
+      splitPositions: new Map(),
+    };
   }
 
   // ------------------------------------------------------------------
@@ -576,8 +608,14 @@ class MockStore {
       const to = Math.min(s.end, now());
       if (to > from) earned += s.ratePerSec * (to - from) * 0.35; // portion not already in claims above
     }
+    // Yours, not the market's. A card headed "next dividend" on a personal dashboard
+    // has to mean a stock you actually hold, or it announces a payout to someone
+    // holding nothing.
+    const held = new Set(
+      [...this.state.holdings].filter(([, h]) => h.amount > 0).map(([symbol]) => symbol)
+    );
     const nextDiv = this.state.dividends
-      .filter((d) => d.status === "DECLARED" && d.exDate > now())
+      .filter((d) => d.status === "DECLARED" && d.exDate > now() && held.has(d.symbol))
       .sort((x, y) => x.exDate - y.exDate)[0];
     return {
       valueUsd: value,
@@ -714,4 +752,15 @@ class MockStore {
 }
 
 /** One store per browser session. Every page reads the same numbers. */
-export const mockStore = new MockStore();
+/**
+ * The visitor's own store. Empty until they do something — deposit, faucet, borrow —
+ * and then it fills with what they did. Every action in the app writes here.
+ */
+export const mockStore = new MockStore(false);
+
+/**
+ * The seeded portfolio, read-only in practice: the landing page's live dashboard and
+ * the docs' worked examples need a populated account to be worth looking at, and
+ * neither of them is claiming the account belongs to the reader.
+ */
+export const demoStore = new MockStore(true);

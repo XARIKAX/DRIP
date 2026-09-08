@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { CountUp, Reveal } from "@/components/motion";
 import { DashboardPreview } from "@/components/DashboardPreview";
-import { HeroCounter } from "@/components/HeroCounter";
 import { Folio } from "@/components/site/Folio";
 
 const NUMBERS = [
@@ -53,24 +52,6 @@ export function Live() {
           <div className="reveal reveal-2 min-w-0 lg:col-span-8">
             <DashboardPreview />
           </div>
-        </div>
-
-        {/* Paid to holders, and counting. The one figure on the page that moves while
-            you read it — carried down from the old hero, where it was competing with a
-            headline, into the section whose whole claim is that this is running. */}
-        <div className="reveal mt-16 flex flex-wrap items-end justify-between gap-6 border-t border-line pt-10">
-          <div className="min-w-0">
-            <div className="eyebrow">Paid to holders, and counting</div>
-            <div className="mt-4 flex items-baseline gap-2">
-              <span className="num text-[19px] font-medium text-faint">$</span>
-              <span className="figure text-[clamp(32px,4.4vw,54px)] leading-none">
-                <HeroCounter />
-              </span>
-            </div>
-          </div>
-          <p className="max-w-xs text-[13px] text-muted">
-            In USDG, this quarter. It moves while you read.
-          </p>
         </div>
 
         {/* The numbers band. Four figures, each one a rule in a contract. */}
