@@ -146,6 +146,39 @@ export function useAutoRepayPrincipal() {
   );
 }
 
+export function useSplitSeriesList() {
+  const reader = useReader();
+  return useQuery(readerQuery(["splitSeries", chainId], reader, (r) => r.getSplitSeries(), {
+    refetchInterval: 30_000,
+  }));
+}
+
+export function useSplitPositionFor(seriesId: number) {
+  const reader = useReader();
+  const { address } = useAccount();
+  return useQuery(
+    readerQuery(
+      ["splitPosition", chainId, seriesId, address],
+      reader,
+      (r) => r.getSplitPosition(BigInt(seriesId), address!),
+      { enabled: Boolean(address) && seriesId > 0 }
+    )
+  );
+}
+
+export function useSplitDividendsFor(seriesId: number) {
+  const reader = useReader();
+  const { address } = useAccount();
+  return useQuery(
+    readerQuery(
+      ["splitDividends", chainId, seriesId, address],
+      reader,
+      (r) => r.getSplitDividends(BigInt(seriesId), address!),
+      { enabled: Boolean(address) && seriesId > 0, refetchInterval: 20_000 }
+    )
+  );
+}
+
 export function useVaultPosition() {
   const reader = useReader();
   const { address } = useAccount();

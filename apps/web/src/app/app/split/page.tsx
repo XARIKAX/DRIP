@@ -145,7 +145,9 @@ function YieldPanel({ series, rows }: { series: SplitSeries; rows: ReturnType<ty
         <div>
           {rows.map((row) => {
             const past = Date.now() >= row.exDate * 1000;
-            const canHarvest = past && !row.harvested;
+            // A dividend that went ex before this series held any stock pays it
+            // nothing, and collecting would revert. Say so instead of offering it.
+            const canHarvest = past && row.eligible && !row.harvested;
             const canClaim = row.harvested && !row.claimed && row.claimableUsd > 0;
             const busy = actions.busy && busyId === row.dividendId;
 
@@ -159,7 +161,14 @@ function YieldPanel({ series, rows }: { series: SplitSeries; rows: ReturnType<ty
                     ${fmt(row.perShare)} / share
                   </div>
                   <div className="mt-1 text-micro font-bold uppercase text-panel-faint">
-                    Ex date {shortDate(row.exDate)} · {past ? (row.harvested ? "Collected" : "Ready to collect") : "Not yet"}
+                    Ex date {shortDate(row.exDate)} ·{" "}
+                    {!past
+                      ? "Not yet"
+                      : !row.eligible
+                        ? "Before this split existed"
+                        : row.harvested
+                          ? "Collected"
+                          : "Ready to collect"}
                   </div>
                 </div>
 

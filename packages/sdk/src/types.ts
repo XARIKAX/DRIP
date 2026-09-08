@@ -162,6 +162,54 @@ export interface CreditParameters {
   closeFactorBps: bigint;
 }
 
+/** One split series: a stock, a maturity, and the two tokens it was cut into. */
+export interface SplitSeriesView {
+  seriesId: bigint;
+  stockToken: Address;
+  symbol: string;
+  name: string;
+  maturity: number;
+  principalToken: Address;
+  yieldToken: Address;
+  /** Share tokens outstanding. Backed 1:1 by stock in custody. */
+  ptSupply: bigint;
+  ytSupply: bigint;
+  /** USDG per whole stock token, 6 decimals. */
+  priceUsdg: bigint;
+  splitFeeBps: number;
+}
+
+/** A holder's balances in one series. */
+export interface SplitPositionView {
+  seriesId: bigint;
+  ptBalance: bigint;
+  ytBalance: bigint;
+}
+
+/** A dividend on a series' underlying, from the series' point of view. */
+export interface SplitDividendView {
+  seriesId: bigint;
+  dividendId: bigint;
+  symbol: string;
+  amountPerToken: bigint;
+  exDate: number;
+  /**
+   * Whether the series held any of the stock when this dividend went ex.
+   *
+   * A dividend that went ex before the series had a balance pays it nothing, and
+   * harvesting reverts with NothingEligible. The row carries this so the UI can say
+   * "nothing to collect" instead of offering a button that fails.
+   */
+  eligible: boolean;
+  /** True once anyone has pulled the entitlement into the series' yield pool. */
+  harvested: boolean;
+  /** USDG the harvest produced for the whole series. */
+  pool: bigint;
+  /** This holder's pro rata share, by dividend token balance at the ex date. */
+  claimable: bigint;
+  claimed: boolean;
+}
+
 /** An LP's stake in the vault. */
 export interface VaultPosition {
   shares: bigint;

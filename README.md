@@ -263,14 +263,26 @@ On a testnet all three can ride along with the deploy:
 FUND=250000 DECLARE=1 PRIVATE_KEY=0x... pnpm deploy:chain robinhood_testnet
 ```
 
+### What the app shows, and what it cannot
+
+Every page reads chain state once a wallet is connected to a deployed chain. Two
+numbers the reference portfolio draws have no onchain source, and the app shows a
+dash rather than a figure:
+
+- **Today's price move and the sparkline.** The oracle answers one price, now. There
+  is no intraday series to read, and drawing a plausible line next to somebody's real
+  money is worse than drawing nothing.
+- **The pool's APY history.** One point, from fees actually earned over the pool's
+  life. A curve would be a past this pool never had.
+
 ### What is still not true after all that
 
 - **No audit.** The credit side in particular is new code holding LP money.
 - **`ADMIN` should be a multisig behind a timelock.** The script takes whatever
   address it is given.
-- **No market for share tokens or dividend tokens.** Split mints them and they are
-  transferable, but nothing trades them, so the Split page's yield number is the
-  stock's own yearly yield, not a price.
+- **No market for share tokens or dividend tokens.** Split mints them, they transfer,
+  and the whole cut/collect/rejoin loop works onchain — but nothing trades them, so
+  the Split page shows no implied yield rather than inventing one.
 - **Liquidators sell seized stock themselves.** The adapter is wired for an
   oracle-bounded sale through SwapRouter02; nothing calls it yet.
 
