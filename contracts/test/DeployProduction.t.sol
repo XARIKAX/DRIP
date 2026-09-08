@@ -170,6 +170,35 @@ contract DeployProductionTest is Test {
         assertEq(uint256(heartbeat), expected, "heartbeat wired from the listing");
     }
 
+    /// @notice Every enabled token names its own heartbeat, so no reader falls back.
+    /// @dev The bound is enforced twice: VerifyUniverse decides whether a token may be
+    ///      listed, ChainlinkPriceOracle decides whether it may be priced. They agree
+    ///      only because both read this field. VerifyUniverse once carried its own
+    ///      hardcoded 1 hour instead and rejected three live feeds the oracle would
+    ///      have happily priced. An entry with no heartbeat sends each reader to its
+    ///      own fallback and reopens exactly that gap, silently, so require the field.
+    function test_everyEnabledTokenNamesItsOwnHeartbeat() public view {
+        string memory book = vm.readFile("listings/4663.json");
+        uint256 fallbackBound = 1 hours;
+
+        for (uint256 i = 0; ; ++i) {
+            string memory base = string.concat(".tokens[", vm.toString(i), "]");
+            if (!vm.keyExistsJson(book, string.concat(base, ".symbol"))) break;
+            if (!book.readBool(string.concat(base, ".enabled"))) continue;
+
+            string memory symbol = book.readString(string.concat(base, ".symbol"));
+            assertTrue(
+                vm.keyExistsJson(book, string.concat(base, ".heartbeat")),
+                string.concat(symbol, " has no heartbeat; readers would disagree on its bound")
+            );
+            assertGt(
+                book.readUint(string.concat(base, ".heartbeat")),
+                fallbackBound,
+                string.concat(symbol, " is back on the too-tight 1 hour bound")
+            );
+        }
+    }
+
     /// @notice The read path the dashboard depends on.
     /// @dev The SDK prices every position by calling priceUsdg on the deployment's
     ///      swapAdapter. That is a public mapping on MockSwapAdapter, so it worked on

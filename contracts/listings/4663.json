@@ -17,7 +17,7 @@
     "Verify onchain before wiring: token symbol()/decimals(), feed description(), feed liveness. Hard-fail on any mismatch.",
     "Quote every route through QuoterV2 before enabling it; re-check fee tier 3000 per pool.",
     "Path encoding is abi.encodePacked(WETH, uint24(3000), USDG, uint24(3000), token); minOut bounds the FINAL token against the Chainlink price, never the mid leg.",
-    "All feeds are 8-decimal USD via latestRoundData(); guard staleness with a 1 hour heartbeat and refuse to settle on a stale read. Fail closed to refund.",
+    "All feeds are 8-decimal USD via latestRoundData(); guard staleness with that feed's heartbeat below and refuse to settle on a stale read. Fail closed to refund.",
     "Stock tokens are Robinhood-issued debt trackers: run a live small receive/hold/transfer test from a contract before real bankroll.",
     "Staleness is per feed. Observed update ages spanned 0-74 minutes in one read, so these are deviation-triggered feeds, not tight-heartbeat ones. Set each token's heartbeat from Chainlink's published figure for that feed before carrying real size; the 6 hour default here is derived from observation, not from documentation."
   ],
