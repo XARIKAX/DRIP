@@ -108,9 +108,38 @@ function useMockVersion(): number {
 const USDG = 1e6;
 const STOCK = 1e18;
 
-/** UI decimal shares to the 18 decimal base unit, via a 6dp intermediate. */
+/**
+ * UI decimal shares to the 18 decimal base unit, via a 6dp intermediate.
+ *
+ * Floors, never rounds. Math.round here rounded 0.1175176... up to 0.117518, which is
+ * MORE than the wallet held, and every Max deposit of a balance whose seventh decimal
+ * was 5 or above reverted with ERC20InsufficientBalance. Asking for fractionally less
+ * than the user typed costs a sliver of dust; asking for more costs the transaction.
+ */
 function toStockBase(shares: number): bigint {
-  return BigInt(Math.round(shares * 1e6)) * 10n ** 12n;
+  return BigInt(Math.floor(shares * 1e6)) * 10n ** 12n;
+}
+
+/**
+ * The amount to actually send, given what the UI asked for and what is really there.
+ *
+ * Two corrections, both of our own lossiness rather than of the user:
+ *
+ *   over    Never send more than the wallet holds. The request is a float that has
+ *           been through 1e18, past JavaScript's 2^53 safe integer limit, so it is an
+ *           approximation of the balance before any rounding is applied to it.
+ *   under   Within one 6dp unit of the whole balance, send the whole balance. Max put
+ *           the full amount in the box; the only reason it cannot be sent exactly is
+ *           the conversion above, and rounding it down would leave dust the user
+ *           explicitly asked to move.
+ *
+ * Both directions resolve to a figure read from the chain, so neither can overspend.
+ */
+function resolveAmount(requested: bigint, available: bigint | undefined): bigint {
+  if (available === undefined) return requested;
+  if (requested > available) return available;
+  if (available - requested < 10n ** 12n) return available;
+  return requested;
 }
 
 const MODE_FROM_CHAIN: Record<number, ModeName> = { 0: "CASH_EARLY", 1: "STREAM", 2: "REINVEST" };
@@ -576,6 +605,7 @@ export function useDataActions(): DataActions {
   const deployment = useDeployment();
   const { address } = useAccount();
   const { state, run } = useTxRunner();
+  const walletBalances = useChainWalletBalances();
   const tokens = useChainTokens();
   const [demoBusy, setDemoBusy] = useState(false);
 
@@ -653,7 +683,8 @@ export function useDataActions(): DataActions {
       deposit: async (symbol, shares, mode) => {
         const d = need(deployment, "deployment");
         const token = need(addressOf(symbol), symbol);
-        const base = toStockBase(shares);
+        const base = resolveAmount(toStockBase(shares), walletBalances.data?.stocks[token]);
+        if (base === 0n) throw new Error(`No ${symbol} in this wallet to deposit`);
         const txs = [buildApprove(token, d.dripCore, base, symbol), buildDeposit(d, token, base, symbol)];
         if (mode) txs.push(buildSetMode(d, token, MODE_TO_CHAIN[mode], symbol));
         await run(txs);
@@ -720,5 +751,16 @@ export function useDataActions(): DataActions {
         await run([buildClaimYield(d, BigInt(seriesId), BigInt(dividendId))]);
       },
     };
-  }, [source, demoBusy, demo, state.status, deployment, address, addressOf, seriesSymbol, run]);
+  }, [
+    source,
+    demoBusy,
+    demo,
+    state.status,
+    deployment,
+    address,
+    addressOf,
+    seriesSymbol,
+    run,
+    walletBalances.data,
+  ]);
 }
