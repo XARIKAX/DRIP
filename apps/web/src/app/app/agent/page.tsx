@@ -312,7 +312,7 @@ export default function AgentPage() {
           text:
             holdings.rows.length === 0
               ? "You have no stock in Osinko yet."
-              : holdings.rows.map((h) => `${h.symbol}: ${fmt(h.amount, 4)} shares · $${fmt(h.valueUsd)} · dividends set to ${MODE_LABEL[h.mode]}`).join("\n"),
+              : holdings.rows.map((h) => `${h.symbol}: ${fmt(h.amount, 4)} shares · ${h.valueUsd === null ? "no live price" : `$${fmt(h.valueUsd)}`} · dividends set to ${MODE_LABEL[h.mode]}`).join("\n"),
         };
       }
 

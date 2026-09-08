@@ -184,8 +184,8 @@ const MODE_TO_CHAIN: Record<ModeName, ChainMode> = {
  * nothing is declared for that token, because the honest answer then is "we do not
  * know yet", not zero.
  */
-function annualYieldPct(perShare: number | undefined, priceUsd: number): number | null {
-  if (perShare === undefined || priceUsd <= 0) return null;
+function annualYieldPct(perShare: number | undefined, priceUsd: number | null): number | null {
+  if (perShare === undefined || priceUsd === null || priceUsd <= 0) return null;
   return ((perShare * 4) / priceUsd) * 100;
 }
 
@@ -205,7 +205,8 @@ export function useTokensView(): TokenInfo[] {
       const next = (chainCalendar.data ?? [])
         .filter((d) => d.symbol === t.symbol && d.exDate * 1000 > Date.now())
         .sort((x, y) => x.exDate - y.exDate)[0];
-      const priceUsd = Number(t.priceUsdg) / USDG;
+      // Number(null) is 0, which would render an unpriceable stock as worthless.
+      const priceUsd = t.priceUsdg === null ? null : Number(t.priceUsdg) / USDG;
       const perShare = next ? Number(next.amountPerToken) / USDG : undefined;
       const nowSec = Date.now() / 1000;
       return {
@@ -237,7 +238,7 @@ export function useHoldings(): { rows: Holding[]; loading: boolean } {
       return {
         symbol: p.symbol,
         amount: Number(p.amount) / STOCK,
-        valueUsd: Number(p.valueUsdg) / USDG,
+        valueUsd: p.valueUsdg === null ? null : Number(p.valueUsdg) / USDG,
         mode: MODE_FROM_CHAIN[p.mode] ?? "STREAM",
         // No intraday history onchain: the oracle answers one price, now. The
         // reference portfolio draws a walk to show the shape of the UI; drawing one
@@ -492,7 +493,7 @@ export function useSplitSeries(): SplitSeries[] {
   return useMemo(() => {
     if (source === "demo") return store.splitSeriesList();
     return (chain.data ?? []).map((s) => {
-      const priceUsd = Number(s.priceUsdg) / USDG;
+      const priceUsd = s.priceUsdg === null ? null : Number(s.priceUsdg) / USDG;
       return {
         seriesId: Number(s.seriesId),
         symbol: s.symbol,
@@ -577,7 +578,8 @@ export function usePortfolioSummary(): PortfolioSummary {
   return useMemo(() => {
     if (source === "demo") return store.summary();
     const nowMs = Date.now();
-    let value = holdings.reduce((sum, h) => sum + h.valueUsd, 0);
+    let value = holdings.reduce((sum, h) => sum + (h.valueUsd ?? 0), 0);
+    const unpricedHoldings = holdings.filter((h) => h.valueUsd === null).length;
     let rate = 0;
     for (const s of streams) {
       if (!s.closed && nowMs >= s.start * 1000 && nowMs < s.end * 1000) rate += s.ratePerSec;
@@ -588,6 +590,7 @@ export function usePortfolioSummary(): PortfolioSummary {
       .sort((x, y) => x.exDate - y.exDate)[0];
     return {
       valueUsd: value,
+      unpricedHoldings,
       streamRatePerSec: rate,
       earnedThisWeekUsd: streams.reduce((sum, s) => sum + s.claimedBaseUsd, 0),
       activeRules: holdings.length,

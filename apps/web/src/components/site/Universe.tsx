@@ -60,7 +60,9 @@ export function Universe() {
       if (key === "nextExDate") return t.nextExDate ?? Number.MAX_SAFE_INTEGER;
       // An unknown yield sorts last too, for the same reason: no number is not zero.
       if (key === "yieldPct") return t.yieldPct ?? -1;
-      return t[key];
+      const v = t[key];
+      // Unpriced sorts last rather than as zero, which would put it beside penny stocks.
+      return v === null ? Number.NEGATIVE_INFINITY : v;
     };
 
     return tokens.filter(matches).sort((a, b) => {
@@ -176,7 +178,7 @@ export function Universe() {
                         </div>
                       </div>
                     </td>
-                    <td className="num text-right text-ink">${fmt(t.priceUsd)}</td>
+                    <td className="num text-right text-ink">{t.priceUsd === null ? "—" : `$${fmt(t.priceUsd)}`}</td>
                     <td className="num text-right text-muted">
                       {t.perShare > 0 ? `$${fmt(t.perShare)}` : "—"}
                     </td>

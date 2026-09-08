@@ -26,7 +26,13 @@ export const MODE_SENTENCE: Record<ModeName, string> = {
 export interface TokenInfo {
   symbol: string;
   name: string;
-  priceUsd: number;
+  /**
+   * Price in USD, or null when the oracle will not answer — a feed past its
+   * heartbeat, most often. Not the same claim as zero: "we cannot price this right
+   * now" and "this is worthless" are different sentences and the UI must not
+   * conflate them, least of all on somebody's collateral.
+   */
+  priceUsd: number | null;
   /** Trailing dividend yield, percent. */
   /** Dividend yield a year, from the declared calendar. Null when nothing is declared. */
   yieldPct: number | null;
@@ -42,7 +48,8 @@ export interface Holding {
   symbol: string;
   /** Shares on deposit. */
   amount: number;
-  valueUsd: number;
+  /** Null when the underlying cannot be priced. See TokenInfo.priceUsd. */
+  valueUsd: number | null;
   mode: ModeName;
   /** Percent move today. */
   /** Today's move, or null on a chain with no intraday price history to read. */
@@ -181,6 +188,12 @@ export interface CreditView {
 
 export interface PortfolioSummary {
   valueUsd: number;
+  /**
+   * Holdings left out of valueUsd because their feed would not answer. Non-zero
+   * means the total is a floor, not the whole portfolio, and the UI has to say so —
+   * a number that silently shrinks when a feed goes quiet is worse than no number.
+   */
+  unpricedHoldings: number;
   /** Combined per second accrual across open streams, for live interpolation. */
   streamRatePerSec: number;
   earnedThisWeekUsd: number;
@@ -205,7 +218,8 @@ export interface SplitSeries {
   /** Principal Token supply for this series, protocol wide. Backs 1:1 in custody. */
   ptSupply: number;
   ytSupply: number;
-  underlyingPriceUsd: number;
+  /** Null when the underlying cannot be priced. See TokenInfo.priceUsd. */
+  underlyingPriceUsd: number | null;
   /** What the market is pricing the drip at, annualised, in the absence of a real AMM. */
   impliedYieldApr: number;
 }

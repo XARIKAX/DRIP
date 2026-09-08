@@ -253,7 +253,7 @@ function HowItWorks() {
                   <TokenMark symbol={h.symbol} size={24} />
                   <span className="text-[13px] font-extrabold tracking-tight">{h.symbol}</span>
                 </div>
-                <div className="num mt-2 text-[13px] font-semibold">${fmt(h.valueUsd, 0)}</div>
+                <div className="num mt-2 text-[13px] font-semibold">{h.valueUsd === null ? "—" : `$${fmt(h.valueUsd, 0)}`}</div>
               </div>
             ))}
           </div>
