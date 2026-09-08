@@ -57,3 +57,57 @@ export function PixelSprite({
     </svg>
   );
 }
+
+/**
+ * A sprite tiled across whatever width it is given.
+ *
+ * The reason this exists rather than a `w-full` on `PixelSprite`: stretching a sprite to
+ * fit is exactly the thing the whole system refuses to do — it produces fractional
+ * cells, which is a blurry photograph of pixel art rather than pixel art. A horizon has
+ * to span the page, so it repeats at its true size instead, and the seam falls wherever
+ * the viewport happens to end.
+ *
+ * It renders as a background image because that is the only way to repeat without
+ * emitting the same few hundred rectangles once per tile.
+ */
+export function PixelStrip({
+  grid,
+  palette,
+  scale = 1,
+  cell,
+  className = "",
+  style,
+}: {
+  grid: Grid;
+  palette: Palette;
+  scale?: number;
+  cell?: string;
+  className?: string;
+  style?: CSSProperties;
+}) {
+  const { w, h } = gridSize(grid);
+  const runs = toRuns(grid);
+  const unit = cell ?? `calc(var(--cell) * ${Math.max(1, Math.round(scale))})`;
+
+  // Custom properties do not survive into a background image, so the palette is
+  // resolved to literal values here. Callers pass a resolved palette for tiled art.
+  const rects = runs
+    .map((r) => `<rect x='${r.x}' y='${r.y}' width='${r.w}' height='${r.h}' fill='${palette[r.k] ?? "none"}'/>`)
+    .join("");
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w} ${h}' width='${w}' height='${h}' shape-rendering='crispEdges'>${rects}</svg>`;
+
+  return (
+    <div
+      aria-hidden
+      className={`pixel ${className}`}
+      style={{
+        height: `calc(${unit} * ${h})`,
+        backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`,
+        backgroundRepeat: "repeat-x",
+        backgroundSize: `calc(${unit} * ${w}) calc(${unit} * ${h})`,
+        backgroundPosition: "left bottom",
+        ...style,
+      }}
+    />
+  );
+}

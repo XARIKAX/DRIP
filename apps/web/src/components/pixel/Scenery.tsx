@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { PixelSprite } from "./Sprite";
+import { PixelSprite, PixelStrip } from "./Sprite";
 import { COIN, KOI, SAKURA, SAND, STONE, TORII } from "./palette";
 import { groundGrid, mossGrid, sakuraGrid, sandGrid, scatterGrid, strip } from "./generate";
 import {
@@ -182,7 +182,33 @@ export function FallenPetals({ scale = 1, cell, className = "", style }: Placeab
   return <PixelSprite grid={SCATTER} palette={SAKURA} scale={scale} cell={cell} className={className} style={style} />;
 }
 
-/** The hillside that runs under a section and turns a rule into a place. */
-export function GroundLine({ scale = 1, cell, className = "", style }: PlaceableProps) {
-  return <PixelSprite grid={GROUND} palette={SAKURA} scale={scale} cell={cell} className={className} style={style} />;
+/**
+ * The hillside that runs under a section and turns a rule into a place.
+ *
+ * Tiled rather than stretched. A horizon has to reach both edges of the page and a
+ * sprite scaled to fit would land on fractional cells, which is the one thing this
+ * system does not do. Its palette is resolved to literal colours because a background
+ * image cannot see a custom property — so it is the day palette, and sections that
+ * need the night one pass `nightPalette`.
+ */
+const GROUND_DAY = { t: "#4a2f42", T: "#6b4560", a: "#ffdce8", b: "#ffbbd3", c: "#ff93bc", d: "#f56aa4", m: "#6b9384", g: "#79a292" };
+const GROUND_NIGHT = { t: "#2a1a42", T: "#45296b", a: "#ffbbd3", b: "#ff93bc", c: "#f56aa4", d: "#b62f68", m: "#35604f", g: "#3f7566" };
+
+export function GroundLine({
+  scale = 1,
+  cell,
+  night = false,
+  className = "",
+  style,
+}: PlaceableProps & { night?: boolean }) {
+  return (
+    <PixelStrip
+      grid={GROUND}
+      palette={night ? GROUND_NIGHT : GROUND_DAY}
+      scale={scale}
+      cell={cell}
+      className={className}
+      style={style}
+    />
+  );
 }

@@ -18,9 +18,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <SiteNav />
       <TickerStrip />
       <main className="shell relative z-[2] py-12 md:py-16">{children}</main>
-      {/* The horizon the app stands on, between the last panel and the night footer. */}
-      <div className="relative z-[2] overflow-hidden opacity-40 [--cell:2px]" aria-hidden>
-        <GroundLine cell="calc(var(--cell) * 2)" className="w-full" />
+      {/* The horizon the app stands on: the last thing before the page goes to night. */}
+      <div className="relative z-[2] overflow-hidden opacity-60 [--cell:2px]" aria-hidden>
+        <GroundLine night cell="calc(var(--cell) * 2)" />
       </div>
       <Footer />
     </div>

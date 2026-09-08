@@ -4,7 +4,6 @@ import Link from "next/link";
 import { CountUp, Reveal } from "@/components/motion";
 import { DashboardPreview } from "@/components/DashboardPreview";
 import { HeroCounter } from "@/components/HeroCounter";
-import { GroundLine } from "@/components/pixel/Scenery";
 import { Folio } from "@/components/site/Folio";
 
 const NUMBERS = [
@@ -53,10 +52,6 @@ export function Live() {
 
           <div className="reveal reveal-2 min-w-0 lg:col-span-8">
             <DashboardPreview />
-            {/* The horizon the panel sits on. */}
-            <div className="mt-[-2px] overflow-hidden opacity-70 [--cell:2px]" aria-hidden>
-              <GroundLine cell="calc(var(--cell) * 2)" className="w-full" />
-            </div>
           </div>
         </div>
 

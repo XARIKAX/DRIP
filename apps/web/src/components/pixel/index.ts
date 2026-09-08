@@ -1,4 +1,4 @@
-export { PixelSprite } from "./Sprite";
+export { PixelSprite, PixelStrip } from "./Sprite";
 export { PetalField } from "./Petals";
 export {
   Bamboo,
