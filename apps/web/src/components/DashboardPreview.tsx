@@ -128,7 +128,7 @@ export function DashboardPreview() {
                 <span className="text-[13px] font-bold tracking-tight text-ink">{h.symbol}</span>
               </div>
               <span className="num text-[12px] text-faint">{fmt(h.amount, 4)}</span>
-              <span className="num text-[12px] text-ink">${fmt(h.valueUsd)}</span>
+              <span className="num text-[12px] text-ink">{h.valueUsd === null ? "—" : `$${fmt(h.valueUsd)}`}</span>
               <span className="font-mono text-nano uppercase text-accent">{MODE_LABEL[h.mode]}</span>
             </div>
           ))}

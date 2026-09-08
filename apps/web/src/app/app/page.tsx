@@ -79,7 +79,11 @@ function TopStrip() {
         <div className="mt-3 text-[clamp(26px,2.6vw,38px)] font-semibold tracking-tighter text-ink">
           <LiveCounter base={summary.valueUsd} ratePerSec={summary.streamRatePerSec} decimals={2} prefix="$" />
         </div>
-        <div className="mt-1 text-[12px] text-muted">Your stock plus everything it has earned</div>
+        <div className="mt-1 text-[12px] text-muted">
+          {summary.unpricedHoldings > 0
+            ? `Excludes ${summary.unpricedHoldings} ${summary.unpricedHoldings === 1 ? "stock" : "stocks"} with no live price right now`
+            : "Your stock plus everything it has earned"}
+        </div>
       </div>
       <div className="bg-ground p-6">
         <div className="panel-title">Earned this week</div>
@@ -312,7 +316,11 @@ function HoldingsPanel() {
                       <AnimatedNumber value={h.amount} decimals={4} className="text-muted" flash="dark" />
                     </td>
                     <td>
-                      <AnimatedNumber value={h.valueUsd} decimals={2} prefix="$" className="font-medium text-ink" flash="dark" />
+                      {h.valueUsd === null ? (
+                        <span className="num font-medium text-muted" title="No live price for this stock right now">—</span>
+                      ) : (
+                        <AnimatedNumber value={h.valueUsd} decimals={2} prefix="$" className="font-medium text-ink" flash="dark" />
+                      )}
                     </td>
                     <td>
                       <div className="seg" role="group" aria-label={`${h.symbol} dividend mode`}>

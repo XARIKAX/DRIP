@@ -60,8 +60,12 @@ function SplitSeriesPage({ series }: { series: SplitSeries }) {
   const dividends = useSplitDividendRows(series.seriesId);
   const matured = Date.now() >= series.maturity * 1000;
 
-  const ptValue = (position?.ptBalance ?? 0) * series.underlyingPriceUsd;
-  const ytAnnual = (position?.ytBalance ?? 0) * series.underlyingPriceUsd * (series.impliedYieldApr / 100);
+  // Null price means these are unknown, not zero: the panels show a dash instead.
+  const ptValue = series.underlyingPriceUsd === null ? null : (position?.ptBalance ?? 0) * series.underlyingPriceUsd;
+  const ytAnnual =
+    series.underlyingPriceUsd === null
+      ? null
+      : (position?.ytBalance ?? 0) * series.underlyingPriceUsd * (series.impliedYieldApr / 100);
 
   return (
     <>
@@ -75,14 +79,14 @@ function SplitSeriesPage({ series }: { series: SplitSeries }) {
                 <AnimatedNumber value={position?.ptBalance ?? 0} decimals={4} flash="dark" />
               </span>
             </div>
-            <div className="mt-1 text-[12px] text-muted">Worth ${fmt(ptValue, 0)} in stock on the end date</div>
+            <div className="mt-1 text-[12px] text-muted">Worth {ptValue === null ? "an unknown amount" : `$${fmt(ptValue, 0)}`} in stock on the end date</div>
           </div>
           <div className="bg-ground p-6">
             <div className="panel-title">Dividend tokens you hold</div>
             <div className="mt-3 text-[clamp(22px,2.2vw,32px)] font-semibold tracking-tighter text-accent">
               <AnimatedNumber value={position?.ytBalance ?? 0} decimals={4} flash="dark" />
             </div>
-            <div className="mt-1 text-[12px] text-muted">About ${fmt(ytAnnual, 0)} a year in dividends</div>
+            <div className="mt-1 text-[12px] text-muted">About {ytAnnual === null ? "an unknown amount" : `$${fmt(ytAnnual, 0)}`} a year in dividends</div>
           </div>
           <div className="bg-ground p-6">
             <div className="panel-title">End date</div>

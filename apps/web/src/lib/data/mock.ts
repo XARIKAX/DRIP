@@ -303,7 +303,7 @@ class MockStore {
       const movePct = (spark[spark.length - 1]! / spark[0]! - 1) * 100;
       out.push({ symbol, amount: h.amount, valueUsd: h.amount * t.priceUsd, mode: h.mode, movePct, spark });
     }
-    return out.sort((x, y) => y.valueUsd - x.valueUsd);
+    return out.sort((x, y) => (y.valueUsd ?? 0) - (x.valueUsd ?? 0));
   }
 
   streams(): StreamRow[] {
@@ -353,7 +353,7 @@ class MockStore {
   private static readonly BORROW_APR = 0.058;
 
   credit(): CreditView {
-    const collateral = this.holdings().reduce((sum, h) => sum + h.valueUsd, 0);
+    const collateral = this.holdings().reduce((sum, h) => sum + (h.valueUsd ?? 0), 0);
     const dividendsPerYear = this.holdings().reduce((sum, h) => {
       const t = this.token(h.symbol);
       return sum + (t ? h.amount * t.perShare * 4 : 0);
@@ -557,7 +557,7 @@ class MockStore {
   summary(): PortfolioSummary {
     const nowMs = Date.now();
     let value = 0;
-    for (const h of this.holdings()) value += h.valueUsd;
+    for (const h of this.holdings()) value += h.valueUsd ?? 0;
     let rate = 0;
     for (const s of this.state.streams) {
       if (!s.closed && nowMs >= s.start * 1000 && nowMs < s.end * 1000) rate += s.ratePerSec;
@@ -581,6 +581,7 @@ class MockStore {
       .sort((x, y) => x.exDate - y.exDate)[0];
     return {
       valueUsd: value,
+      unpricedHoldings: 0,
       streamRatePerSec: rate,
       earnedThisWeekUsd: earned,
       activeRules: [...this.state.holdings.values()].filter((h) => h.amount > 0).length,
