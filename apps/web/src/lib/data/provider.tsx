@@ -191,19 +191,11 @@ const MODE_TO_CHAIN: Record<ModeName, ChainMode> = {
  * right and manufactures one outright for a stock that has never paid a dividend at
  * all, which is most of a mega cap technology basket.
  */
-function annualYieldPct(
-  perShare: number | undefined,
-  priceUsd: number | null,
-  perYear: number | undefined
-): number | null {
-  if (perShare === undefined || priceUsd === null || priceUsd <= 0) return null;
-  if (perYear === undefined || perYear <= 0) return null;
-  return ((perShare * perYear) / priceUsd) * 100;
-}
-
-/** How often a stock pays, from the listing. Undefined when the listing does not say. */
-function paymentsPerYear(symbol: string): number | undefined {
-  return listings[chainId]?.tokens.find((t) => t.symbol === symbol)?.dividendsPerYear;
+function annualYieldPct(symbol: string, priceUsd: number | null): number | null {
+  if (priceUsd === null || priceUsd <= 0) return null;
+  const annual = listings[chainId]?.tokens.find((t) => t.symbol === symbol)?.annualDividendPerShare;
+  if (annual === undefined) return null;
+  return (annual / priceUsd) * 100;
 }
 
 // ---------------------------------------------------------------------------
@@ -230,7 +222,7 @@ export function useTokensView(): TokenInfo[] {
         symbol: t.symbol,
         name: t.name,
         priceUsd,
-        yieldPct: annualYieldPct(perShare, priceUsd, paymentsPerYear(t.symbol)),
+        yieldPct: annualYieldPct(t.symbol, priceUsd),
         perShare: perShare ?? 0,
         nextExDate: next ? next.exDate : null,
         // Paying now means the calendar has this token between its ex and pay dates.
