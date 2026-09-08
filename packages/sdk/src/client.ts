@@ -5,7 +5,10 @@ import {
   dividendRegistryAbi,
   dripCoreAbi,
   lendingPoolAbi,
+  principalTokenAbi,
   reinvestorAbi,
+  splitVaultAbi,
+  yieldTokenAbi,
   streamEngineAbi,
 } from "./generated";
 import {
@@ -17,6 +20,9 @@ import {
   type DividendView,
   type PositionView,
   type StockToken,
+  type SplitDividendView,
+  type SplitPositionView,
+  type SplitSeriesView,
   type StreamView,
   type VaultPosition,
   type VaultStats,
@@ -496,6 +502,155 @@ export class DripReader {
       functionName: "autoRepayPrincipal",
       args: [user],
     })) as boolean;
+  }
+
+  // -------------------------------------------------------------------
+  // Split
+  // -------------------------------------------------------------------
+
+  /** True when this chain's deployment has a SplitVault. */
+  hasSplit(): boolean {
+    return Boolean(this.deployment.splitVault);
+  }
+
+  /**
+   * Every series the vault has opened, newest last.
+   *
+   * Series ids start at 1 and are never reused, so walking the counter is exact.
+   * A deployment with no series returns an empty list rather than throwing.
+   */
+  async getSplitSeries(): Promise<SplitSeriesView[]> {
+    const vault = this.deployment.splitVault;
+    if (!vault) return [];
+
+    const [count, splitFeeBps] = (await Promise.all([
+      this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "seriesCount" }),
+      this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "splitFeeBps" }),
+    ])) as [bigint, bigint];
+
+    if (count === 0n) return [];
+
+    const ids = Array.from({ length: Number(count) }, (_, i) => BigInt(i + 1));
+    const rows = await Promise.all(
+      ids.map(async (seriesId) => {
+        const s = (await this.client.readContract({
+          address: vault,
+          abi: splitVaultAbi,
+          functionName: "series",
+          args: [seriesId],
+        })) as readonly [Address, bigint, Address, Address, boolean];
+
+        const [stockToken, maturity, principalToken, yieldToken, exists] = s;
+        if (!exists) return null;
+
+        const [symbol, name, ptSupply, ytSupply, priceUsdg] = await Promise.all([
+          this.client.readContract({ address: stockToken, abi: erc20Abi, functionName: "symbol" }),
+          this.client.readContract({ address: stockToken, abi: erc20Abi, functionName: "name" }),
+          this.client.readContract({ address: principalToken, abi: principalTokenAbi, functionName: "totalSupply" }),
+          this.client.readContract({ address: yieldToken, abi: yieldTokenAbi, functionName: "totalSupply" }),
+          this.client.readContract({
+            address: this.deployment.swapAdapter,
+            abi: swapAdapterPriceAbi,
+            functionName: "priceUsdg",
+            args: [stockToken],
+          }),
+        ]);
+
+        return {
+          seriesId,
+          stockToken,
+          symbol,
+          name,
+          maturity: Number(maturity),
+          principalToken,
+          yieldToken,
+          ptSupply: ptSupply as bigint,
+          ytSupply: ytSupply as bigint,
+          priceUsdg: priceUsdg as bigint,
+          splitFeeBps: Number(splitFeeBps),
+        } satisfies SplitSeriesView;
+      })
+    );
+
+    return rows.filter((r): r is SplitSeriesView => r !== null);
+  }
+
+  /** A holder's share token and dividend token balances in one series. */
+  async getSplitPosition(seriesId: bigint, user: Address): Promise<SplitPositionView | null> {
+    const vault = this.deployment.splitVault;
+    if (!vault) return null;
+
+    const s = (await this.client.readContract({
+      address: vault,
+      abi: splitVaultAbi,
+      functionName: "series",
+      args: [seriesId],
+    })) as readonly [Address, bigint, Address, Address, boolean];
+    if (!s[4]) return null;
+
+    const [ptBalance, ytBalance] = await Promise.all([
+      this.client.readContract({ address: s[2], abi: principalTokenAbi, functionName: "balanceOf", args: [user] }),
+      this.client.readContract({ address: s[3], abi: yieldTokenAbi, functionName: "balanceOf", args: [user] }),
+    ]);
+
+    return { seriesId, ptBalance: ptBalance as bigint, ytBalance: ytBalance as bigint };
+  }
+
+  /**
+   * The dividends a series has seen, with this holder's claim on each.
+   *
+   * Every dividend on the series' own stock, whatever its ex date. It is tempting to
+   * filter to the ones already ex, but the only clock available here is the caller's
+   * wall clock and the ex date is a chain timestamp — on any chain whose time has
+   * drifted from the browser's, that comparison hides dividends that are genuinely
+   * harvestable. The row carries its ex date; the UI gates the button on it.
+   */
+  async getSplitDividends(seriesId: bigint, user: Address): Promise<SplitDividendView[]> {
+    const vault = this.deployment.splitVault;
+    if (!vault) return [];
+
+    const s = (await this.client.readContract({
+      address: vault,
+      abi: splitVaultAbi,
+      functionName: "series",
+      args: [seriesId],
+    })) as readonly [Address, bigint, Address, Address, boolean];
+    if (!s[4]) return [];
+
+    const calendar = await this.getCalendar();
+    const mine = calendar.filter((d) => d.stockToken.toLowerCase() === s[0].toLowerCase());
+
+    return Promise.all(
+      mine.map(async (d) => {
+        const [harvested, pool, claimable, claimed, balanceAtEx] = await Promise.all([
+          this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "harvested", args: [seriesId, d.id] }),
+          this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "dividendPool", args: [seriesId, d.id] }),
+          this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "pendingYield", args: [seriesId, d.id, user] }),
+          this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "yieldClaimed", args: [seriesId, d.id, user] }),
+          // What the series held when the dividend went ex. Zero means this dividend
+          // predates the series having a balance, and there is nothing to harvest.
+          this.client.readContract({
+            address: this.deployment.dripCore,
+            abi: dripCoreAbi,
+            functionName: "balanceOfAt",
+            args: [vault, s[0], BigInt(d.exDate)],
+          }),
+        ]);
+
+        return {
+          seriesId,
+          dividendId: d.id,
+          symbol: d.symbol,
+          amountPerToken: d.amountPerToken,
+          exDate: d.exDate,
+          eligible: (balanceAtEx as bigint) > 0n,
+          harvested: harvested as boolean,
+          pool: pool as bigint,
+          claimable: claimable as bigint,
+          claimed: claimed as boolean,
+        } satisfies SplitDividendView;
+      })
+    );
   }
 
   // -------------------------------------------------------------------

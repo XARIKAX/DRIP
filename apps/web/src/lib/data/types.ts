@@ -28,7 +28,8 @@ export interface TokenInfo {
   name: string;
   priceUsd: number;
   /** Trailing dividend yield, percent. */
-  yieldPct: number;
+  /** Dividend yield a year, from the declared calendar. Null when nothing is declared. */
+  yieldPct: number | null;
   /** Quarterly dividend per share in USD. */
   perShare: number;
   /** Next ex date, unix seconds, or null when nothing is scheduled. */
@@ -44,8 +45,10 @@ export interface Holding {
   valueUsd: number;
   mode: ModeName;
   /** Percent move today. */
-  movePct: number;
+  /** Today's move, or null on a chain with no intraday price history to read. */
+  movePct: number | null;
   /** 60 point intraday walk for the inline sparkline, oldest first. */
+  /** Intraday series for the sparkline. Empty when there is none to show. */
   spark: number[];
 }
 
@@ -221,6 +224,8 @@ export interface SplitDividendRow {
   symbol: string;
   perShare: number;
   exDate: number;
+  /** False when the series held none of the stock at this dividend's ex date. */
+  eligible: boolean;
   /** Set once anyone has pulled the entitlement into the series' yield pool. */
   harvested: boolean;
   /** The pool a harvest produced, split fee already taken at split time, advance

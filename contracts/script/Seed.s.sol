@@ -11,6 +11,7 @@ import {MockStockToken} from "../src/mocks/MockStockToken.sol";
 import {DividendRegistry} from "../src/DividendRegistry.sol";
 import {AdvanceVault} from "../src/AdvanceVault.sol";
 import {DripCore} from "../src/DripCore.sol";
+import {SplitVault} from "../src/SplitVault.sol";
 
 /// @title Seed
 /// @notice Makes a fresh deployment look like a live market in one command.
@@ -86,8 +87,20 @@ contract Seed is Script {
         console2.log("Declared KO dividend:", d2);
         console2.log("Declared MSFT dividend:", d3);
 
+        // 4. One open split series, so the Split page has something to render. A
+        //    deployment with no series is correct and completely empty, same as a
+        //    calendar with no dividends.
+        _openSplitSeries(book, aapl, nowTs);
+
         vm.stopBroadcast();
 
         console2.log("Seed complete. Connect a wallet, faucet, deposit, pick a mode.");
+    }
+
+    /// @dev Its own frame purely to keep run() under solc's stack limit. The seed
+    ///      touches enough addresses that one more local tips it over.
+    function _openSplitSeries(string memory book, address stockToken, uint64 nowTs) private {
+        SplitVault(book.readAddress(".splitVault")).createSeries(stockToken, nowTs + 180 days);
+        console2.log("Opened AAPL split series maturing in 180 days");
     }
 }

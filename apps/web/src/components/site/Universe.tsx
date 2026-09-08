@@ -57,6 +57,8 @@ export function Universe() {
       // A name with no scheduled ex date sorts last in either direction rather than
       // pretending to be at the epoch.
       if (key === "nextExDate") return t.nextExDate ?? Number.MAX_SAFE_INTEGER;
+      // An unknown yield sorts last too, for the same reason: no number is not zero.
+      if (key === "yieldPct") return t.yieldPct ?? -1;
       return t[key];
     };
 
@@ -164,7 +166,7 @@ export function Universe() {
                       {t.perShare > 0 ? `$${fmt(t.perShare)}` : "—"}
                     </td>
                     <td className="num text-right text-cyan">
-                      {t.yieldPct > 0 ? `${fmt(t.yieldPct, 2)}%` : "—"}
+                      {t.yieldPct ? `${fmt(t.yieldPct, 2)}%` : "—"}
                     </td>
                     <td className="num text-right text-panel-muted">
                       {t.nextExDate ? shortDate(t.nextExDate) : "—"}

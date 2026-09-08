@@ -932,7 +932,7 @@ HANDOFF.md                notes for the developer taking this live`}</Code>
               </span>,
               view?.name ?? "—",
               <span key="p" className="num">{view ? `$${fmt(view.priceUsd)}` : "—"}</span>,
-              <span key="y" className="num text-cyan-deep">{view && view.yieldPct > 0 ? `${view.yieldPct.toFixed(2)}%` : "—"}</span>,
+              <span key="y" className="num text-cyan-deep">{view?.yieldPct ? `${view.yieldPct.toFixed(2)}%` : "—"}</span>,
               <span key="e" className="num">{view?.nextExDate ? shortDate(view.nextExDate) : view?.payingNow ? "paying now" : "—"}</span>,
               <span key="l" className="font-mono text-nano uppercase text-faint">{t.liquidity === "live" ? "proven" : "quote first"}</span>,
             ];

@@ -332,11 +332,19 @@ function HoldingsPanel() {
                     </td>
                     <td>
                       <div className="flex items-center justify-end gap-3">
-                        <Sparkline points={h.spark} width={76} up={h.movePct >= 0} dark />
-                        <span className={`num w-[58px] text-right text-[12px] font-medium ${h.movePct >= 0 ? "text-cyan" : "text-down"}`}>
-                          {h.movePct >= 0 ? "+" : ""}
-                          {h.movePct.toFixed(2)}%
-                        </span>
+                        {h.movePct === null ? (
+                          // No intraday price history to read on this chain. A dash is
+                          // the honest answer; a drawn line would be invented.
+                          <span className="num w-[58px] text-right text-[12px] text-panel-muted">—</span>
+                        ) : (
+                          <>
+                            <Sparkline points={h.spark} width={76} up={h.movePct >= 0} dark />
+                            <span className={`num w-[58px] text-right text-[12px] font-medium ${h.movePct >= 0 ? "text-cyan" : "text-down"}`}>
+                              {h.movePct >= 0 ? "+" : ""}
+                              {h.movePct.toFixed(2)}%
+                            </span>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

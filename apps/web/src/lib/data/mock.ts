@@ -459,6 +459,9 @@ class MockStore {
           symbol: d.symbol,
           perShare: d.perShare,
           exDate: d.exDate,
+          // The reference portfolio's series holds stock from the start, so every
+          // dividend in it is eligible. Onchain this is read per dividend.
+          eligible: true,
           harvested: h?.harvested ?? false,
           poolUsd: h?.poolUsd ?? 0,
           claimableUsd: h?.claimed ? 0 : ytShare,

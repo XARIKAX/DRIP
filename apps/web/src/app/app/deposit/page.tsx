@@ -98,7 +98,7 @@ export default function DepositPage() {
                         <span className="num text-[13px]">${fmt(t.priceUsd)}</span>
                       </span>
                       <span className={`mt-0.5 flex items-baseline justify-between gap-2 text-micro font-bold uppercase ${active ? "text-panel-text/60" : "text-panel-muted"}`}>
-                        <span>{t.yieldPct.toFixed(2)}% yield</span>
+                        <span>{t.yieldPct === null ? "Yield unknown" : `${t.yieldPct.toFixed(2)}% yield`}</span>
                         <span>{t.nextExDate ? `Ex ${shortDate(t.nextExDate)}` : t.payingNow ? "Paying now" : "None set"}</span>
                       </span>
                     </span>
