@@ -42,6 +42,7 @@ export interface Deployment {
   streamEngine: Address;
   reinvestor: Address;
   swapAdapter: Address;
+  splitVault: Address;
   /** Ticker to address. */
   tokens: Record<string, Address>;
   /** Ticker to USDG price of one whole token, 6 decimals. */
