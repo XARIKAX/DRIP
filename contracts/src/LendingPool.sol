@@ -21,6 +21,9 @@ interface ILendableVault {
     function recordLoanLoss(uint256 amount) external;
     function loansOutstanding() external view returns (uint256);
     function freeCash() external view returns (uint256);
+    function totalAssets() external view returns (uint256);
+    function receivables() external view returns (uint256);
+    function maxUtilizationBps() external view returns (uint256);
 }
 
 /// @notice The DripCore surface the credit side uses.
@@ -281,12 +284,28 @@ contract LendingPool is ILendingPool, AccessControl, Pausable, ReentrancyGuard {
         return (collateralValue(user) * maxLtvBps) / BPS;
     }
 
+    /// @notice What the vault will still lend before it hits its utilisation cap.
+    /// @dev Lending does not change the vault's total assets — cash falls and the loan
+    ///      book rises by the same amount — so the cap reduces to a headroom on the
+    ///      deployed total. Without this, a pool at its cap reports its remaining cash
+    ///      as borrowable and the next borrow reverts inside the vault.
+    function lendableHeadroom() public view returns (uint256) {
+        uint256 ceiling = (vault.totalAssets() * vault.maxUtilizationBps()) / BPS;
+        uint256 deployed = vault.receivables() + vault.loansOutstanding();
+        if (deployed >= ceiling) return 0;
+        return ceiling - deployed;
+    }
+
     /// @notice Still drawable by `user` right now.
+    /// @dev Three limits, and the smallest wins: their collateral, the vault's spare
+    ///      cash, and the utilisation cap. All three have to be here — this number is
+    ///      what the app puts on the Borrow button, and a figure the next transaction
+    ///      would reject is worse than no figure.
     function availableToBorrow(address user) public view returns (uint256) {
         uint256 power = borrowingPower(user);
         uint256 debt = debtOf(user);
         if (debt >= power) return 0;
-        return Math.min(power - debt, vault.freeCash());
+        return Math.min(power - debt, Math.min(vault.freeCash(), lendableHeadroom()));
     }
 
     /// @notice Interest owed by `user` on top of the principal they drew.
@@ -462,7 +481,7 @@ contract LendingPool is ILendingPool, AccessControl, Pausable, ReentrancyGuard {
         collateral = collateralValue(user);
         power = (collateral * maxLtvBps) / BPS;
         debt = debtOf(user);
-        available = debt >= power ? 0 : Math.min(power - debt, vault.freeCash());
+        available = debt >= power ? 0 : Math.min(power - debt, Math.min(vault.freeCash(), lendableHeadroom()));
         interest = accruedInterestOf(user);
         serviced = servicedFromDividends[user];
         health = healthFactorBps(user);
