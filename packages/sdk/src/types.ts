@@ -136,7 +136,13 @@ export interface VaultStats {
   maxUtilizationBps: bigint;
   advanceFeeBps: bigint;
   totalSupply: bigint;
-  /** Assets per 1e18 shares. */
+  /**
+   * Decimals the vault's SHARES carry, which is not the asset's six: AdvanceVault
+   * adds a _decimalsOffset() of 3 on top. Scale raw share amounts by this, never by
+   * the stock token's 1e18.
+   */
+  shareDecimals: number;
+  /** Assets for one whole share, i.e. 10 ** shareDecimals of them. */
   sharePrice: bigint;
 }
 

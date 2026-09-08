@@ -298,7 +298,9 @@ export function useVaultView(): { vault: VaultView; loading: boolean } {
       feesEarnedUsd: Number(s.totalFeesAccrued) / USDG,
       sharePrice: Number(s.sharePrice) / USDG,
       freeLiquidityUsd: Number(s.freeCash) / USDG,
-      yourShares: p ? Number(p.shares) / STOCK : 0,
+      // Pool shares are the vault's own decimals, not a stock token's 1e18. Dividing by
+      // STOCK here rendered a real 50 share position as 0.0000 next to $50.00 of assets.
+      yourShares: p ? Number(p.shares) / 10 ** s.shareDecimals : 0,
       yourAssetsUsd: p ? Number(p.assets) / USDG : 0,
       maxWithdrawUsd: p ? Number(p.maxWithdraw) / USDG : 0,
       // One point, not a curve. There is no historical series onchain to read, and

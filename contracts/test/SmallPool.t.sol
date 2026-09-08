@@ -28,6 +28,23 @@ contract SmallPoolTest is DripTestBase {
         fundVault(POOL);
     }
 
+    /// @notice What a share IS, which is what the Pool page renders.
+    /// @dev The virtual share offset makes a share 1e9, not 1e18, and the dashboard read
+    ///      the balance as though it were a stock token: a real 50 share position showed
+    ///      as 0.0000 beside $50.00 of assets, and one share was priced at a billion
+    ///      dollars. Nothing onchain was wrong, but nothing onchain said so either.
+    ///      These three lines are what the SDK now reads instead of assuming.
+    function test_aShareIsTheVaultsOwnDecimalsAndIsWorthOneUsdg() public view {
+        uint8 shareDecimals = vault.decimals();
+        assertEq(shareDecimals, usdg.decimals() + 3, "shares carry the asset's decimals plus the offset");
+
+        // One whole share, at par, is one whole USDG.
+        assertEq(vault.convertToAssets(10 ** shareDecimals), 1e6, "one share is one USDG");
+
+        // And the LP's raw balance, scaled by that, is the position the page shows.
+        assertEq(vault.balanceOf(lp) / 10 ** shareDecimals, 50, "50 shares for 50 USDG");
+    }
+
     /// @dev The LP's shares are worth what they put in, on a pool this size too.
     function test_firstDepositIsNotDilutedByTheVirtualShares() public view {
         assertEq(vault.totalAssets(), POOL, "pool holds what was funded");
