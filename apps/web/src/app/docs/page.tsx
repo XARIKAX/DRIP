@@ -1,4 +1,5 @@
 import { Docs } from "@/components/docs/Docs";
+import { ShowcaseData } from "@/lib/data/provider";
 
 /**
  * The documentation. One page, numbered like a prospectus, read top to bottom or
@@ -7,5 +8,9 @@ import { Docs } from "@/components/docs/Docs";
  * file stays a single line of composition.
  */
 export default function DocsPage() {
-  return <Docs />;
+  return (
+    <ShowcaseData>
+      <Docs />
+    </ShowcaseData>
+  );
 }

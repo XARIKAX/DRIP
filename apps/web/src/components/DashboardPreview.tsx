@@ -2,18 +2,30 @@
 
 import { LiveCounter, StreamTicker, fmt, shortDate } from "@/components/live";
 import { TokenMark } from "@/components/TokenMark";
-import { useHoldings, usePortfolioSummary, useStreamRows } from "@/lib/data/provider";
+import { ShowcaseData, useHoldings, usePortfolioSummary, useStreamRows } from "@/lib/data/provider";
 import { MODE_LABEL } from "@/lib/data/types";
 
 /**
  * The product shot, except it is the product.
  *
- * Not an image and not a mock-up: the actual dashboard components, bound to the same
- * demo store as /app, accruing against the wall clock while the page is open. Framed
- * in a window whose chrome carries the live marker, because the claim being made is
- * that the numbers are moving — so they had better be moving.
+ * Not an image and not a mock-up: the actual dashboard components, accruing against
+ * the wall clock while the page is open. Framed in a window whose chrome carries the
+ * live marker, because the claim being made is that the numbers are moving — so they
+ * had better be moving.
+ *
+ * It reads the seeded showcase store rather than the visitor's own, which is empty
+ * until they do something. A landing page has to show a working account; the app has
+ * to show yours.
  */
 export function DashboardPreview() {
+  return (
+    <ShowcaseData>
+      <PreviewBody />
+    </ShowcaseData>
+  );
+}
+
+function PreviewBody() {
   const summary = usePortfolioSummary();
   const streams = useStreamRows();
   const holdings = useHoldings();

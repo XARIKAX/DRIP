@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Mark } from "@/components/Wordmark";
 import { useMagnetic } from "@/components/motion";
-import { activeChain } from "@/lib/chain.config";
 import { SECTIONS } from "@/components/site/HeroNav";
 
 /**
@@ -92,10 +91,6 @@ export function StickyNav() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <span className="pill-live hidden xl:inline-flex">
-              <span className="beacon" aria-hidden />
-              Live · {activeChain.name}
-            </span>
             <Link
               href="/docs"
               className="hidden font-serif text-[14px] text-faint transition-colors duration-300 hover:text-ink md:inline-block"
