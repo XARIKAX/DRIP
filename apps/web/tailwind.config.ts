@@ -124,34 +124,6 @@ const config: Config = {
         down: { DEFAULT: ch("--down"), bright: ch("--down-bright") },
         vermilion: ch("--vermilion"),
 
-        /* ------------------------------------------------------------------ */
-        /* Compatibility shims.                                                */
-        /*                                                                     */
-        /* The dApp and the docs — some 3,400 lines — are written almost        */
-        /* entirely in these token names. Pointing them at the new ramps        */
-        /* re-skins every one of those screens without editing a single page    */
-        /* file, which is what lets the rebrand land in reviewable pieces       */
-        /* instead of one unreadable commit. They are renamed away, and this    */
-        /* block deleted, in the final pass; a green build after that deletion  */
-        /* is the proof that nothing was left behind.                          */
-        /* ------------------------------------------------------------------ */
-        cyan: {
-          DEFAULT: ch("--iris-500"),
-          bright: ch("--iris-300"),
-          dark: ch("--iris-600"),
-          deep: ch("--iris-700"),
-          soft: "rgb(var(--iris-500) / 0.10)",
-        },
-        panel: {
-          DEFAULT: ch("--night-2"),
-          2: ch("--night-3"),
-          3: ch("--night-4"),
-          text: ch("--night-text"),
-          muted: ch("--night-muted"),
-          faint: ch("--night-faint"),
-          line: "var(--night-edge-soft)",
-          edge: "var(--night-edge)",
-        },
       },
 
       fontFamily: {

@@ -97,7 +97,7 @@ export function HeroNav() {
                 className="flex items-center justify-between rounded-md px-4 py-3 font-serif text-[15px] text-muted transition-colors hover:bg-ground-2 hover:text-ink"
               >
                 {s.label}
-                <span aria-hidden className="text-ghost">→</span>
+                <span aria-hidden className="text-faint">→</span>
               </a>
             ))}
           </div>

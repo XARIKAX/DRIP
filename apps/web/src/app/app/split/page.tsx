@@ -66,37 +66,37 @@ function SplitSeriesPage({ series }: { series: SplitSeries }) {
   return (
     <>
       <section className="panel" aria-label="Series position">
-        <div className="grid grid-cols-2 gap-px bg-panel-line lg:grid-cols-4">
-          <div className="bg-panel p-6">
+        <div className="grid grid-cols-2 gap-px bg-line lg:grid-cols-4">
+          <div className="bg-ground p-6">
             <div className="panel-title">Share tokens you hold</div>
             <div className="mt-3 flex items-baseline gap-2">
               <TokenMark symbol={series.symbol} dark size={22} />
-              <span className="text-[clamp(22px,2.2vw,32px)] font-semibold tracking-tighter text-panel-text">
+              <span className="text-[clamp(22px,2.2vw,32px)] font-semibold tracking-tighter text-ink">
                 <AnimatedNumber value={position?.ptBalance ?? 0} decimals={4} flash="dark" />
               </span>
             </div>
-            <div className="mt-1 text-[12px] text-panel-muted">Worth ${fmt(ptValue, 0)} in stock on the end date</div>
+            <div className="mt-1 text-[12px] text-muted">Worth ${fmt(ptValue, 0)} in stock on the end date</div>
           </div>
-          <div className="bg-panel p-6">
+          <div className="bg-ground p-6">
             <div className="panel-title">Dividend tokens you hold</div>
-            <div className="mt-3 text-[clamp(22px,2.2vw,32px)] font-semibold tracking-tighter text-cyan">
+            <div className="mt-3 text-[clamp(22px,2.2vw,32px)] font-semibold tracking-tighter text-accent">
               <AnimatedNumber value={position?.ytBalance ?? 0} decimals={4} flash="dark" />
             </div>
-            <div className="mt-1 text-[12px] text-panel-muted">About ${fmt(ytAnnual, 0)} a year in dividends</div>
+            <div className="mt-1 text-[12px] text-muted">About ${fmt(ytAnnual, 0)} a year in dividends</div>
           </div>
-          <div className="bg-panel p-6">
+          <div className="bg-ground p-6">
             <div className="panel-title">End date</div>
-            <div className={`mt-3 text-[clamp(20px,2vw,28px)] font-semibold tracking-tighter ${matured ? "text-cyan" : "text-panel-text"}`}>
+            <div className={`mt-3 text-[clamp(20px,2vw,28px)] font-semibold tracking-tighter ${matured ? "text-accent" : "text-ink"}`}>
               {matured ? "Reached" : <Countdown to={series.maturity} />}
             </div>
-            <div className="mt-1 text-[12px] text-panel-muted">{shortDate(series.maturity)}</div>
+            <div className="mt-1 text-[12px] text-muted">{shortDate(series.maturity)}</div>
           </div>
-          <div className="bg-panel p-6">
+          <div className="bg-ground p-6">
             <div className="panel-title">Dividend yield</div>
-            <div className="mt-3 text-[clamp(22px,2.2vw,32px)] font-semibold tracking-tighter text-panel-text">
-              {series.impliedYieldApr.toFixed(2)}<span className="text-[15px] text-panel-muted">% a year</span>
+            <div className="mt-3 text-[clamp(22px,2.2vw,32px)] font-semibold tracking-tighter text-ink">
+              {series.impliedYieldApr.toFixed(2)}<span className="text-[15px] text-muted">% a year</span>
             </div>
-            <div className="mt-1 text-[12px] text-panel-muted">{(series.splitFeeBps / 100).toFixed(2)}% fee to split, free to rejoin</div>
+            <div className="mt-1 text-[12px] text-muted">{(series.splitFeeBps / 100).toFixed(2)}% fee to split, free to rejoin</div>
           </div>
         </div>
       </section>
@@ -135,11 +135,11 @@ function YieldPanel({ series, rows }: { series: SplitSeries; rows: ReturnType<ty
     <section className="panel lg:col-span-2" aria-label="Yield pool">
       <div className="panel-head">
         <span className="panel-title">Dividends</span>
-        <span className="text-micro font-bold uppercase text-panel-faint">Every payout on this stock</span>
+        <span className="text-micro font-bold uppercase text-faint">Every payout on this stock</span>
       </div>
 
       {rows.length === 0 ? (
-        <div className="px-6 py-10 text-center text-[13px] text-panel-muted">
+        <div className="px-6 py-10 text-center text-[13px] text-muted">
           No dividends announced for {series.symbol} yet.
         </div>
       ) : (
@@ -153,23 +153,23 @@ function YieldPanel({ series, rows }: { series: SplitSeries; rows: ReturnType<ty
             return (
               <div
                 key={row.dividendId}
-                className="flex flex-wrap items-center justify-between gap-4 border-b border-panel-line px-6 py-4 last:border-b-0"
+                className="flex flex-wrap items-center justify-between gap-4 border-b border-line px-6 py-4 last:border-b-0"
               >
                 <div>
-                  <div className="text-[14px] font-bold tracking-tight text-panel-text">
+                  <div className="text-[14px] font-bold tracking-tight text-ink">
                     ${fmt(row.perShare)} / share
                   </div>
-                  <div className="mt-1 text-micro font-bold uppercase text-panel-faint">
+                  <div className="mt-1 text-micro font-bold uppercase text-faint">
                     Ex date {shortDate(row.exDate)} · {past ? (row.harvested ? "Collected" : "Ready to collect") : "Not yet"}
                   </div>
                 </div>
 
                 {row.harvested ? (
                   <div className="text-right">
-                    <div className="num text-[15px] font-semibold text-cyan">
+                    <div className="num text-[15px] font-semibold text-accent">
                       {row.claimed ? "Paid to you" : `$${fmt(row.claimableUsd)} is yours`}
                     </div>
-                    <div className="text-[11px] text-panel-faint">${fmt(row.poolUsd)} total for everyone</div>
+                    <div className="text-[11px] text-faint">${fmt(row.poolUsd)} total for everyone</div>
                   </div>
                 ) : null}
 
@@ -188,7 +188,7 @@ function YieldPanel({ series, rows }: { series: SplitSeries; rows: ReturnType<ty
         </div>
       )}
 
-      <p className="border-t border-panel-line px-6 py-4 text-[12px] leading-relaxed text-panel-faint">
+      <p className="border-t border-line px-6 py-4 text-[12px] leading-relaxed text-faint">
         Anyone can press collect once a dividend&apos;s ex date has passed. The money is then
         shared out to whoever held dividend tokens on that exact day. If you sold your
         tokens the day after, you still get paid for that one.
@@ -249,7 +249,7 @@ function ActionPanel({ series, matured }: { series: SplitSeries; matured: boolea
       </div>
 
       <div className="space-y-4 p-5">
-        <div className="flex items-baseline justify-between text-micro font-bold uppercase text-panel-muted">
+        <div className="flex items-baseline justify-between text-micro font-bold uppercase text-muted">
           <span>
             {activeTab === "split" ? `${series.symbol} in your wallet` : activeTab === "merge" ? "Pairs you can rejoin" : "Share tokens you can cash in"}
           </span>
@@ -266,7 +266,7 @@ function ActionPanel({ series, matured }: { series: SplitSeries; matured: boolea
           />
           <button
             type="button"
-            className="border border-panel-line px-3 text-micro font-bold uppercase text-panel-muted hover:text-panel-text"
+            className="border border-line px-3 text-micro font-bold uppercase text-muted hover:text-ink"
             onClick={() => setAmount(max > 0 ? max.toFixed(4) : "")}
           >
             Max
@@ -274,13 +274,13 @@ function ActionPanel({ series, matured }: { series: SplitSeries; matured: boolea
         </div>
 
         <dl className="text-[13px]">
-          <div className="flex justify-between border-b border-panel-line py-2">
-            <dt className="text-panel-muted">Fee to split</dt>
-            <dd className="num text-panel-text">{(series.splitFeeBps / 100).toFixed(2)}%</dd>
+          <div className="flex justify-between border-b border-line py-2">
+            <dt className="text-muted">Fee to split</dt>
+            <dd className="num text-ink">{(series.splitFeeBps / 100).toFixed(2)}%</dd>
           </div>
           <div className="flex justify-between py-2">
-            <dt className="text-panel-muted">Fee to rejoin or cash in</dt>
-            <dd className="num text-panel-text">None</dd>
+            <dt className="text-muted">Fee to rejoin or cash in</dt>
+            <dd className="num text-ink">None</dd>
           </div>
         </dl>
 
@@ -288,7 +288,7 @@ function ActionPanel({ series, matured }: { series: SplitSeries; matured: boolea
           {activeTab === "split" ? "Split it" : activeTab === "merge" ? "Rejoin into stock" : "Cash in for stock"}
         </button>
         {error ? <p className="text-[12px] text-down">{error}</p> : null}
-        <p className="text-[12px] leading-snug text-panel-faint">
+        <p className="text-[12px] leading-snug text-faint">
           {activeTab === "split"
             ? "You get one share token and one dividend token for each share, minus the small fee. The stock keeps earning dividends the whole time."
             : activeTab === "merge"

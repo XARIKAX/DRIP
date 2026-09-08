@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
  * The diagrams in the documentation.
  *
  * Every figure is an inline SVG in the same vocabulary as the mechanism scene on the
- * landing page: graph paper registration marks, mono labels, hairline boxes, one cyan
+ * landing page: graph paper registration marks, mono labels, hairline boxes, one accent
  * accent for whatever is live or moving. They are drawn at an 860 unit width and
  * scale with the column, so label sizes are set for legibility at the narrowest
  * column they will ever be rendered in, not the widest.
@@ -18,7 +18,7 @@ const SANS = "Instrument Sans, Helvetica Neue, Helvetica, Arial, sans-serif";
 const INK = "#F1EBFF";
 const MUTED = "#A99BC4";
 const FAINT = "#8A7BA8";
-const CYAN = "#AC85FB";
+const ACCENT = "#AC85FB";
 const RED = "#FF7A66";
 const BOX = "#150A24";
 const BOX_2 = "#1D1030";
@@ -42,8 +42,8 @@ function Frame({
         <marker id="doc-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill={MUTED} />
         </marker>
-        <marker id="doc-arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill={CYAN} />
+        <marker id="doc-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill={ACCENT} />
         </marker>
         <pattern id="doc-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <line x1="0" y1="0" x2="0" y2="6" stroke={RED} strokeWidth="1.2" opacity="0.7" />
@@ -101,7 +101,7 @@ function Box({
         strokeWidth="1.2"
         strokeDasharray={dashed ? "4 4" : undefined}
       />
-      {accent ? <rect x={x} y={y} width="3" height={h} fill={CYAN} /> : null}
+      {accent ? <rect x={x} y={y} width="3" height={h} fill={ACCENT} /> : null}
       <text x={x + 16} y={y + 27} fill={dashed ? MUTED : INK} fontSize="15" fontFamily={SANS} fontWeight="700" letterSpacing="-0.3">
         {title}
       </text>
@@ -141,16 +141,16 @@ function Label({
   );
 }
 
-function Arrow({ d, cyan = false, dashed = false }: { d: string; cyan?: boolean; dashed?: boolean }) {
+function Arrow({ d, accent = false, dashed = false }: { d: string; accent?: boolean; dashed?: boolean }) {
   return (
     <path
       d={d}
       fill="none"
-      stroke={cyan ? CYAN : MUTED}
+      stroke={accent ? ACCENT : MUTED}
       strokeWidth="1.3"
       strokeDasharray={dashed ? "4 4" : undefined}
-      markerEnd={cyan ? "url(#doc-arrow-cyan)" : "url(#doc-arrow)"}
-      opacity={cyan ? 0.95 : 0.8}
+      markerEnd={accent ? "url(#doc-arrow-accent)" : "url(#doc-arrow)"}
+      opacity={accent ? 0.95 : 0.8}
     />
   );
 }
@@ -229,8 +229,8 @@ export function ArchitectureFigure() {
       </text>
 
       {/* DripCore → StreamEngine */}
-      <Arrow d="M420,240 L420,328" cyan />
-      <Label x={430} y={262} color={CYAN}>
+      <Arrow d="M420,240 L420,328" accent />
+      <Label x={430} y={262} color={ACCENT}>
         STARTS THE PAYOUT
       </Label>
 
@@ -246,15 +246,15 @@ export function ArchitectureFigure() {
       <Box x={300} y={330} w={240} h={90} title="StreamEngine" sub="pays out a little every second" sub2="from the ex date to pay day" />
 
       {/* StreamEngine → USDG wallet */}
-      <Arrow d="M540,375 L638,375" cyan />
-      <Label x={589} y={365} anchor="middle" size={8.5} color={CYAN}>
+      <Arrow d="M540,375 L638,375" accent />
+      <Label x={589} y={365} anchor="middle" size={8.5} color={ACCENT}>
         CASH TO YOU
       </Label>
       <Box x={640} y={330} w={196} h={90} title="Your wallet" sub="USDG, a little every second" sub2="or all at once, early" />
 
       {/* StreamEngine → Reinvestor */}
-      <Arrow d="M300,375 L166,375" cyan />
-      <Label x={233} y={365} anchor="middle" size={8.5} color={CYAN}>
+      <Arrow d="M300,375 L166,375" accent />
+      <Label x={233} y={365} anchor="middle" size={8.5} color={ACCENT}>
         BUY MORE STOCK
       </Label>
       <Box x={24} y={330} w={140} h={90} title="Reinvestor" sub="USDG → stock" sub2="checks the price" />
@@ -298,7 +298,7 @@ export function TimelineFigure() {
 
       {/* Eligibility window */}
       <rect x="60" y="70" width="330" height="100" fill="rgba(53,194,219,0.06)" />
-      <Label x={72} y={92} color={CYAN} size={9.5}>
+      <Label x={72} y={92} color={ACCENT} size={9.5}>
         DEPOSIT BEFORE THIS LINE TO GET THIS DIVIDEND
       </Label>
       <Label x={72} y={106} size={9.5}>
@@ -307,8 +307,8 @@ export function TimelineFigure() {
 
       {/* The stream */}
       <path d={`M390,${y} L710,88 L710,${y} Z`} fill="rgba(53,194,219,0.12)" />
-      <line x1="390" y1={y} x2="710" y2="88" stroke={CYAN} strokeWidth="1.8" />
-      <Label x={550} y={112} anchor="middle" color={CYAN}>
+      <line x1="390" y1={y} x2="710" y2="88" stroke={ACCENT} strokeWidth="1.8" />
+      <Label x={550} y={112} anchor="middle" color={ACCENT}>
         PAYS OUT A LITTLE EVERY SECOND
       </Label>
       <Label x={550} y={126} anchor="middle" size={9.5}>
@@ -317,7 +317,7 @@ export function TimelineFigure() {
 
       {/* Early chip */}
       <rect x="396" y="40" width="150" height="22" fill={BOX} stroke="rgba(53,194,219,0.5)" />
-      <Label x={471} y={55} anchor="middle" color={CYAN} size={9.5}>
+      <Label x={471} y={55} anchor="middle" color={ACCENT} size={9.5}>
         OR ALL OF IT TODAY, −1%
       </Label>
       <line x1="396" y1="62" x2="392" y2={y - 4} stroke="rgba(53,194,219,0.4)" strokeDasharray="2 3" />
@@ -425,23 +425,23 @@ export function CheckpointFigure() {
       })}
 
       {/* Ex date */}
-      <line x1={ex} y1="56" x2={ex} y2={base} stroke={CYAN} strokeWidth="1.6" strokeDasharray="4 4" />
-      <circle cx={ex} cy={yFor(150)} r="6" fill={CYAN} />
+      <line x1={ex} y1="56" x2={ex} y2={base} stroke={ACCENT} strokeWidth="1.6" strokeDasharray="4 4" />
+      <circle cx={ex} cy={yFor(150)} r="6" fill={ACCENT} />
       <rect x={ex - 60} y="30" width="120" height="22" fill={BOX} stroke="rgba(53,194,219,0.5)" />
-      <Label x={ex} y={45} anchor="middle" color={CYAN} size={9.5}>
+      <Label x={ex} y={45} anchor="middle" color={ACCENT} size={9.5}>
         EX DATE SECOND
       </Label>
 
       {/* The proof */}
       <rect x="520" y="72" width="270" height="86" fill={BOX} stroke={LINE} />
-      <rect x="520" y="72" width="3" height="86" fill={CYAN} />
+      <rect x="520" y="72" width="3" height="86" fill={ACCENT} />
       <text x="536" y="96" fill={INK} fontSize="12.5" fontFamily={MONO} fontWeight="500">
         shares on record on the ex date: 150
       </text>
       <text x="536" y="118" fill={MUTED} fontSize="11.5" fontFamily={MONO}>
         150 × $0.26 a share = $39.00
       </text>
-      <text x="536" y="140" fill={CYAN} fontSize="11.5" fontFamily={MONO}>
+      <text x="536" y="140" fill={ACCENT} fontSize="11.5" fontFamily={MONO}>
         paid early, after the 1% fee = $38.61
       </text>
 
@@ -490,9 +490,9 @@ export function VaultFigure() {
             {kind === "neg" ? (
               <rect x={x0} y={y} width={w} height="26" fill="url(#doc-hatch)" stroke={RED} strokeWidth="1" opacity="0.9" />
             ) : (
-              <rect x={x0} y={y} width={w} height="26" fill={kind === "sum" ? CYAN : "rgba(243,246,248,0.14)"} stroke={kind === "sum" ? CYAN : LINE} />
+              <rect x={x0} y={y} width={w} height="26" fill={kind === "sum" ? ACCENT : "rgba(243,246,248,0.14)"} stroke={kind === "sum" ? ACCENT : LINE} />
             )}
-            <text x={x0 + w + 10} y={y + 17} fill={kind === "sum" ? CYAN : INK} fontSize="12" fontFamily={MONO} fontWeight="500">
+            <text x={x0 + w + 10} y={y + 17} fill={kind === "sum" ? ACCENT : INK} fontSize="12" fontFamily={MONO} fontWeight="500">
               {v.toLocaleString()}
             </text>
             <Label x={x0 + w + 62} y={y + 17} size={9.5}>
@@ -511,7 +511,7 @@ export function VaultFigure() {
       <text x="24" y="278" fill={MUTED} fontSize="11.5" fontFamily={MONO}>
         cash 500 ≥ owed 300
       </text>
-      <text x="300" y="278" fill={CYAN} fontSize="11.5" fontFamily={MONO}>
+      <text x="300" y="278" fill={ACCENT} fontSize="11.5" fontFamily={MONO}>
         ✓ everyone promised money could be paid today
       </text>
 
@@ -522,7 +522,7 @@ export function VaultFigure() {
         400 lent out of 600 = 66.7%
       </text>
       <rect x="300" y="312" width="300" height="6" fill={BOX_2} />
-      <rect x="300" y="312" width={300 * 0.667} height="6" fill={CYAN} />
+      <rect x="300" y="312" width={300 * 0.667} height="6" fill={ACCENT} />
       <rect x={300 + 300 * 0.8 - 1} y="308" width="2" height="14" fill={INK} />
       <Label x={608} y={322} size={9.5}>
         LIMIT 80% · CAN NEVER BE SET PAST 95%
@@ -556,7 +556,7 @@ export function StreamFigure() {
       <line x1={at(now)} y1={acc(now)} x2={x1} y2={yTop} stroke={LINE} strokeDasharray="3 5" />
       {/* Accrued so far */}
       <path d={`M${x0},${yBase} L${at(now)},${acc(now)} L${at(now)},${yBase} Z`} fill="rgba(53,194,219,0.10)" />
-      <line x1={x0} y1={yBase} x2={at(now)} y2={acc(now)} stroke={CYAN} strokeWidth="1.8" />
+      <line x1={x0} y1={yBase} x2={at(now)} y2={acc(now)} stroke={ACCENT} strokeWidth="1.8" />
 
       {/* Claimed staircase: one claim on day 4 */}
       <path d={`M${x0},${yBase} L${at(4 / 21)},${yBase} L${at(4 / 21)},${acc(4 / 21)} L${at(now)},${acc(4 / 21)}`} fill="none" stroke={INK} strokeWidth="1.5" />
@@ -566,9 +566,9 @@ export function StreamFigure() {
       </Label>
 
       {/* Claimable gap */}
-      <line x1={at(now)} y1={acc(now)} x2={at(now)} y2={acc(4 / 21)} stroke={CYAN} strokeWidth="1.5" />
+      <line x1={at(now)} y1={acc(now)} x2={at(now)} y2={acc(4 / 21)} stroke={ACCENT} strokeWidth="1.5" />
       <rect x={at(now) + 12} y={acc(now) - 4} width="188" height="40" fill={BOX} stroke="rgba(53,194,219,0.5)" />
-      <text x={at(now) + 24} y={acc(now) + 13} fill={CYAN} fontSize="11.5" fontFamily={MONO} fontWeight="500">
+      <text x={at(now) + 24} y={acc(now) + 13} fill={ACCENT} fontSize="11.5" fontFamily={MONO} fontWeight="500">
         ready to collect = the gap
       </text>
       <text x={at(now) + 24} y={acc(now) + 29} fill={MUTED} fontSize="11" fontFamily={MONO}>
@@ -628,7 +628,7 @@ export function LtvFigure({ ltvPct, healthFactor }: { ltvPct: number; healthFact
       <rect x={at(40)} y={y} width={at(65) - at(40)} height="28" fill="rgba(255,255,255,0.05)" stroke={LINE} />
       <rect x={at(65)} y={y} width={at(100) - at(65)} height="28" fill="url(#doc-hatch)" stroke={RED} opacity="0.9" />
 
-      <Label x={at(0)} y={y - 30} color={CYAN}>
+      <Label x={at(0)} y={y - 30} color={ACCENT}>
         YOU CAN BORROW HERE
       </Label>
       <Label x={at(0)} y={y - 16} size={9.5}>
@@ -660,9 +660,9 @@ export function LtvFigure({ ltvPct, healthFactor }: { ltvPct: number; healthFact
 
       {live ? (
         <g>
-          <line x1={at(ltvPct)} y1={y - 6} x2={at(ltvPct)} y2={y + 34} stroke={CYAN} strokeWidth="2" />
-          <circle cx={at(ltvPct)} cy={y - 8} r="3.5" fill={CYAN} />
-          <text x={at(ltvPct)} y={y + 86} fill={CYAN} fontSize="11.5" fontFamily={MONO} fontWeight="500" textAnchor={ltvPct > 80 ? "end" : "start"}>
+          <line x1={at(ltvPct)} y1={y - 6} x2={at(ltvPct)} y2={y + 34} stroke={ACCENT} strokeWidth="2" />
+          <circle cx={at(ltvPct)} cy={y - 8} r="3.5" fill={ACCENT} />
+          <text x={at(ltvPct)} y={y + 86} fill={ACCENT} fontSize="11.5" fontFamily={MONO} fontWeight="500" textAnchor={ltvPct > 80 ? "end" : "start"}>
             THIS PORTFOLIO · {ltvPct.toFixed(1)}% BORROWED · SAFETY SCORE {Number.isFinite(healthFactor) ? healthFactor.toFixed(2) : "∞"}
           </text>
         </g>
@@ -694,18 +694,18 @@ export function SplitFigure() {
       <Box x={24} y={160} w={176} h={82} title="One share" sub="1.0000 · in your wallet" />
 
       {/* Split node */}
-      <Arrow d="M200,201 L262,201" cyan />
+      <Arrow d="M200,201 L262,201" accent />
       <rect x="264" y="176" width="112" height="50" fill={BOX} stroke="rgba(53,194,219,0.5)" />
       <text x="320" y="197" fill={INK} fontSize="13" fontFamily={SANS} fontWeight="700" textAnchor="middle">
         split
       </text>
-      <Label x={320} y={214} anchor="middle" color={CYAN} size={9.5}>
+      <Label x={320} y={214} anchor="middle" color={ACCENT} size={9.5}>
         FEE 0.1%
       </Label>
 
       {/* To PT and YT */}
-      <Arrow d="M376,190 L410,190 L410,96 L438,96" cyan />
-      <Arrow d="M376,212 L410,212 L410,306 L438,306" cyan />
+      <Arrow d="M376,190 L410,190 L410,96 L438,96" accent />
+      <Arrow d="M376,212 L410,212 L410,306 L438,306" accent />
       <Label x={418} y={150} size={9.5}>
         0.9990
       </Label>
@@ -780,8 +780,8 @@ export function LifecycleFigure() {
 
       <Box x={252} y={64} w={190} h={64} title="COMING" sub="you can get paid early now" accent />
 
-      <Arrow d="M442,84 L560,50" cyan />
-      <Label x={500} y={54} anchor="middle" size={9.5} color={CYAN}>
+      <Arrow d="M442,84 L560,50" accent />
+      <Label x={500} y={54} anchor="middle" size={9.5} color={ACCENT}>
         THE COMPANY PAYS
       </Label>
       <Box x={562} y={16} w={180} h={64} title="PAID" sub="the pool is paid back" />

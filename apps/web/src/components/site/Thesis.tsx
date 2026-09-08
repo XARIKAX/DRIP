@@ -107,9 +107,9 @@ export function Thesis() {
 
               {/* Column headings once, at the top. Repeating "Osinko" on all six rows
                   turned the accent into wallpaper and said nothing six times. */}
-              <div className="mt-8 grid grid-cols-[1fr_1fr] gap-5 rule-double-b pb-2.5">
+              <div className="mt-8 grid grid-cols-[1fr_1fr] gap-5 border-b border-line pb-3">
                 <div className="serial">Today</div>
-                <div className="serial pl-5 text-cyan-deep">Osinko</div>
+                <div className="serial pl-5 text-accent">Osinko</div>
               </div>
 
               <div>
@@ -122,7 +122,7 @@ export function Thesis() {
                       <div className="text-[13px] leading-snug text-faint line-through decoration-faint/40">
                         {row.them}
                       </div>
-                      <div className="mt-1.5 font-mono text-nano uppercase text-ghost">
+                      <div className="mt-1.5 font-mono text-nano uppercase text-faint">
                         {row.term}
                       </div>
                     </div>

@@ -52,7 +52,7 @@ export default function DepositPage() {
       </header>
 
       {placed ? (
-        <div className="border border-cyan/30 bg-cyan-soft px-5 py-4">
+        <div className="border border-accent/30 bg-accent/10 px-5 py-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-[14px]">
               <span className="font-extrabold">{fmt(placed.shares, 4)} {placed.symbol}</span> is in, set to{" "}
@@ -69,11 +69,11 @@ export default function DepositPage() {
         <div className="space-y-8 lg:col-span-7">
           {/* Step 1: the token */}
           <section className="panel" aria-label="Pick a token">
-            <div className="flex items-baseline justify-between border-b border-panel-line px-5 py-4">
-              <span className="eyebrow text-cyan">01 — Pick a stock</span>
-              <span className="text-micro font-bold uppercase text-panel-muted">Price · yield · next ex date</span>
+            <div className="flex items-baseline justify-between border-b border-line px-5 py-4">
+              <span className="eyebrow text-accent">01 — Pick a stock</span>
+              <span className="text-micro font-bold uppercase text-muted">Price · yield · next ex date</span>
             </div>
-            <div className="grid grid-cols-1 gap-px bg-panel-line sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-px bg-line sm:grid-cols-2">
               {tokens.map((t, i) => {
                 const active = t.symbol === token?.symbol;
                 const spansRow = tokens.length % 2 === 1 && i === tokens.length - 1;
@@ -88,7 +88,7 @@ export default function DepositPage() {
                     } ${
                       active
                         ? "bg-ground-3 text-ink shadow-[inset_3px_0_0_0_rgb(var(--accent))]"
-                        : "bg-panel text-panel-muted hover:bg-panel-2"
+                        : "bg-ground text-muted hover:bg-ground-2"
                     }`}
                   >
                     <TokenMark symbol={t.symbol} dark={active} size={36} />
@@ -97,7 +97,7 @@ export default function DepositPage() {
                         <span className="text-[15px] font-extrabold tracking-tight">{t.symbol}</span>
                         <span className="num text-[13px]">${fmt(t.priceUsd)}</span>
                       </span>
-                      <span className={`mt-0.5 flex items-baseline justify-between gap-2 text-micro font-bold uppercase ${active ? "text-panel-text/60" : "text-panel-muted"}`}>
+                      <span className={`mt-0.5 flex items-baseline justify-between gap-2 text-micro font-bold uppercase ${active ? "text-ink/60" : "text-muted"}`}>
                         <span>{t.yieldPct.toFixed(2)}% yield</span>
                         <span>{t.nextExDate ? `Ex ${shortDate(t.nextExDate)}` : t.payingNow ? "Paying now" : "None set"}</span>
                       </span>
@@ -111,8 +111,8 @@ export default function DepositPage() {
           {/* Step 2: the amount */}
           <section className="panel card-pad" aria-label="Amount">
             <div className="flex items-baseline justify-between">
-              <span className="eyebrow text-cyan">02 — How many shares</span>
-              <span className="num text-micro font-bold uppercase text-panel-muted">
+              <span className="eyebrow text-accent">02 — How many shares</span>
+              <span className="num text-micro font-bold uppercase text-muted">
                 Wallet {fmt(walletShares, 4)} {token?.symbol}
               </span>
             </div>
@@ -133,12 +133,12 @@ export default function DepositPage() {
               {tooMuch ? (
                 <span className="text-down">More than this wallet holds.</span>
               ) : (
-                <span className="text-panel-muted">
+                <span className="text-muted">
                   ≈ <AnimatedNumber value={shares * (token?.priceUsd ?? 0)} prefix="$" flash="light" /> USD
                 </span>
               )}
               {walletShares === 0 && token ? (
-                <button type="button" className="text-micro font-bold uppercase underline decoration-cyan decoration-2 underline-offset-4" onClick={() => void actions.faucet(token.symbol)}>
+                <button type="button" className="text-micro font-bold uppercase underline decoration-accent decoration-2 underline-offset-4" onClick={() => void actions.faucet(token.symbol)}>
                   Get test {token.symbol}
                 </button>
               ) : null}
@@ -147,10 +147,10 @@ export default function DepositPage() {
 
           {/* Step 3: the mode */}
           <section data-shot="deposit-modes" className="panel" aria-label="Pick a mode">
-            <div className="border-b border-panel-line px-5 py-4">
-              <span className="eyebrow text-cyan">03 — What should its dividends do</span>
+            <div className="border-b border-line px-5 py-4">
+              <span className="eyebrow text-accent">03 — What should its dividends do</span>
             </div>
-            <div className="grid grid-cols-1 gap-px bg-panel-line md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-px bg-line md:grid-cols-3">
               {MODES.map((m) => {
                 const active = mode === m;
                 return (
@@ -162,14 +162,14 @@ export default function DepositPage() {
                     className={`p-5 text-left transition-colors duration-300 ${
                       active
                         ? "bg-ground-3 text-ink shadow-[inset_0_3px_0_0_rgb(var(--accent))]"
-                        : "bg-panel text-panel-muted hover:bg-panel-2"
+                        : "bg-ground text-muted hover:bg-ground-2"
                     }`}
                   >
                     <span className="flex items-center justify-between">
                       <span className="text-[15px] font-extrabold tracking-tight">{MODE_LABEL[m]}</span>
-                      <span className={`block h-3 w-3 border ${active ? "border-cyan bg-cyan" : "border-panel-line"}`} aria-hidden />
+                      <span className={`block h-3 w-3 border ${active ? "border-accent bg-accent-fill" : "border-line"}`} aria-hidden />
                     </span>
-                    <span className={`mt-2 block text-[13px] leading-snug ${active ? "text-panel-text/70" : "text-panel-muted"}`}>
+                    <span className={`mt-2 block text-[13px] leading-snug ${active ? "text-ink/70" : "text-muted"}`}>
                       {MODE_SENTENCE[m]}
                     </span>
                   </button>
@@ -184,7 +184,7 @@ export default function DepositPage() {
           <section className="panel" aria-label="Summary" data-shot="deposit-summary">
             <div className="panel-head">
               <span className="panel-title">Check it over</span>
-              <span className="text-micro font-bold uppercase text-panel-faint">Before you confirm</span>
+              <span className="text-micro font-bold uppercase text-faint">Before you confirm</span>
             </div>
             <dl className="px-5 py-4 text-[14px]">
               {[
@@ -195,9 +195,9 @@ export default function DepositPage() {
                 ["Next ex date", token?.nextExDate ? `${shortDate(token.nextExDate)} (${relativeTime(token.nextExDate)})` : "None set"],
                 ["Next payout, about", token ? `$${fmt(shares * token.perShare)}` : "—"],
               ].map(([k, v]) => (
-                <div key={k} className="flex items-baseline justify-between border-b border-panel-line py-2.5 last:border-b-0">
-                  <dt className="text-micro font-bold uppercase text-panel-muted">{k}</dt>
-                  <dd className="num text-right font-medium text-panel-text">{v}</dd>
+                <div key={k} className="flex items-baseline justify-between border-b border-line py-2.5 last:border-b-0">
+                  <dt className="text-micro font-bold uppercase text-muted">{k}</dt>
+                  <dd className="num text-right font-medium text-ink">{v}</dd>
                 </div>
               ))}
             </dl>
@@ -205,7 +205,7 @@ export default function DepositPage() {
               <button type="button" className="btn-accent w-full" disabled={!valid || actions.busy} onClick={() => void submit()}>
                 Confirm deposit
               </button>
-              <p className="mt-3 text-[12px] text-panel-faint">
+              <p className="mt-3 text-[12px] text-faint">
                 Your deposit is on the record the second it lands. Any dividend with an ex date after that is yours.
               </p>
             </div>
@@ -227,7 +227,7 @@ function WithdrawPanel() {
 
   return (
     <section className="panel" aria-label="Withdraw">
-      <div className="border-b border-panel-line px-5 py-4">
+      <div className="border-b border-line px-5 py-4">
         <span className="serial">Take stock out</span>
       </div>
       <div className="px-5 py-4">
@@ -239,7 +239,7 @@ function WithdrawPanel() {
             <div key={h.symbol} className="hairline-b py-3 last:border-b-0">
               <div className="flex items-baseline justify-between">
                 <span className="text-[14px] font-extrabold tracking-tight">{h.symbol}</span>
-                <span className="num text-[12px] text-panel-muted">{fmt(h.amount, 4)} in Osinko</span>
+                <span className="num text-[12px] text-muted">{fmt(h.amount, 4)} in Osinko</span>
               </div>
               <div className="mt-2 flex gap-2">
                 <input

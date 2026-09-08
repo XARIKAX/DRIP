@@ -30,7 +30,7 @@ export function Hero() {
           and the one thing that must never be pushed off screen is the frame's own
           bottom edge. */}
       <div data-shot="hero"
-        className="grain-local relative flex h-[calc(100svh-18px)] min-h-[620px] flex-col overflow-hidden rounded-2xl md:h-[calc(100svh-26px)] [--cell:2px] sm:[--cell:3px] xl:[--cell:4px]">
+        className="grain-local relative flex h-[calc(100svh-18px)] min-h-[620px] flex-col overflow-hidden rounded-2xl bg-night md:h-[calc(100svh-26px)] [--cell:2px] sm:[--cell:3px] xl:[--cell:4px]">
         {/* The sky, in three layers rather than one impossible gradient: the fall from
             dawn to midnight, the bloom the coin sits in, and the light coming in over
             the top-left shoulder. */}

@@ -114,7 +114,7 @@ export function AreaChart({
         <path d={line} fill="none" stroke={PALETTE.iris[300]} strokeWidth="1.75" pathLength={1} className="draw-line" />
       </svg>
       {(labelLeft || labelRight) && (
-        <div className="mt-3 flex justify-between font-mono text-nano uppercase text-panel-faint">
+        <div className="mt-3 flex justify-between font-mono text-nano uppercase text-faint">
           <span>
             {labelLeft} · <span className="num">{formatValue(min)}</span> low
           </span>

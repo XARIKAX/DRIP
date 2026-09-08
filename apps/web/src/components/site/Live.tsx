@@ -104,7 +104,7 @@ export function Live() {
                     <div className="text-[13px] font-semibold leading-snug text-ink">
                       {n.label}
                     </div>
-                    <div className="mt-1.5 font-mono text-nano uppercase text-ghost">{n.note}</div>
+                    <div className="mt-1.5 font-mono text-nano uppercase text-faint">{n.note}</div>
                   </div>
                 </div>
               ))}

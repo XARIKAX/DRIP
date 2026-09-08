@@ -358,7 +358,7 @@ export function ReadProgress() {
       aria-hidden
     >
       <div
-        className="h-full origin-left bg-cyan-dark"
+        className="h-full origin-left bg-accent"
         style={{ transform: `scaleX(${progress})` }}
       />
     </div>

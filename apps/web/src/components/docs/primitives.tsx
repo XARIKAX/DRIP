@@ -31,7 +31,7 @@ export function Section({
       className="scroll-mt-28 border-t border-line-soft pt-14 first:border-t-0 first:pt-0"
     >
       <h2 className="display flex items-baseline gap-4 text-headline">
-        <span className="num shrink-0 text-[16px] font-medium text-cyan-deep">{index}</span>
+        <span className="num shrink-0 text-[16px] font-medium text-accent">{index}</span>
         <span>{title}</span>
       </h2>
       {kicker ? <p className="kicker mt-4 max-w-prose">{kicker}</p> : null}
@@ -54,7 +54,7 @@ export function Sub({
   return (
     <div id={id} data-doc-section className="scroll-mt-28 pt-6">
       <h3 className="flex items-baseline gap-3 text-[19px] font-semibold tracking-tight text-ink">
-        <span className="num shrink-0 text-[12px] font-medium text-cyan-deep">{index}</span>
+        <span className="num shrink-0 text-[12px] font-medium text-accent">{index}</span>
         <span>{title}</span>
       </h3>
       <div className="docs-prose mt-4">{children}</div>
@@ -62,11 +62,11 @@ export function Sub({
   );
 }
 
-/** A note in the margin's voice: one label, a few lines, a cyan rule down the side. */
+/** A note in the margin's voice: one label, a few lines, an accent rule down the side. */
 export function Callout({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <aside className="max-w-prose border-l-2 border-cyan-dark bg-ground-2 px-5 py-4">
-      <div className="serial text-cyan-deep">{label}</div>
+    <aside className="max-w-prose border-l-2 border-accent bg-ground-2 px-5 py-4">
+      <div className="serial text-accent">{label}</div>
       <div className="mt-2 text-[14px] leading-relaxed text-muted">{children}</div>
     </aside>
   );
@@ -96,7 +96,7 @@ export function Terms({ rows }: { rows: { term: string; def: ReactNode }[] }) {
         <tbody>
           {rows.map((r) => (
             <tr key={r.term}>
-              <td className="font-semibold text-cyan-deep">{r.term}</td>
+              <td className="font-semibold text-accent">{r.term}</td>
               <td className="leading-relaxed text-muted">{r.def}</td>
             </tr>
           ))}
@@ -162,7 +162,7 @@ export function Params({ rows }: { rows: { name: string; value: ReactNode; note?
           className="grid gap-x-6 gap-y-1 border-b border-line-soft px-5 py-3.5 last:border-b-0 sm:grid-cols-[1fr_auto]"
         >
           <dt className="text-[13.5px] font-medium text-ink">{r.name}</dt>
-          <dd className="num text-[13.5px] text-cyan-deep sm:text-right">{r.value}</dd>
+          <dd className="num text-[13.5px] text-accent sm:text-right">{r.value}</dd>
           {r.note ? <dd className="text-[12.5px] leading-relaxed text-faint sm:col-span-2">{r.note}</dd> : null}
         </div>
       ))}
@@ -175,12 +175,12 @@ export function Code({ title, lang, children }: { title?: string; lang?: string;
   return (
     <figure className="panel">
       {title || lang ? (
-        <div className="flex items-center justify-between border-b border-panel-line px-4 py-2.5">
+        <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
           <span className="panel-title">{title}</span>
-          <span className="font-mono text-nano uppercase text-panel-faint">{lang}</span>
+          <span className="font-mono text-nano uppercase text-faint">{lang}</span>
         </div>
       ) : null}
-      <pre className="dark-scroll overflow-x-auto px-4 py-4 font-mono text-[12.5px] leading-[1.65] text-panel-text">
+      <pre className="dark-scroll overflow-x-auto px-4 py-4 font-mono text-[12.5px] leading-[1.65] text-ink">
         <code>{children}</code>
       </pre>
     </figure>
@@ -191,10 +191,10 @@ export function Code({ title, lang, children }: { title?: string; lang?: string;
 export function Figure({ n, caption, children }: { n: number; caption: ReactNode; children: ReactNode }) {
   return (
     <figure className="panel-frame p-4 md:p-6">
-      <div className="pointer-events-none absolute inset-0 grid-bg-dark opacity-50" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 sand-bg opacity-40" aria-hidden />
       <div className="relative">{children}</div>
-      <figcaption className="relative mt-4 flex items-baseline gap-3 border-t border-panel-line pt-4 text-[12.5px] leading-relaxed text-panel-muted">
-        <span className="num shrink-0 text-nano uppercase tracking-widest text-cyan">Fig. {String(n).padStart(2, "0")}</span>
+      <figcaption className="relative mt-4 flex items-baseline gap-3 border-t border-line pt-4 text-[12.5px] leading-relaxed text-muted">
+        <span className="num shrink-0 text-nano uppercase tracking-widest text-accent">Fig. {String(n).padStart(2, "0")}</span>
         <span>{caption}</span>
       </figcaption>
     </figure>
@@ -219,7 +219,7 @@ export function Shot({ name, alt, n, caption }: { name: keyof typeof SHOTS; alt:
         className="block h-auto w-full border border-line-soft"
       />
       <figcaption className="mt-3 flex items-baseline gap-3 px-1 pb-1 text-[12.5px] leading-relaxed text-muted">
-        <span className="num shrink-0 text-nano uppercase tracking-widest text-cyan-deep">Fig. {String(n).padStart(2, "0")}</span>
+        <span className="num shrink-0 text-nano uppercase tracking-widest text-accent">Fig. {String(n).padStart(2, "0")}</span>
         <span>{caption}</span>
       </figcaption>
     </figure>

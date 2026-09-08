@@ -107,7 +107,7 @@ export function Universe() {
           </div>
 
           <div className="relative flex flex-wrap items-center justify-between gap-4 border-b border-line px-5 py-4">
-            <div className="seg-dark">
+            <div className="seg">
               {FILTERS.map((f) => (
                 <button
                   key={f.key}
@@ -126,7 +126,7 @@ export function Universe() {
           </div>
 
           <div className="overflow-x-auto dark-scroll">
-            <table className="panel-table min-w-[760px] text-[13px]">
+            <table className="data-table min-w-[760px] text-[13px]">
               <thead>
                 <tr>
                   {COLUMNS.map((c) => {
@@ -142,12 +142,12 @@ export function Universe() {
                           onClick={() => toggle(c.key)}
                           className={`th-sort inline-flex items-center gap-1.5 uppercase ${
                             c.align === "right" ? "flex-row-reverse" : ""
-                          } ${on ? "text-panel-text" : ""}`}
+                          } ${on ? "text-ink" : ""}`}
                         >
                           {c.label}
                           <span
                             className={`transition-opacity duration-200 ${
-                              on ? "text-cyan opacity-100" : "opacity-0"
+                              on ? "text-accent opacity-100" : "opacity-0"
                             }`}
                             aria-hidden
                           >
@@ -167,31 +167,31 @@ export function Universe() {
                       <div className="flex items-center gap-3">
                         <TokenMark symbol={t.symbol} size={26} />
                         <div className="min-w-0">
-                          <div className="font-bold tracking-tight text-panel-text">{t.symbol}</div>
-                          <div className="truncate font-mono text-nano uppercase text-panel-faint">
+                          <div className="font-bold tracking-tight text-ink">{t.symbol}</div>
+                          <div className="truncate font-mono text-nano uppercase text-faint">
                             {t.name}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="num text-right text-panel-text">${fmt(t.priceUsd)}</td>
-                    <td className="num text-right text-panel-muted">
+                    <td className="num text-right text-ink">${fmt(t.priceUsd)}</td>
+                    <td className="num text-right text-muted">
                       {t.perShare > 0 ? `$${fmt(t.perShare)}` : "—"}
                     </td>
-                    <td className="num text-right text-cyan">
+                    <td className="num text-right text-accent">
                       {t.yieldPct > 0 ? `${fmt(t.yieldPct, 2)}%` : "—"}
                     </td>
-                    <td className="num text-right text-panel-muted">
+                    <td className="num text-right text-muted">
                       {t.nextExDate ? shortDate(t.nextExDate) : "—"}
                     </td>
                     <td className="text-right">
                       <span
                         className={`font-mono text-nano uppercase ${
                           t.payingNow
-                            ? "text-cyan"
+                            ? "text-accent"
                             : t.perShare > 0
-                              ? "text-panel-muted"
-                              : "text-panel-faint"
+                              ? "text-muted"
+                              : "text-faint"
                         }`}
                       >
                         {t.payingNow ? "Paying now" : t.perShare > 0 ? "Announced" : "No dividend"}
@@ -201,7 +201,7 @@ export function Universe() {
                 ))}
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-panel-faint">
+                    <td colSpan={6} className="py-12 text-center text-faint">
                       Nothing matches that filter.
                     </td>
                   </tr>
@@ -228,7 +228,7 @@ export function Universe() {
             },
           ].map((r) => (
             <div key={r.rule} className="bg-paper p-6">
-              <div className="font-mono text-nano uppercase text-cyan-deep">{r.rule}</div>
+              <div className="font-mono text-nano uppercase text-accent">{r.rule}</div>
               <p className="mt-3 text-[13px] leading-relaxed text-muted">{r.body}</p>
             </div>
           ))}

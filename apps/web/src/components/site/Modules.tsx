@@ -175,7 +175,7 @@ export function Modules() {
                     >
                       <span
                         className={`num text-micro font-medium transition-colors duration-500 ${
-                          on ? "text-accent" : "text-ghost"
+                          on ? "text-accent" : "text-faint"
                         }`}
                       >
                         {m.index}
@@ -205,14 +205,14 @@ export function Modules() {
                       <span className="hidden shrink-0 items-baseline gap-1.5 sm:flex">
                         <span
                           className={`figure text-[30px] leading-none transition-colors duration-500 ${
-                            on ? "text-accent" : "text-ghost"
+                            on ? "text-accent" : "text-faint"
                           }`}
                         >
                           {m.stat}
                         </span>
                         <span
                           className={`ml-2 font-mono text-nano uppercase transition-colors duration-500 ${
-                            on ? "text-faint" : "text-ghost"
+                            on ? "text-faint" : "text-faint"
                           }`}
                         >
                           {m.unit}

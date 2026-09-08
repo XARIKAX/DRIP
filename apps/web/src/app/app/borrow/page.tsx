@@ -43,42 +43,42 @@ function CreditStrip() {
 
   return (
     <section className="panel" aria-label="Credit line" data-shot="borrow">
-      <div className="grid grid-cols-2 gap-px bg-panel-line lg:grid-cols-4">
-        <div className="bg-panel p-6">
+      <div className="grid grid-cols-2 gap-px bg-line lg:grid-cols-4">
+        <div className="bg-ground p-6">
           <div className="panel-title">Your stock is worth</div>
-          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-panel-text">
+          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-ink">
             <AnimatedNumber value={c.collateralValueUsd} decimals={0} prefix="$" flash="dark" />
           </div>
-          <div className="mt-1 text-[12px] text-panel-muted">At live prices. This backs the loan.</div>
+          <div className="mt-1 text-[12px] text-muted">At live prices. This backs the loan.</div>
         </div>
-        <div className="bg-panel p-6">
+        <div className="bg-ground p-6">
           <div className="panel-title">You borrowed</div>
-          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-panel-text">
+          <div className="mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter text-ink">
             <AnimatedNumber value={c.borrowedUsd} decimals={0} prefix="$" flash="dark" />
           </div>
-          <div className="mt-1 text-[12px] text-panel-muted">
+          <div className="mt-1 text-[12px] text-muted">
             You can borrow up to ${fmt(c.maxBorrowUsd, 0)}, which is {c.maxLtvPct.toFixed(0)}% of your stock
           </div>
         </div>
-        <div className="bg-panel p-6">
+        <div className="bg-ground p-6">
           <div className="panel-title">Safety score</div>
-          <div className={`mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter ${c.healthFactor < 1.2 ? "text-down" : "text-cyan"}`}>
+          <div className={`mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter ${c.healthFactor < 1.2 ? "text-down" : "text-accent"}`}>
             {Number.isFinite(c.healthFactor) ? <AnimatedNumber value={c.healthFactor} decimals={2} flash="dark" /> : "∞"}
           </div>
           <div className="mt-3">
             <Meter pct={ltvPct} capPct={c.liqThresholdPct} />
           </div>
-          <div className="mt-1.5 flex justify-between text-micro font-bold uppercase text-panel-faint">
+          <div className="mt-1.5 flex justify-between text-micro font-bold uppercase text-faint">
             <span className="num">{ltvPct.toFixed(1)}% borrowed</span>
             <span>Danger at {c.liqThresholdPct.toFixed(0)}%</span>
           </div>
         </div>
-        <div className="bg-panel p-6">
+        <div className="bg-ground p-6">
           <div className="panel-title">You come out ahead by</div>
-          <div className={`mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter ${c.netCarryPerYearUsd >= 0 ? "text-cyan" : "text-down"}`}>
+          <div className={`mt-3 text-[clamp(24px,2.4vw,34px)] font-semibold tracking-tighter ${c.netCarryPerYearUsd >= 0 ? "text-accent" : "text-down"}`}>
             <AnimatedNumber value={Math.abs(c.netCarryPerYearUsd)} decimals={0} prefix={c.netCarryPerYearUsd >= 0 ? "+$" : "-$"} flash="dark" />
           </div>
-          <div className="mt-1 text-[12px] text-panel-muted">Per year. Dividends earned minus interest owed.</div>
+          <div className="mt-1 text-[12px] text-muted">Per year. Dividends earned minus interest owed.</div>
         </div>
       </div>
     </section>
@@ -92,30 +92,30 @@ function CarryPanel() {
     <section className="panel lg:col-span-2" aria-label="Your carry">
       <div className="panel-head">
         <span className="panel-title">Does the loan pay for itself?</span>
-        <span className="text-micro font-bold uppercase text-panel-faint">Dividends vs interest, live</span>
+        <span className="text-micro font-bold uppercase text-faint">Dividends vs interest, live</span>
       </div>
 
-      <div className="grid gap-px bg-panel-line sm:grid-cols-2">
-        <div className="bg-panel p-6">
+      <div className="grid gap-px bg-line sm:grid-cols-2">
+        <div className="bg-ground p-6">
           <div className="panel-title">Dividends your stock earns</div>
-          <div className="num mt-3 text-[26px] font-semibold tracking-tighter text-cyan">
-            +${fmt(c.dividendsPerYearUsd)} <span className="text-[13px] text-panel-muted">/ year</span>
+          <div className="num mt-3 text-[26px] font-semibold tracking-tighter text-accent">
+            +${fmt(c.dividendsPerYearUsd)} <span className="text-[13px] text-muted">/ year</span>
           </div>
         </div>
-        <div className="bg-panel p-6">
+        <div className="bg-ground p-6">
           <div className="panel-title">Interest your loan costs</div>
-          <div className="num mt-3 text-[26px] font-semibold tracking-tighter text-panel-text">
-            -${fmt(c.interestPerYearUsd)} <span className="text-[13px] text-panel-muted">/ year at {c.borrowAprPct.toFixed(1)}%</span>
+          <div className="num mt-3 text-[26px] font-semibold tracking-tighter text-ink">
+            -${fmt(c.interestPerYearUsd)} <span className="text-[13px] text-muted">/ year at {c.borrowAprPct.toFixed(1)}%</span>
           </div>
         </div>
       </div>
 
-      <div className="border-t border-panel-line px-6 py-5">
+      <div className="border-t border-line px-6 py-5">
         <div className="panel-title">Interest your dividends have paid since you borrowed</div>
-        <div className="mt-2 text-[clamp(24px,2.6vw,36px)] font-semibold tracking-tighter text-cyan">
+        <div className="mt-2 text-[clamp(24px,2.6vw,36px)] font-semibold tracking-tighter text-accent">
           <LiveCounter base={c.servicedBaseUsd} ratePerSec={c.servicedRatePerSec} decimals={4} prefix="$" />
         </div>
-        <p className="mt-3 max-w-lg text-[13px] leading-relaxed text-panel-muted">
+        <p className="mt-3 max-w-lg text-[13px] leading-relaxed text-muted">
           Every dividend your stock earns goes toward the interest first. As long as the
           dividends earn more than the interest costs, the loan pays for itself. You spend
           the USDG and keep every share.
@@ -169,7 +169,7 @@ function BorrowPanel() {
       </div>
 
       <div className="space-y-4 p-5">
-        <div className="flex items-baseline justify-between text-micro font-bold uppercase text-panel-muted">
+        <div className="flex items-baseline justify-between text-micro font-bold uppercase text-muted">
           <span>{tab === "borrow" ? "You can borrow" : "You can repay"}</span>
           <span className="num">${fmt(max)}</span>
         </div>
@@ -184,7 +184,7 @@ function BorrowPanel() {
           />
           <button
             type="button"
-            className="border border-panel-line px-3 text-micro font-bold uppercase text-panel-muted hover:text-panel-text"
+            className="border border-line px-3 text-micro font-bold uppercase text-muted hover:text-ink"
             onClick={() => setAmount(max > 0 ? max.toFixed(2) : "")}
           >
             Max
@@ -192,17 +192,17 @@ function BorrowPanel() {
         </div>
 
         <dl className="text-[13px]">
-          <div className="flex justify-between border-b border-panel-line py-2">
-            <dt className="text-panel-muted">Interest per year</dt>
-            <dd className="num text-panel-text">{c.borrowAprPct.toFixed(1)}%</dd>
+          <div className="flex justify-between border-b border-line py-2">
+            <dt className="text-muted">Interest per year</dt>
+            <dd className="num text-ink">{c.borrowAprPct.toFixed(1)}%</dd>
           </div>
-          <div className="flex justify-between border-b border-panel-line py-2">
-            <dt className="text-panel-muted">USDG in your wallet</dt>
-            <dd className="num text-panel-text">${fmt(wallet.usdg)}</dd>
+          <div className="flex justify-between border-b border-line py-2">
+            <dt className="text-muted">USDG in your wallet</dt>
+            <dd className="num text-ink">${fmt(wallet.usdg)}</dd>
           </div>
           <div className="flex justify-between py-2">
-            <dt className="text-panel-muted">Danger line</dt>
-            <dd className="num text-panel-text">{c.liqThresholdPct.toFixed(0)}% of your stock</dd>
+            <dt className="text-muted">Danger line</dt>
+            <dd className="num text-ink">{c.liqThresholdPct.toFixed(0)}% of your stock</dd>
           </div>
         </dl>
 
@@ -210,7 +210,7 @@ function BorrowPanel() {
           {tab === "borrow" ? "Borrow USDG" : "Repay USDG"}
         </button>
         {error ? <p className="text-[12px] text-down">{error}</p> : null}
-        <p className="text-[12px] leading-snug text-panel-faint">
+        <p className="text-[12px] leading-snug text-faint">
           No deadline. Repay whenever you like, or let the dividends chip away at it. Your
           stock is only ever sold to cover the loan if the loan grows past{" "}
           {c.liqThresholdPct.toFixed(0)}% of what the stock is worth.

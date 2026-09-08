@@ -111,7 +111,7 @@ export function Docs() {
     { label: "Contracts · tests", value: "10 · 96 passing" },
     {
       label: "Earned while you read",
-      value: <LiveCounter base={0} ratePerSec={summary.streamRatePerSec} decimals={6} prefix="$" className="text-cyan-deep" />,
+      value: <LiveCounter base={0} ratePerSec={summary.streamRatePerSec} decimals={6} prefix="$" className="text-accent" />,
     },
   ];
 
@@ -932,7 +932,7 @@ HANDOFF.md                notes for the developer taking this live`}</Code>
               </span>,
               view?.name ?? "—",
               <span key="p" className="num">{view ? `$${fmt(view.priceUsd)}` : "—"}</span>,
-              <span key="y" className="num text-cyan-deep">{view && view.yieldPct > 0 ? `${view.yieldPct.toFixed(2)}%` : "—"}</span>,
+              <span key="y" className="num text-accent">{view && view.yieldPct > 0 ? `${view.yieldPct.toFixed(2)}%` : "—"}</span>,
               <span key="e" className="num">{view?.nextExDate ? shortDate(view.nextExDate) : view?.payingNow ? "paying now" : "—"}</span>,
               <span key="l" className="font-mono text-nano uppercase text-faint">{t.liquidity === "live" ? "proven" : "quote first"}</span>,
             ];
@@ -1074,7 +1074,7 @@ const vault     = await reader.getVaultStats();
           <Shot
             name="calendar"
             n={17}
-            alt="The payout calendar: stocks, dividend per share, ex date, pay date, and a cyan column of days paid early."
+            alt="The payout calendar: stocks, dividend per share, ex date, pay date, and a column of days paid early."
             caption="The payout calendar. Wait for the company and you are paid on the right-hand date. Use Osinko and you are paid on the left-hand one, minus 1%."
           />
           <Shot

@@ -67,9 +67,9 @@
 
     /* Direction. Persimmon, not scarlet — a falling number must never read as a
        blossom, and on a violet page a true red does. */
-    --up: 15 116 84;
+    --up-day: 15 116 84;
     --up-bright: 72 214 160;
-    --down: 176 64 42;
+    --down-day: 176 64 42;
     --down-bright: 255 122 102;
     --vermilion: 224 83 58;
 
@@ -98,6 +98,12 @@
     --edge: rgb(22 14 34 / 0.1);
     --edge-soft: rgb(22 14 34 / 0.055);
     --edge-strong: rgb(22 14 34 / 0.22);
+
+    /* Direction is contextual for the same reason everything else is: the persimmon
+       that reads on paper is 3.3:1 on a night panel, and the mint that reads on night
+       is far too light on paper. One name, two values, no call site that has to know. */
+    --up: var(--up-day);
+    --down: var(--down-day);
 
     /* ------------------------------------------------------------------ */
     /* Tier 3 — the garden.                                                */
@@ -164,6 +170,9 @@
     --edge: var(--night-edge-soft);
     --edge-soft: rgb(233 224 255 / 0.05);
     --edge-strong: var(--night-edge);
+
+    --up: var(--up-bright);
+    --down: var(--down-bright);
 
     --pk-bark: #2a1a42;
     --pk-bark-lit: #45296b;
@@ -646,33 +655,27 @@
   /* Tables                                                              */
   /* ------------------------------------------------------------------ */
 
-  .data-table,
-  .panel-table {
+  .data-table {
     @apply w-full border-collapse text-left;
   }
 
-  .data-table th,
-  .panel-table th {
+  .data-table th {
     @apply border-b border-line px-4 py-3 font-mono text-micro font-medium uppercase text-faint;
   }
 
-  .data-table td,
-  .panel-table td {
+  .data-table td {
     @apply border-b border-line-soft px-4 py-4 align-middle text-[14px] text-ink;
   }
 
-  .data-table tbody tr:last-child td,
-  .panel-table tbody tr:last-child td {
+  .data-table tbody tr:last-child td {
     @apply border-b-0;
   }
 
-  .data-table tbody tr,
-  .panel-table tbody tr {
+  .data-table tbody tr {
     transition: background-color 0.2s ease;
   }
 
-  .data-table tbody tr:hover,
-  .panel-table tbody tr:hover {
+  .data-table tbody tr:hover {
     background: rgb(var(--text) / 0.035);
   }
 
@@ -688,25 +691,21 @@
   /* Controls                                                            */
   /* ------------------------------------------------------------------ */
 
-  .seg,
-  .seg-dark {
+  .seg {
     @apply inline-flex overflow-hidden rounded-full border border-line p-0.5;
   }
 
-  .seg button,
-  .seg-dark button {
+  .seg button {
     @apply rounded-full px-3.5 py-1.5 font-mono text-micro font-medium uppercase text-faint
            transition-colors duration-200;
   }
 
-  .seg button[aria-pressed="true"],
-  .seg-dark button[aria-pressed="true"] {
+  .seg button[aria-pressed="true"] {
     background: rgb(var(--accent-fill));
     color: rgb(var(--accent-ink));
   }
 
-  .seg button:not([aria-pressed="true"]):hover,
-  .seg-dark button:not([aria-pressed="true"]):hover {
+  .seg button:not([aria-pressed="true"]):hover {
     @apply text-ink;
   }
 
@@ -718,15 +717,14 @@
   /* Feedback                                                            */
   /* ------------------------------------------------------------------ */
 
-  .flash-light {
-    animation: pulse-cell 0.9s ease-out;
-  }
-
+  /* One flash for both surfaces: the accent it pulses is contextual now. */
+  .flash-light,
   .flash-dark {
     animation: pulse-cell 0.9s ease-out;
   }
 
-  /* Never a spinner: the layout is held while the data settles. */
+  /* Never a spinner: the layout is held while the data settles. One rule for both
+     surfaces, because the tint it shimmers is drawn from the text colour. */
   .skeleton,
   .skeleton-dark {
     @apply rounded-sm;
@@ -1041,7 +1039,7 @@
   .hero-sky {
     /* The dawn holds nearly halfway down on purpose: the claim has to be read on
        near-white, and the violet only arrives with the object it lights. */
-    background: linear-gradient(
+    background-image: linear-gradient(
       180deg,
       #fbfaff 0%,
       #f6f2fd 20%,
@@ -1055,7 +1053,7 @@
   }
 
   .hero-bloom {
-    background: radial-gradient(
+    background-image: radial-gradient(
       56% 40% at 50% 64%,
       rgb(154 110 250 / 0.85) 0%,
       rgb(123 47 247 / 0.42) 40%,
@@ -1064,7 +1062,7 @@
   }
 
   .hero-dawn {
-    background: radial-gradient(
+    background-image: radial-gradient(
       52% 46% at 3% -10%,
       rgb(255 255 255 / 1) 0%,
       rgb(255 255 255 / 0.6) 30%,
@@ -1078,7 +1076,7 @@
    * legible-but-barely, which only works over something close to unlit.
    */
   .hero-floor {
-    background: linear-gradient(180deg, transparent 48%, rgb(10 5 16 / 0.5) 72%, rgb(10 5 16 / 0.93) 90%, rgb(10 5 16 / 0.99) 100%);
+    background-image: linear-gradient(180deg, transparent 48%, rgb(10 5 16 / 0.5) 72%, rgb(10 5 16 / 0.93) 90%, rgb(10 5 16 / 0.99) 100%);
   }
 
   /* Petals only fall where there is sky dark enough to see them against. */
@@ -1093,7 +1091,7 @@
    * ends where the garden does rather than snapping back to daylight at the seam.
    */
   .dusk-sky {
-    background: linear-gradient(
+    background-image: linear-gradient(
       180deg,
       #f6f4fb 0%,
       #d8c2f7 8%,
@@ -1113,61 +1111,6 @@
   .pixel {
     shape-rendering: crispEdges;
     image-rendering: pixelated;
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* Transitional aliases.                                               */
-  /*                                                                     */
-  /* The certificate concept is retired, but the sections that speak its  */
-  /* vocabulary are rewritten in later passes. Until then these keep the  */
-  /* page coherent rather than half-styled, and each one is deleted the   */
-  /* moment its last caller is gone.                                     */
-  /* ------------------------------------------------------------------ */
-
-  .certificate {
-    @apply relative rounded-lg border border-line bg-paper shadow-lift;
-  }
-
-  .rule-double,
-  .rule-double-b {
-    height: calc(var(--cell) * 2);
-    background-image: repeating-linear-gradient(
-      90deg,
-      var(--pk-sand-line) 0,
-      var(--pk-sand-line) var(--cell),
-      transparent var(--cell),
-      transparent calc(var(--cell) * 3)
-    );
-    background-position: 0 50%;
-    background-repeat: repeat-x;
-    background-size: calc(var(--cell) * 3) var(--cell);
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-  }
-
-  .stamp {
-    @apply pill-live;
-  }
-
-  .foil-text {
-    position: relative;
-    display: inline-block;
-  }
-
-  .grid-bg,
-  .grid-bg-dark {
-    background-image:
-      repeating-linear-gradient(90deg, var(--pk-sand-line) 0 1px, transparent 1px calc(var(--cell) * 4)),
-      repeating-linear-gradient(0deg, var(--pk-sand-line) 0 1px, transparent 1px calc(var(--cell) * 4));
-    opacity: 0.5;
-  }
-
-  .glow-cyan {
-    background: radial-gradient(closest-side, rgb(var(--iris-500) / 0.3), transparent 78%);
-  }
-
-  .text-lit-dark {
-    color: rgb(var(--night-text));
   }
 
   /* ------------------------------------------------------------------ */

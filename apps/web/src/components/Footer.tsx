@@ -102,11 +102,11 @@ export function Footer() {
       {/* The colophon. A document that states how it was set is a document someone
           cared about; the engraving here is generated, and it says so. */}
       <div className="relative border-t border-line">
-        <div className="shell flex flex-wrap items-center justify-between gap-3 py-6 font-mono text-nano font-medium uppercase text-ghost">
+        <div className="shell flex flex-wrap items-center justify-between gap-3 py-6 font-mono text-nano font-medium uppercase text-faint">
           <span>$OSINKO · Finnish for dividend · Robinhood Chain · Paid in USDG</span>
           <span className="text-faint">Let the dividends do the work</span>
         </div>
-        <div className="shell flex flex-wrap items-center justify-between gap-3 border-t border-line py-4 font-mono text-nano font-medium uppercase text-ghost">
+        <div className="shell flex flex-wrap items-center justify-between gap-3 border-t border-line py-4 font-mono text-nano font-medium uppercase text-faint">
           <span>Set in Archivo, Instrument Sans, Newsreader &amp; IBM Plex Mono · Garden grown in code, not drawn</span>
           <span>© 2026 Osinko</span>
         </div>

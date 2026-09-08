@@ -12,7 +12,7 @@ type View = "table" | "month";
 
 /**
  * The screenshotable asset. A table where one column is the product: the days you
- * get paid early, in cyan. Filters, a month grid, and a set-a-rule shortcut on hover.
+ * get paid early, in the accent. Filters, a month grid, and a set-a-rule shortcut on hover.
  */
 export default function CalendarPage() {
   const { rows } = useCalendarRows();
@@ -66,8 +66,8 @@ export default function CalendarPage() {
           { label: "Days early, on average", value: String(avgEarly), accent: true },
         ].map((s) => (
           <div key={s.label} className="bg-paper p-5">
-            <div className="eyebrow text-panel-muted">{s.label}</div>
-            <div className={`num mt-2 text-3xl font-semibold tracking-tighter ${s.accent ? "text-cyan" : ""}`}>
+            <div className="eyebrow text-muted">{s.label}</div>
+            <div className={`num mt-2 text-3xl font-semibold tracking-tighter ${s.accent ? "text-accent" : ""}`}>
               {s.value}
             </div>
           </div>
@@ -112,7 +112,7 @@ export default function CalendarPage() {
 
         {view === "table" ? <CalendarTable rows={filtered} held={held} /> : <MonthGrid rows={filtered} />}
 
-        <p className="text-[13px] text-panel-muted">
+        <p className="text-[13px] text-muted">
           “Paid early by” is the gap between the two dates. Wait for the company and you get paid on
           the pay date. Use Osinko and you get paid on the ex date, minus 1%.
         </p>
@@ -126,13 +126,13 @@ function CalendarTable({ rows, held }: { rows: DividendRow[]; held: Set<string> 
     return (
       <div className="rounded-lg border border-line bg-ground-2 px-6 py-12 text-center">
         <p className="text-[15px] font-bold">Nothing in this range</p>
-        <p className="mt-1 text-[13px] text-panel-muted">Try a wider one.</p>
+        <p className="mt-1 text-[13px] text-muted">Try a wider one.</p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto border border-panel-line">
+    <div className="overflow-x-auto border border-line">
       <table className="data-table min-w-[760px] text-[14px]">
         <thead>
           <tr>
@@ -140,13 +140,13 @@ function CalendarTable({ rows, held }: { rows: DividendRow[]; held: Set<string> 
             <th>Per share</th>
             <th>Ex date</th>
             <th>Pay date</th>
-            <th className="text-cyan">Paid early by</th>
+            <th className="text-accent">Paid early by</th>
             <th aria-label="Actions" />
           </tr>
         </thead>
         <tbody>
           {rows.map((d) => (
-            <tr key={d.id} className="group transition-colors hover:bg-panel-2">
+            <tr key={d.id} className="group transition-colors hover:bg-ground-2">
               <td>
                 <div className="flex items-center gap-3">
                   <TokenMark symbol={d.symbol} size={28} />
@@ -157,11 +157,11 @@ function CalendarTable({ rows, held }: { rows: DividendRow[]; held: Set<string> 
               <td className="num font-semibold">${fmt(d.perShare)}</td>
               <td className="num">
                 {shortDate(d.exDate)}
-                <span className="ml-2 text-micro font-bold uppercase text-panel-muted">{relativeTime(d.exDate)}</span>
+                <span className="ml-2 text-micro font-bold uppercase text-muted">{relativeTime(d.exDate)}</span>
               </td>
-              <td className="num text-panel-muted">{shortDate(d.payDate)}</td>
+              <td className="num text-muted">{shortDate(d.payDate)}</td>
               <td>
-                <span className="num text-[17px] font-extrabold text-cyan">{d.daysEarly} days</span>
+                <span className="num text-[17px] font-extrabold text-accent">{d.daysEarly} days</span>
               </td>
               <td className="text-right">
                 <Link
@@ -179,7 +179,7 @@ function CalendarTable({ rows, held }: { rows: DividendRow[]; held: Set<string> 
   );
 }
 
-/** A month of squares; ex dates land as cyan blocks. */
+/** A month of squares; ex dates land as accent blocks. */
 function MonthGrid({ rows }: { rows: DividendRow[] }) {
   const today = new Date();
   const year = today.getFullYear();
@@ -201,14 +201,14 @@ function MonthGrid({ rows }: { rows: DividendRow[] }) {
   const monthName = today.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
   return (
-    <div className="border border-panel-line">
-      <div className="flex items-baseline justify-between border-b border-panel-line px-4 py-3">
+    <div className="border border-line">
+      <div className="flex items-baseline justify-between border-b border-line px-4 py-3">
         <span className="text-[15px] font-extrabold tracking-tight">{monthName}</span>
-        <span className="text-micro font-bold uppercase text-panel-muted">Ex dates this month</span>
+        <span className="text-micro font-bold uppercase text-muted">Ex dates this month</span>
       </div>
-      <div className="grid grid-cols-7 gap-px bg-panel-3 p-px">
+      <div className="grid grid-cols-7 gap-px bg-ground-3 p-px">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-          <div key={d} className="bg-paper px-2 py-1.5 text-center text-micro font-bold uppercase text-panel-muted">
+          <div key={d} className="bg-paper px-2 py-1.5 text-center text-micro font-bold uppercase text-muted">
             {d}
           </div>
         ))}
