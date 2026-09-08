@@ -74,7 +74,7 @@ export default function CalendarPage() {
         ))}
       </div>
 
-      <section className="space-y-5" aria-label="Declared dividends">
+      <section className="space-y-5" aria-label="Declared dividends" data-shot="calendar">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2" role="group" aria-label="Filter">
             {FILTERS.map((f) => (

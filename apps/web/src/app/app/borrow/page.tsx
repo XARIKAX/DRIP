@@ -42,7 +42,7 @@ function CreditStrip() {
   const ltvPct = c.collateralValueUsd > 0 ? (c.borrowedUsd / c.collateralValueUsd) * 100 : 0;
 
   return (
-    <section className="panel" aria-label="Credit line">
+    <section className="panel" aria-label="Credit line" data-shot="borrow">
       <div className="grid grid-cols-2 gap-px bg-panel-line lg:grid-cols-4">
         <div className="bg-panel p-6">
           <div className="panel-title">Your stock is worth</div>

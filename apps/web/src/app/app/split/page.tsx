@@ -28,7 +28,7 @@ export default function SplitPage() {
   const active = series[0] ?? null;
 
   return (
-    <div className="rise-group space-y-10">
+    <div className="rise-group space-y-10" data-shot="split">
       <header className="max-w-2xl border-b border-line pb-8">
         <div className="serial">Sell the dividend on its own</div>
         <h1 className="mt-4 display text-display">Split</h1>

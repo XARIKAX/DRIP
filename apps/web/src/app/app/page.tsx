@@ -19,7 +19,7 @@ const MODES: ModeName[] = ["CASH_EARLY", "STREAM", "REINVEST"];
 
 export default function DashboardPage() {
   return (
-    <div className="rise-group space-y-8">
+    <div className="rise-group space-y-8" data-shot="dashboard">
       <Header />
       <TopStrip />
       <div className="grid gap-8 xl:grid-cols-3">

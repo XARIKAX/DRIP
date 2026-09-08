@@ -91,7 +91,7 @@ export function Universe() {
           </p>
         </div>
 
-        <div ref={glow} className="reveal reveal-2 panel-frame spotlight mt-14 [--cell:2px]">
+        <div ref={glow} data-shot="universe" className="reveal reveal-2 panel-frame spotlight mt-14 [--cell:2px]">
           {/* One koi crosses the header on a long loop. The pond has something living
               in it, and it costs a single CSS keyframe on a three-frame sprite. */}
           <div

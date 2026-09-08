@@ -374,7 +374,7 @@ export default function AgentPage() {
         </p>
       </header>
 
-      <section className="panel flex flex-col" aria-label="Agent console">
+      <section className="panel flex flex-col" aria-label="Agent console" data-shot="agent">
         <div className="panel-head">
           <span className="panel-title">osinko · agent</span>
           <span className="num text-micro font-bold uppercase text-panel-faint">{source === "demo" ? "portfolio session" : "wallet session"}</span>

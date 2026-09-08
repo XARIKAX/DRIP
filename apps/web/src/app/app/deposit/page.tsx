@@ -146,7 +146,7 @@ export default function DepositPage() {
           </section>
 
           {/* Step 3: the mode */}
-          <section className="panel" aria-label="Pick a mode">
+          <section data-shot="deposit-modes" className="panel" aria-label="Pick a mode">
             <div className="border-b border-panel-line px-5 py-4">
               <span className="eyebrow text-cyan">03 — What should its dividends do</span>
             </div>
@@ -181,7 +181,7 @@ export default function DepositPage() {
 
         {/* The receipt */}
         <div className="space-y-8 lg:col-span-5">
-          <section className="panel" aria-label="Summary">
+          <section className="panel" aria-label="Summary" data-shot="deposit-summary">
             <div className="panel-head">
               <span className="panel-title">Check it over</span>
               <span className="text-micro font-bold uppercase text-panel-faint">Before you confirm</span>

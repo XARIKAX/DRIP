@@ -261,10 +261,10 @@ export function Docs() {
             </li>
           </ul>
           <Shot
-            name="certificate"
+            name="hero"
             n={2}
-            alt="An engraved Osinko share certificate for one hundred and fifty shares of Apple Inc, with a $39.00 dividend coupon attached along a tear-off line and an ex date stamp."
-            caption="The thing Osinko replaces: a paper share certificate with a dividend coupon you tore off along the dotted line. Osinko keeps the certificate whole and does the work on the coupon."
+            alt="The Osinko home page: a hand holding a dark coin whose face carries a lit sphere split down its meridian, under the words The On-Chain Dividend Engine."
+            caption="The mark is the argument. A holding, lit on one side and left whole; the dividend separated along a line that does not cut the thing in two."
           />
         </Sub>
       </Section>

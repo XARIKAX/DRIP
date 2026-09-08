@@ -39,7 +39,7 @@ function HeroStats() {
   const { vault } = useVaultView();
 
   return (
-    <section className="panel" aria-label="Vault statistics">
+    <section className="panel" aria-label="Vault statistics" data-shot="vault">
       <div className="grid grid-cols-2 gap-px bg-panel-line lg:grid-cols-4">
         <div className="bg-panel p-6">
           <div className="panel-title">In the pool</div>
