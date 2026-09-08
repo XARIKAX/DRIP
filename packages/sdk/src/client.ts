@@ -103,6 +103,27 @@ export class DripReader {
    * feed went quiet. Everything that moves money keeps calling the oracle directly
    * and keeps failing closed.
    */
+  /** Cached, because it is fixed at deploy and this sits on a rate limited public RPC. */
+  private shareDecimalsCache?: number;
+
+  /**
+   * How many decimals the vault's SHARES carry, which is not USDG's six.
+   *
+   * AdvanceVault overrides _decimalsOffset() to 3 on top of the asset's decimals, so
+   * a share is 1e9, not 1e18. Reading it rather than hardcoding 9 keeps this correct
+   * if the offset changes or a chain lists an asset with different decimals.
+   */
+  private async shareDecimals(): Promise<number> {
+    if (this.shareDecimalsCache === undefined) {
+      this.shareDecimalsCache = await this.client.readContract({
+        address: this.deployment.advanceVault,
+        abi: advanceVaultAbi,
+        functionName: "decimals",
+      });
+    }
+    return this.shareDecimalsCache;
+  }
+
   private async priceOrNull(stockToken: Address): Promise<bigint | null> {
     try {
       return (await this.client.readContract({
@@ -356,6 +377,7 @@ export class DripReader {
   async getVaultStats(): Promise<VaultStats> {
     const address = this.deployment.advanceVault;
     const abi = advanceVaultAbi;
+    const shareDecimals = await this.shareDecimals();
 
     const [
       totalAssets,
@@ -382,10 +404,12 @@ export class DripReader {
       this.client.readContract({ address, abi, functionName: "maxUtilizationBps" }),
       this.client.readContract({ address, abi, functionName: "advanceFeeBps" }),
       this.client.readContract({ address, abi, functionName: "totalSupply" }),
-      this.client.readContract({ address, abi, functionName: "convertToAssets", args: [10n ** 18n] }),
+      this.client
+        .readContract({ address, abi, functionName: "convertToAssets", args: [10n ** BigInt(shareDecimals)] }),
     ]);
 
     return {
+      shareDecimals,
       totalAssets,
       cash,
       freeCash,
