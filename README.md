@@ -41,8 +41,8 @@ pnpm install
 # 1. a local chain
 pnpm chain                      # anvil, chain id 31337, 2s blocks
 
-# 2. deploy + seed + sync ABIs (new terminal)
-pnpm contracts:deploy:local     # deploys, declares 3 dividends, funds the vault
+# 2. deploy + seed + sync ABIs + point the app at it (new terminal)
+pnpm contracts:deploy:local
 
 # 3. the app (new terminal)
 pnpm dev                        # http://localhost:3000
@@ -52,6 +52,50 @@ Then in the browser: connect a wallet pointed at `http://127.0.0.1:8545` (chain 
 faucet AAPL from the dashboard, deposit it, pick a mode, and watch the counter move.
 
 Import one of anvil's printed private keys into the wallet for instant gas.
+
+## One command onto a real chain
+
+`scripts/deploy.sh` is the whole path from empty chain to live app, and it is the
+same script the local run uses. It compiles, deploys the protocol and the five stock
+tokens, seeds the vault and the calendar, copies the address book into the SDK, and
+writes `apps/web/.env.local` so `pnpm dev` comes up on the new chain with nothing
+else to edit.
+
+```bash
+# Fund a deployer first: https://faucet.testnet.chain.robinhood.com
+PRIVATE_KEY=0x... pnpm deploy:chain robinhood_testnet
+```
+
+Network arguments: `local`, `robinhood_testnet`, `robinhood_mainnet`,
+`arbitrum_sepolia`. Any other endpoint works by setting `RPC_URL` and passing no
+argument.
+
+| Env var | Effect |
+| --- | --- |
+| `PRIVATE_KEY` | Deployer key. Required off local, defaults to anvil's first account on it. |
+| `RPC_URL` | Overrides the network's default endpoint. Use this for an Alchemy URL. |
+| `SEED=0` | Deploy only. No vault funding, no declared dividends. |
+| `SEED_EX_LEAD` | Seconds until the first dividend goes ex. 60 local, 900 remote. |
+| `VERIFY=1` | Verify sources on the chain's Blockscout. `VERIFIER_URL` overrides the endpoint. |
+| `DEPLOY_MOCKS_TO_MAINNET=1` | Required to target a non-testnet chain. See below. |
+
+It refuses to start rather than half-deploy: no chain answering, no key, or no gas on
+the deployer each stop it before the first transaction. It also refuses any chain that
+is not a known testnet, because `Deploy.s.sol` deploys mock USDG and five
+faucet-minting mock stock tokens unconditionally — fine on a testnet, an incident on a
+chain carrying real money. Production swaps the real addresses in first
+(`HANDOFF.md` §7); `DEPLOY_MOCKS_TO_MAINNET=1` overrides the check if you genuinely
+want the mocks there.
+
+Two generated files carry the result into the frontend, and both belong in the commit:
+
+```
+contracts/deployments/<chainid>.json         written by Deploy.s.sol
+packages/sdk/src/generated/deployments.ts    written by scripts/sync-abis.mjs
+```
+
+`apps/web/.env.local` is gitignored on purpose — the same five variables go into the
+Vercel project instead, and the script prints them ready to paste.
 
 ## Demo mode
 
@@ -74,16 +118,14 @@ is in one line: the Aave of stocks.
 ## Robinhood Chain testnet
 
 The real target: chain id 46630, an Arbitrum Orbit L2, public since February 2026.
-Fund a deployer at the faucet (https://faucet.testnet.chain.robinhood.com), then:
+Fund a deployer at the faucet (https://faucet.testnet.chain.robinhood.com), then one
+command does the whole thing:
 
 ```bash
-cd contracts
-PRIVATE_KEY=0x... forge script script/Deploy.s.sol --rpc-url robinhood_testnet --broadcast
-PRIVATE_KEY=0x... forge script script/Seed.s.sol --rpc-url robinhood_testnet --broadcast
-cd .. && pnpm abis
+PRIVATE_KEY=0x... pnpm deploy:chain robinhood_testnet
 ```
 
-Set `apps/web/.env.local`:
+It writes `apps/web/.env.local` itself:
 
 ```
 NEXT_PUBLIC_CHAIN_ID=46630
@@ -136,7 +178,7 @@ apps/web/          Next.js app — home, dashboard, deposit, borrow, split, vaul
 contracts/         Foundry — 10 protocol contracts, mocks, tests, deploy + seed scripts
 packages/sdk/      TypeScript SDK (viem) — typed reads, unsigned write builders
 packages/mcp/      MCP server wrapping the SDK
-scripts/           deploy-local.sh, sync-abis.mjs
+scripts/           deploy.sh (any chain), deploy-local.sh, sync-abis.mjs
 HANDOFF.md         for the Solidity developer taking this to mainnet
 ```
 
@@ -180,10 +222,7 @@ state. To go fully interactive: fund a deployer wallet at the faucet
 (https://faucet.testnet.chain.robinhood.com), then
 
 ```bash
-cd contracts
-PRIVATE_KEY=0x... forge script script/Deploy.s.sol --rpc-url robinhood_testnet --broadcast
-PRIVATE_KEY=0x... forge script script/Seed.s.sol --rpc-url robinhood_testnet --broadcast
-node ../scripts/sync-abis.mjs
+PRIVATE_KEY=0x... pnpm deploy:chain robinhood_testnet
 ```
 
 commit `contracts/deployments/46630.json` plus the regenerated
