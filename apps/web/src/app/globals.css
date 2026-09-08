@@ -824,8 +824,14 @@
     color: rgb(var(--accent));
   }
 
+  /*
+   * A contents row is a number and a title, and it has been rendering as "1What Osinko
+   * is" — the number carried a width but the row was `block`, so the two spans butted
+   * together with nothing to separate them. A flex row with a real gap fixes it once
+   * for every entry, including the indented ones.
+   */
   .docs-toc a {
-    @apply block rounded-sm py-1.5 pl-4 pr-2 text-[13px] leading-snug text-faint transition-colors duration-200 hover:text-ink;
+    @apply flex items-baseline gap-2.5 rounded-sm py-1.5 pl-4 pr-2 text-[13px] leading-snug text-faint transition-colors duration-200 hover:text-ink;
   }
 
   .docs-toc a[aria-current="true"] {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Steps } from "@/components/app/Steps";
 import { AnimatedNumber, Countdown, fmt, shortDate } from "@/components/live";
 import { TokenMark } from "@/components/TokenMark";
 import {
@@ -239,7 +240,7 @@ function ActionPanel({ series, matured }: { series: SplitSeries; matured: boolea
             aria-selected={activeTab === t}
             onClick={() => setTab(t)}
             className={`border-b px-4 py-3 text-micro font-bold uppercase transition-colors ${
-              activeTab === t ? "border-cyan text-cyan" : "border-panel-line text-panel-muted hover:text-panel-text"
+              activeTab === t ? "border-accent text-accent" : "border-line text-muted hover:text-ink"
             }`}
           >
             {t}
@@ -256,7 +257,7 @@ function ActionPanel({ series, matured }: { series: SplitSeries; matured: boolea
         </div>
         <div className="flex gap-2">
           <input
-            className="num w-full border border-panel-line bg-panel-2 px-4 py-3 text-[16px] text-panel-text outline-none placeholder:text-panel-faint focus:border-cyan"
+            className="field text-[16px]"
             inputMode="decimal"
             placeholder="0.0000"
             aria-label={`Shares to ${activeTab}`}
@@ -300,37 +301,23 @@ function ActionPanel({ series, matured }: { series: SplitSeries; matured: boolea
 }
 
 function HowItWorks() {
-  const rows = [
-    {
-      n: "01",
-      h: "One share becomes two tokens",
-      p: "Split a share and you get a share token and a dividend token. The share token is the stock itself, minus its dividends. The dividend token is the dividends, minus the stock.",
-    },
-    {
-      n: "02",
-      h: "The dividend gets its own price",
-      p: "The dividend token is worth exactly the dividends the stock will pay before the end date, and nothing else. Sell it, and you have sold the dividends on their own.",
-    },
-    {
-      n: "03",
-      h: "Rejoin them any time, for free",
-      p: "Hold one of each and you can always put them back together into the whole share. No fee, no waiting. The same stock, whole again, whenever you want it.",
-    },
-  ];
   return (
-    <section aria-label="How splitting works" className="space-y-6">
-      <div>
-        <div className="eyebrow text-cyan">How it works</div>
-        <div className="mt-4">
-          {rows.map((r) => (
-            <div key={r.n} className="hairline-t grid gap-2 py-5 md:grid-cols-12 md:gap-6">
-              <div className="num text-micro font-bold text-cyan md:col-span-1">{r.n}</div>
-              <h3 className="text-[17px] font-extrabold tracking-tight md:col-span-4">{r.h}</h3>
-              <p className="text-[14px] leading-relaxed text-panel-muted md:col-span-7">{r.p}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+    <Steps
+      label="How splitting works"
+      steps={[
+        {
+          h: "One share becomes two tokens",
+          p: "Split a share and you get a share token and a dividend token. The share token is the stock itself, minus its dividends. The dividend token is the dividends, minus the stock.",
+        },
+        {
+          h: "The dividend gets its own price",
+          p: "The dividend token is worth exactly the dividends the stock will pay before the end date, and nothing else. Sell it, and you have sold the dividends on their own.",
+        },
+        {
+          h: "Rejoin them any time, for free",
+          p: "Hold one of each and you can always put them back together into the whole share. No fee, no waiting. The same stock, whole again, whenever you want it.",
+        },
+      ]}
+    />
   );
 }

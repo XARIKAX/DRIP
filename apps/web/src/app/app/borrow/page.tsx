@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Steps } from "@/components/app/Steps";
 import { AnimatedNumber, LiveCounter, fmt } from "@/components/live";
 import { Meter } from "@/components/charts";
 import { TokenMark } from "@/components/TokenMark";
@@ -159,7 +160,7 @@ function BorrowPanel() {
             aria-selected={tab === t}
             onClick={() => setTab(t)}
             className={`border-b px-4 py-3 text-micro font-bold uppercase transition-colors ${
-              tab === t ? "border-cyan text-cyan" : "border-panel-line text-panel-muted hover:text-panel-text"
+              tab === t ? "border-accent text-accent" : "border-line text-muted hover:text-ink"
             }`}
           >
             {t}
@@ -174,7 +175,7 @@ function BorrowPanel() {
         </div>
         <div className="flex gap-2">
           <input
-            className="num w-full border border-panel-line bg-panel-2 px-4 py-3 text-[16px] text-panel-text outline-none placeholder:text-panel-faint focus:border-cyan"
+            className="field text-[16px]"
             inputMode="decimal"
             placeholder="0.00"
             aria-label={`USDG to ${tab}`}
@@ -221,47 +222,33 @@ function BorrowPanel() {
 
 function HowItWorks() {
   const holdings = useHoldings();
-  const rows = [
-    {
-      n: "01",
-      h: "Your stock stays yours",
-      p: "The stock backing your loan is the same stock earning your dividends. It keeps paying out while it backs the loan. You never sell a share to borrow.",
-    },
-    {
-      n: "02",
-      h: "Dividends pay the interest first",
-      p: "Every dividend your stock earns goes toward the interest before anything else. Borrow a modest amount and the dividends cover the whole cost.",
-    },
-    {
-      n: "03",
-      h: "A big safety margin, on purpose",
-      p: "You can borrow up to 40% of what your stock is worth. Your stock is only sold to cover the loan if the loan passes 65%. That gap is there to ride out a bad month.",
-    },
-  ];
   return (
-    <section aria-label="How borrowing works" className="space-y-6">
-      <div>
-        <div className="eyebrow text-cyan">How it works</div>
-        <div className="mt-4">
-          {rows.map((r) => (
-            <div key={r.n} className="hairline-t grid gap-2 py-5 md:grid-cols-12 md:gap-6">
-              <div className="num text-micro font-bold text-cyan md:col-span-1">{r.n}</div>
-              <h3 className="text-[17px] font-extrabold tracking-tight md:col-span-4">{r.h}</h3>
-              <p className="text-[14px] leading-relaxed text-panel-muted md:col-span-7">{r.p}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
+    <Steps
+      label="How borrowing works"
+      steps={[
+        {
+          h: "Your stock stays yours",
+          p: "The stock backing your loan is the same stock earning your dividends. It keeps paying out while it backs the loan. You never sell a share to borrow.",
+        },
+        {
+          h: "Dividends pay the interest first",
+          p: "Every dividend your stock earns goes toward the interest before anything else. Borrow a modest amount and the dividends cover the whole cost.",
+        },
+        {
+          h: "A big safety margin, on purpose",
+          p: "You can borrow up to 40% of what your stock is worth. Your stock is only sold to cover the loan if the loan passes 65%. That gap is there to ride out a bad month.",
+        },
+      ]}
+    >
       {holdings.rows.length > 0 ? (
-        <div className="border border-panel-line">
-          <div className="flex items-baseline justify-between border-b border-panel-line px-5 py-3">
+        <div className="overflow-hidden rounded-lg border border-line">
+          <div className="flex items-baseline justify-between border-b border-line px-5 py-3">
             <span className="serial">Stock backing your loan</span>
-            <span className="text-micro font-bold uppercase text-panel-muted">Still earning dividends</span>
+            <span className="text-micro font-bold uppercase text-muted">Still earning dividends</span>
           </div>
-          <div className="grid grid-cols-2 gap-px bg-panel-3 p-px sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-px bg-line p-px sm:grid-cols-3 lg:grid-cols-6">
             {holdings.rows.map((h) => (
-              <div key={h.symbol} className="bg-paper p-4">
+              <div key={h.symbol} className="bg-ground p-4">
                 <div className="flex items-center gap-2">
                   <TokenMark symbol={h.symbol} size={24} />
                   <span className="text-[13px] font-extrabold tracking-tight">{h.symbol}</span>
@@ -272,6 +259,6 @@ function HowItWorks() {
           </div>
         </div>
       ) : null}
-    </section>
+    </Steps>
   );
 }

@@ -40,7 +40,7 @@ export function TickerStrip() {
       <div className="flex w-max marquee">
         {doubled.map((cell, i) => (
           <div key={`${cell.symbol}-${i}`} className="ticker-cell gap-3">
-            <Koi scale={1} />
+            <Koi cell="calc(var(--cell) * 0.8)" className="opacity-80" />
             <span className="text-[12px] font-bold tracking-tight text-ink">{cell.symbol}</span>
             <span className="num text-[12px] font-medium text-accent">${cell.amount}</span>
             <span className="font-mono text-nano font-medium uppercase text-faint">

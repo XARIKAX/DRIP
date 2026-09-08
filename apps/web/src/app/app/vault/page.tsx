@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Steps } from "@/components/app/Steps";
 import { AnimatedNumber, fmt } from "@/components/live";
 import { AreaChart, Meter } from "@/components/charts";
 import { useDataActions, useVaultView, useWalletView } from "@/lib/data/provider";
@@ -141,7 +142,7 @@ function LpPanel() {
             aria-selected={tab === t}
             onClick={() => setTab(t)}
             className={`border-b px-4 py-3 text-micro font-bold uppercase transition-colors ${
-              tab === t ? "border-cyan text-cyan" : "border-panel-line text-panel-muted hover:text-panel-text"
+              tab === t ? "border-accent text-accent" : "border-line text-muted hover:text-ink"
             }`}
           >
             {t}
@@ -156,7 +157,7 @@ function LpPanel() {
         </div>
         <div className="flex gap-2">
           <input
-            className="num w-full border border-panel-line bg-panel-2 px-4 py-3 text-[16px] text-panel-text outline-none placeholder:text-panel-faint focus:border-cyan"
+            className="field text-[16px]"
             inputMode="decimal"
             placeholder="0.00"
             aria-label={`USDG to ${tab}`}
@@ -199,35 +200,24 @@ function LpPanel() {
 }
 
 function HowItEarns() {
-  const rows = [
-    {
-      n: "01",
-      h: "It pays what a company already owes",
-      p: "Once a dividend is announced, the company owes a known amount on a known date. The pool pays the holder today and collects from the company on that date.",
-    },
-    {
-      n: "02",
-      h: "Lenders earn 1% each time",
-      p: "The fee is taken the moment the pool pays someone early. It goes straight to the people who put cash in the pool, so their share of the pool is worth more right away.",
-    },
-    {
-      n: "03",
-      h: "Two limits keep it safe",
-      p: "The pool never lends out more than 80% of what it holds. And it always keeps enough cash on hand to pay everyone it has promised to pay. Boring on purpose.",
-    },
-  ];
   return (
-    <section aria-label="How the pool earns">
-      <div className="eyebrow text-cyan">How the pool earns</div>
-      <div className="mt-4">
-        {rows.map((r) => (
-          <div key={r.n} className="hairline-t grid gap-2 py-5 md:grid-cols-12 md:gap-6">
-            <div className="num text-micro font-bold text-cyan md:col-span-1">{r.n}</div>
-            <h3 className="text-[17px] font-extrabold tracking-tight md:col-span-4">{r.h}</h3>
-            <p className="text-[14px] leading-relaxed text-panel-muted md:col-span-7">{r.p}</p>
-          </div>
-        ))}
-      </div>
-    </section>
+    <Steps
+      label="How the pool earns"
+      title="How the pool earns"
+      steps={[
+        {
+          h: "It pays what a company already owes",
+          p: "Once a dividend is announced, the company owes a known amount on a known date. The pool pays the holder today and collects from the company on that date.",
+        },
+        {
+          h: "Lenders earn 1% each time",
+          p: "The fee is taken the moment the pool pays someone early. It goes straight to the people who put cash in the pool, so their share of the pool is worth more right away.",
+        },
+        {
+          h: "Two limits keep it safe",
+          p: "The pool never lends out more than 80% of what it holds. And it always keeps enough cash on hand to pay everyone it has promised to pay. Boring on purpose.",
+        },
+      ]}
+    />
   );
 }

@@ -13,17 +13,17 @@ import type { ReactNode } from "react";
  */
 
 const MONO = "IBM Plex Mono, SFMono-Regular, Menlo, Consolas, monospace";
-const SANS = "Archivo, Helvetica Neue, Helvetica, Arial, sans-serif";
+const SANS = "Instrument Sans, Helvetica Neue, Helvetica, Arial, sans-serif";
 
-const INK = "#F3F6F8";
-const MUTED = "#8B949C";
-const FAINT = "#5A636B";
-const CYAN = "#35C2DB";
-const RED = "#E0644F";
-const BOX = "#0B0E11";
-const BOX_2 = "#101419";
-const LINE = "rgba(255,255,255,0.16)";
-const LINE_SOFT = "rgba(255,255,255,0.08)";
+const INK = "#F1EBFF";
+const MUTED = "#A99BC4";
+const FAINT = "#8A7BA8";
+const CYAN = "#AC85FB";
+const RED = "#FF7A66";
+const BOX = "#150A24";
+const BOX_2 = "#1D1030";
+const LINE = "rgba(233,224,255,0.18)";
+const LINE_SOFT = "rgba(233,224,255,0.08)";
 
 function Frame({
   w = 860,

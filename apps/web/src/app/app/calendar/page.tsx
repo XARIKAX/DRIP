@@ -59,7 +59,7 @@ export default function CalendarPage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-3 gap-px border border-panel-line bg-panel-2">
+      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-line bg-line">
         {[
           { label: "Dividends coming up", value: String(filtered.length) },
           { label: "Added up, per share", value: `$${fmt(totalPerShare)}` },
@@ -83,25 +83,25 @@ export default function CalendarPage() {
                 type="button"
                 aria-pressed={filter === f.key}
                 onClick={() => setFilter(f.key)}
-                className={`border px-3 py-1.5 text-micro font-bold uppercase transition-colors ${
+                className={`rounded-full border px-3.5 py-1.5 text-micro font-bold uppercase transition-colors ${
                   filter === f.key
-                    ? "border-cyan bg-cyan text-void-deep"
-                    : "border-panel-line text-panel-muted hover:border-panel-line hover:text-panel-text"
+                    ? "border-transparent bg-accent-fill text-accent-ink"
+                    : "border-line text-muted hover:text-ink"
                 }`}
               >
                 {f.label}
               </button>
             ))}
           </div>
-          <div className="inline-flex border border-panel-line" role="group" aria-label="View">
+          <div className="inline-flex overflow-hidden rounded-full border border-line p-0.5" role="group" aria-label="View">
             {(["table", "month"] as View[]).map((v, i) => (
               <button
                 key={v}
                 type="button"
                 aria-pressed={view === v}
                 onClick={() => setView(v)}
-                className={`px-3 py-1.5 text-micro font-bold uppercase ${i > 0 ? "border-l border-panel-line" : ""} ${
-                  view === v ? "bg-cyan text-void-deep" : "bg-transparent text-panel-muted hover:text-panel-text"
+                className={`rounded-full px-3.5 py-1.5 text-micro font-bold uppercase transition-colors ${
+                  view === v ? "bg-accent-fill text-accent-ink" : "bg-transparent text-muted hover:text-ink"
                 }`}
               >
                 {v === "table" ? "Table" : "Month"}
@@ -124,7 +124,7 @@ export default function CalendarPage() {
 function CalendarTable({ rows, held }: { rows: DividendRow[]; held: Set<string> }) {
   if (rows.length === 0) {
     return (
-      <div className="border border-panel-line bg-panel-2 px-6 py-12 text-center">
+      <div className="rounded-lg border border-line bg-ground-2 px-6 py-12 text-center">
         <p className="text-[15px] font-bold">Nothing in this range</p>
         <p className="mt-1 text-[13px] text-panel-muted">Try a wider one.</p>
       </div>
@@ -213,18 +213,18 @@ function MonthGrid({ rows }: { rows: DividendRow[] }) {
           </div>
         ))}
         {Array.from({ length: leadBlanks }).map((_, i) => (
-          <div key={`b${i}`} className="min-h-[72px] bg-panel-2" />
+          <div key={`b${i}`} className="min-h-[72px] bg-ground-2" />
         ))}
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1;
           const events = byDay.get(day) ?? [];
           const isToday = day === today.getDate();
           return (
-            <div key={day} className={`min-h-[72px] bg-paper p-1.5 ${isToday ? "outline outline-1 outline-cyan" : ""}`}>
-              <div className={`num text-[11px] ${isToday ? "font-bold text-cyan" : "text-panel-muted"}`}>{day}</div>
+            <div key={day} className={`min-h-[72px] bg-ground p-1.5 ${isToday ? "outline outline-1 outline-accent" : ""}`}>
+              <div className={`num text-[11px] ${isToday ? "font-bold text-accent" : "text-muted"}`}>{day}</div>
               <div className="mt-1 space-y-1">
                 {events.map((e) => (
-                  <div key={e.id} className="bg-cyan px-1.5 py-0.5 text-[11px] font-bold tracking-tight text-panel-text">
+                  <div key={e.id} className="rounded-sm bg-iris-100 px-1.5 py-0.5 text-[11px] font-bold tracking-tight text-iris-900">
                     {e.symbol} <span className="num">${fmt(e.perShare)}</span>
                   </div>
                 ))}

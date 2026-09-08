@@ -24,10 +24,10 @@ const DOCS = { href: "/docs", label: "Guide" };
 /**
  * The application header. Wordmark, seven destinations, the docs, one connect button.
  *
- * The active link is marked by a cyan underscore drawn beneath it rather than a filled
- * chip — at this weight of type, a rule is louder than a box and quieter on the page.
- * On scroll the bar loses its transparency and gains a hairline, so content always
- * passes *under* something rather than through it.
+ * The active link is marked by two cells of stone set beneath it rather than a filled
+ * chip — quieter than a box, and on the same grid as everything else in the garden.
+ * On scroll the bar gains a hairline, so content always passes *under* something
+ * rather than through it.
  */
 export function SiteNav() {
   const pathname = usePathname();
@@ -37,7 +37,7 @@ export function SiteNav() {
   return (
     <header
       className={`sticky top-0 z-chrome transition-colors duration-500 ease-osk ${
-        scrolled ? "border-b border-line bg-paper" : "border-b border-line-soft bg-paper"
+        scrolled ? "border-b border-line bg-ground/90 backdrop-blur-xl" : "border-b border-line-soft bg-ground"
       }`}
     >
       {/* Eight destinations plus a connect button fill 1024px to the wire, so the row
@@ -61,8 +61,8 @@ export function SiteNav() {
               >
                 {link.label}
                 <span
-                  className={`absolute inset-x-2 bottom-0 h-px origin-left bg-cyan transition-transform duration-500 ease-osk xl:inset-x-3.5 ${
-                    active ? "scale-x-100" : "scale-x-0"
+                  className={`absolute bottom-0.5 left-1/2 h-[3px] w-[6px] -translate-x-1/2 rounded-[1px] bg-accent transition-opacity duration-400 ${
+                    active ? "opacity-100" : "opacity-0"
                   }`}
                   aria-hidden
                 />
@@ -81,8 +81,8 @@ export function SiteNav() {
           >
             {DOCS.label}
             <span
-              className={`absolute inset-x-2 bottom-0 h-px origin-left bg-cyan transition-transform duration-500 ease-osk xl:inset-x-3.5 ${
-                docsActive ? "scale-x-100" : "scale-x-0"
+              className={`absolute bottom-0.5 left-1/2 h-[3px] w-[6px] -translate-x-1/2 rounded-[1px] bg-accent transition-opacity duration-400 ${
+                docsActive ? "opacity-100" : "opacity-0"
               }`}
               aria-hidden
             />
@@ -109,7 +109,9 @@ export function SiteNav() {
               }`}
             >
               {link.label}
-              {active ? <span className="absolute inset-x-4 bottom-0 h-px bg-cyan" aria-hidden /> : null}
+              {active ? (
+                <span className="absolute bottom-1 left-1/2 h-[3px] w-[6px] -translate-x-1/2 rounded-[1px] bg-accent" aria-hidden />
+              ) : null}
             </Link>
           );
         })}

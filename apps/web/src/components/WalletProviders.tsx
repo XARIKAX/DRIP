@@ -27,25 +27,34 @@ const wagmiConfig = getDefaultConfig({
 });
 
 /**
- * The connect modal has to belong to the same product as the page behind it: paper
- * chrome, square corners, ink type and the one cyan accent.
+ * The connect modal has to belong to the same product as the page behind it.
+ *
+ * RainbowKit is a second design system with its own colour object, and none of the
+ * work in `globals.css` reaches it — so the palette is restated here by hand. The
+ * radius matters as much as the colour: a square-cornered wallet modal over a product
+ * where every corner is soft is the loudest possible tell of a rebrand that was only
+ * half done.
  */
 const rainbowTheme = {
   ...lightTheme({
-    accentColor: "#0A0A0A",
+    accentColor: "#6320D6",
     accentColorForeground: "#FFFFFF",
-    borderRadius: "none",
+    borderRadius: "large",
     fontStack: "system",
   }),
 };
 
 rainbowTheme.colors.modalBackground = "#FFFFFF";
-rainbowTheme.colors.modalBorder = "rgba(10,10,10,0.11)";
-rainbowTheme.colors.profileForeground = "#F6F7F8";
-rainbowTheme.colors.connectButtonBackground = "#0A0A0A";
-rainbowTheme.colors.connectButtonInnerBackground = "#0A0A0A";
-rainbowTheme.colors.connectButtonText = "#FFFFFF";
-rainbowTheme.fonts.body = "Archivo, Helvetica Neue, Helvetica, Arial, sans-serif";
+rainbowTheme.colors.modalBorder = "rgba(22,14,34,0.10)";
+rainbowTheme.colors.profileForeground = "#F6F4FB";
+rainbowTheme.colors.connectButtonBackground = "#E4D6FF";
+rainbowTheme.colors.connectButtonInnerBackground = "#E4D6FF";
+rainbowTheme.colors.connectButtonText = "#160E22";
+rainbowTheme.fonts.body = "Instrument Sans, Helvetica Neue, Helvetica, Arial, sans-serif";
+rainbowTheme.colors.modalText = "#160E22";
+rainbowTheme.colors.modalTextSecondary = "#5B4E72";
+rainbowTheme.colors.actionButtonBorder = "rgba(22,14,34,0.10)";
+rainbowTheme.colors.closeButtonBackground = "#EFEBF7";
 
 export default function WalletProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(

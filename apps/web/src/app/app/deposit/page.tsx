@@ -87,7 +87,7 @@ export default function DepositPage() {
                       spansRow ? "sm:col-span-2" : ""
                     } ${
                       active
-                        ? "bg-panel-3 text-panel-text shadow-[inset_2px_0_0_0_#35C2DB]"
+                        ? "bg-ground-3 text-ink shadow-[inset_3px_0_0_0_rgb(var(--accent))]"
                         : "bg-panel text-panel-muted hover:bg-panel-2"
                     }`}
                   >
@@ -161,7 +161,7 @@ export default function DepositPage() {
                     onClick={() => setMode(m)}
                     className={`p-5 text-left transition-colors duration-300 ${
                       active
-                        ? "bg-panel-3 text-panel-text shadow-[inset_0_2px_0_0_#35C2DB]"
+                        ? "bg-ground-3 text-ink shadow-[inset_0_3px_0_0_rgb(var(--accent))]"
                         : "bg-panel text-panel-muted hover:bg-panel-2"
                     }`}
                   >

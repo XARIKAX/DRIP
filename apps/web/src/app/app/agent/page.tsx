@@ -384,7 +384,7 @@ export default function AgentPage() {
           {messages.map((m) =>
             m.role === "user" ? (
               <div key={m.id} className="flex justify-end">
-                <div className="max-w-[85%] border border-panel-line bg-panel-2 px-4 py-2.5">
+                <div className="max-w-[85%] rounded-lg border border-line bg-ground-2 px-4 py-2.5">
                   <span className="num text-[13px] text-panel-text">{m.text}</span>
                 </div>
               </div>
@@ -434,7 +434,7 @@ export default function AgentPage() {
               ❯
             </span>
             <input
-              className="num w-full border border-panel-line bg-panel-2 px-3 py-2.5 text-[14px] text-panel-text outline-none placeholder:text-panel-faint focus:border-cyan"
+              className="field py-2.5 text-[14px]"
               placeholder="reinvest all my MSFT dividends"
               aria-label="Agent command"
               value={input}
@@ -490,7 +490,7 @@ function PlanCard({
   onDismiss: () => void;
 }) {
   return (
-    <div className="border border-panel-line bg-panel-2">
+    <div className="rounded-lg border border-line bg-ground-2">
       <div className="flex items-center justify-between border-b border-panel-line px-4 py-2.5">
         <span className="text-[13px] font-extrabold tracking-tight text-panel-text">{plan.title}</span>
         <span className="text-micro font-bold uppercase text-panel-faint">

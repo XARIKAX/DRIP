@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { listings } from "@drip-markets/sdk";
 import { fmt, LiveCounter, shortDate } from "@/components/live";
-import { Rosette } from "@/components/Guilloche";
+import { SakuraTree } from "@/components/pixel/Scenery";
 import { TokenMark } from "@/components/TokenMark";
 import { useCreditView, useDataSource, usePortfolioSummary, useTokensView, useVaultView } from "@/lib/data/provider";
 import { DocsShell, type GlanceRow, type QuickLink, type TocGroup } from "@/components/docs/DocsShell";
@@ -117,16 +117,16 @@ export function Docs() {
 
   const hero = (
     <header className="relative">
-      {/* The rose engine, behind the title — the same watermark the certificate carries,
-          so the reference is visibly printed on the same stock as the product. */}
-      <div className="pointer-events-none absolute -right-10 -top-16 text-ink/[0.07] lg:-right-24" aria-hidden>
-        <Rosette size={380} rings={30} R={100} r={28} a={68} drift={0.8} />
+      {/* A tree behind the title, at the opacity of a watermark — the reference is
+          visibly grown in the same garden as the product. */}
+      <div className="pointer-events-none absolute -right-8 -top-10 opacity-[0.13] lg:-right-20" aria-hidden>
+        <SakuraTree seed={2} cell="4px" />
       </div>
-      <div className="serial">Start here</div>
-      <h1 className="display relative mt-5 text-[clamp(40px,5.4vw,70px)] leading-[0.98] tracking-[-0.02em]">
+      <div className="eyebrow">Start here</div>
+      <h1 className="display relative mt-5 text-[clamp(40px,5.4vw,70px)] leading-[0.98] tracking-[-0.03em]">
         The Aave of stocks,
         <br />
-        <span className="italic text-cyan-deep">explained.</span>
+        <span className="font-serif italic text-accent">explained.</span>
       </h1>
       <p className="mt-8 max-w-[62ch] text-[17.5px] leading-[1.65] text-ink">
         Stocks pay dividends. Today the cash shows up weeks after you earned it, then sits
