@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Reveal, usePointerGlow } from "@/components/motion";
 import { Folio } from "@/components/site/Folio";
+import { Koi } from "@/components/pixel/Scenery";
 import { TokenMark } from "@/components/TokenMark";
 import { fmt, shortDate } from "@/components/live";
 import { useTokensView } from "@/lib/data/provider";
@@ -28,7 +29,7 @@ const FILTERS: { key: Filter; label: string }[] = [
 ];
 
 /**
- * The universe.
+ * The universe — the pond.
  *
  * The one place on the page where density is the point. A landing page that only ever
  * shows three round-numbered stats is hiding the fact that it has no data; a table of
@@ -90,8 +91,22 @@ export function Universe() {
           </p>
         </div>
 
-        <div ref={glow} className="reveal reveal-2 panel-frame spotlight mt-14">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-panel-line px-5 py-4">
+        <div ref={glow} className="reveal reveal-2 panel-frame spotlight mt-14 [--cell:2px]">
+          {/* One koi crosses the header on a long loop. The pond has something living
+              in it, and it costs a single CSS keyframe on a three-frame sprite. */}
+          <div
+            className="pointer-events-none absolute inset-x-0 top-2 h-6 overflow-hidden opacity-40"
+            aria-hidden
+          >
+            <span
+              className="absolute"
+              style={{ animation: "koi-cross 26s linear infinite" }}
+            >
+              <Koi facing="right" cell="calc(var(--cell) * 1.2)" />
+            </span>
+          </div>
+
+          <div className="relative flex flex-wrap items-center justify-between gap-4 border-b border-line px-5 py-4">
             <div className="seg-dark">
               {FILTERS.map((f) => (
                 <button
@@ -104,7 +119,7 @@ export function Universe() {
                 </button>
               ))}
             </div>
-            <span className="flex items-center gap-2 font-mono text-nano uppercase text-cyan">
+            <span className="flex items-center gap-2 font-mono text-nano uppercase text-accent">
               <span className="beacon" aria-hidden />
               {paying} paying right now
             </span>

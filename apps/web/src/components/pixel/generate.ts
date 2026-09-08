@@ -194,6 +194,8 @@ export interface SandOptions {
   focus?: readonly [number, number];
   /** How many rings before the pattern relaxes into straight lines. */
   rings?: number;
+  /** Rake the ground beyond the outermost ring into straight lines. */
+  straighten?: boolean;
 }
 
 /**
@@ -233,7 +235,10 @@ export function sandGrid(opts: SandOptions = {}): Grid {
       }
       if (drawn) continue;
 
-      // Past the outermost ring the rake straightens out.
+      // Past the outermost ring the rake straightens out — but only when asked. A
+      // half-ringed, half-striped patch reads as two patterns rather than one garden,
+      // so a sprite that is all rings simply sets enough rings to reach its corners.
+      if (!opts.straighten) continue;
       const outer = rings * pitch;
       if (d2 > outer * outer && (y + ((hash(y, seed) % 2) === 0 ? 0 : 1)) % pitch === 0) {
         put(g, x, y, "s");

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Mark } from "@/components/Wordmark";
+import { GhostWordmark, Wordmark } from "@/components/Wordmark";
+import { SakuraTree } from "@/components/pixel/Scenery";
 import { Reveal } from "@/components/motion";
 
 const COLUMNS = [
@@ -36,18 +37,28 @@ const COLUMNS = [
 ];
 
 /**
- * The footer.
+ * The footer, after dark.
  *
- * Three columns of destinations over a colossal wordmark cut from the background — the
- * last thing on the page should be the name, at a scale nothing else on the site is
- * allowed. The legal line sits under its own hairline, in the smallest type we set.
+ * The page opened on a lavender dawn and it ends here, at night, with the garden still
+ * growing at both edges and the name across the floor at a scale nothing else on the
+ * site is allowed. It renders the same `GhostWordmark` the hero does rather than a
+ * second copy of the idea, so the two can never drift — and so it spans its frame
+ * regardless of which display face actually loaded.
  */
 export function Footer() {
   return (
-    <footer className="relative mt-band border-t border-line-soft bg-ground-2">
-      <Reveal className="shell grid gap-12 py-20 md:grid-cols-12 md:py-24">
+    <footer className="night relative overflow-hidden bg-night text-ink [--cell:2px] md:[--cell:3px]">
+      {/* The garden closes over the page. */}
+      <div className="pointer-events-none absolute bottom-[8%] left-[-5%] opacity-35 sm:left-[-2%]" aria-hidden>
+        <SakuraTree seed={2} cell="calc(var(--cell) * 0.9)" />
+      </div>
+      <div className="pointer-events-none absolute bottom-[8%] right-[-6%] opacity-30 sm:right-[-2%]" aria-hidden>
+        <SakuraTree seed={5} cell="calc(var(--cell) * 0.8)" />
+      </div>
+
+      <Reveal className="shell relative grid gap-12 py-20 md:grid-cols-12 md:py-24">
         <div className="reveal md:col-span-5 lg:col-span-4">
-          <Mark size={30} className="text-ink" />
+          <Wordmark size="lg" />
           <p className="mt-7 max-w-xs text-[15px] leading-relaxed text-muted">
             The Aave of stocks. Deposit your stock and get the dividend the day you earn it.
             Sell the dividend on its own. Or borrow against the stock and let the dividends
@@ -81,20 +92,22 @@ export function Footer() {
         </div>
       </Reveal>
 
-      {/* The name, at the scale it deserves, cut from the background. */}
-      <div className="shell overflow-hidden pb-6" aria-hidden>
-        <div className="text-cut select-none display text-colossal leading-[0.78]">OSINKO</div>
+      {/* The name, at the scale it deserves, cropped by the floor. */}
+      <div className="relative h-[11vw] min-h-[70px] select-none overflow-hidden text-night-3" aria-hidden>
+        <div className="shell h-full">
+          <GhostWordmark style={{ transform: "translateY(9%)" }} />
+        </div>
       </div>
 
       {/* The colophon. A document that states how it was set is a document someone
           cared about; the engraving here is generated, and it says so. */}
-      <div className="border-t border-line-soft">
+      <div className="relative border-t border-line">
         <div className="shell flex flex-wrap items-center justify-between gap-3 py-6 font-mono text-nano font-medium uppercase text-ghost">
           <span>$OSINKO · Finnish for dividend · Robinhood Chain · Paid in USDG</span>
           <span className="text-faint">Let the dividends do the work</span>
         </div>
-        <div className="shell flex flex-wrap items-center justify-between gap-3 border-t border-line-soft py-4 font-mono text-nano font-medium uppercase text-ghost">
-          <span>Set in Bodoni Moda, Archivo &amp; IBM Plex Mono · Engine turning generated, not drawn</span>
+        <div className="shell flex flex-wrap items-center justify-between gap-3 border-t border-line py-4 font-mono text-nano font-medium uppercase text-ghost">
+          <span>Set in Archivo, Instrument Sans, Newsreader &amp; IBM Plex Mono · Garden grown in code, not drawn</span>
           <span>© 2026 Osinko</span>
         </div>
       </div>

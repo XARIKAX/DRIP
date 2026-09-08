@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Reveal, usePointerGlow } from "@/components/motion";
 import { Folio } from "@/components/site/Folio";
+import { Bamboo, Bridge, Koi, Sapling, Stone, StoneLantern, Torii } from "@/components/pixel/Scenery";
 
 const MODULES = [
   {
@@ -69,14 +70,33 @@ const MODULES = [
 ];
 
 /**
- * The five modules.
+ * The six modules, as six stones.
  *
- * A list, not a grid of cards. Cards force five things to be equally important and
+ * A list, not a grid of cards. Cards force six things to be equally important and
  * equally shallow; a list lets one be open at a time and say something worth reading.
- * Hover, focus and the arrow keys all move the selection, and a cyan marker slides to
+ * Hover, focus and the arrow keys all move the selection, and a marker slides to
  * whichever row is live — so the connection between the list and the panel beside it is
  * something you can watch rather than something you have to infer.
+ *
+ * Choosing a module plants its object in the panel: a lantern for the payment that
+ * arrives early, a koi for the one that never stops moving, a sapling for the one that
+ * compounds, a bridge for the one that carries a loan across, a split stone for the one
+ * module that divides the holding, and a torii for the gate an agent speaks through.
+ * Six objects, one garden — which is a better memory than six icons.
  */
+
+/** One object per module, in the order the modules are declared. */
+const OBJECTS = [
+  <StoneLantern key="early" cell="calc(var(--cell) * 1.6)" />,
+  <Koi key="stream" cell="calc(var(--cell) * 1.9)" />,
+  <Sapling key="reinvest" cell="calc(var(--cell) * 2.4)" />,
+  <Bridge key="borrow" cell="calc(var(--cell) * 1.7)" />,
+  <span key="split" className="flex items-end gap-2">
+    <Stone size={1} cell="calc(var(--cell) * 2)" />
+    <Stone size={2} cell="calc(var(--cell) * 2)" />
+  </span>,
+  <Torii key="agent" cell="calc(var(--cell) * 1.6)" />,
+];
 export function Modules() {
   const [active, setActive] = useState(0);
   const listRef = useRef<HTMLUListElement>(null);
@@ -132,9 +152,11 @@ export function Modules() {
           {/* The list */}
           <div className="reveal reveal-2 relative min-w-0 lg:col-span-7">
             {/* The marker. One element, moved — not five states toggled. */}
+            {/* The marker. One element, moved — not six states toggled. A column of
+                stones rather than a hairline, on the same cell pitch as everything else. */}
             <span
-              className="absolute left-0 w-px bg-cyan-dark transition-all duration-700 ease-osk"
-              style={{ top: marker.top, height: marker.height }}
+              className="absolute left-0 w-[3px] rounded-[1px] bg-accent transition-all duration-700 ease-osk"
+              style={{ top: marker.top + 8, height: Math.max(0, marker.height - 16) }}
               aria-hidden
             />
 
@@ -153,7 +175,7 @@ export function Modules() {
                     >
                       <span
                         className={`num text-micro font-medium transition-colors duration-500 ${
-                          on ? "text-cyan-deep" : "text-ghost"
+                          on ? "text-accent" : "text-ghost"
                         }`}
                       >
                         {m.index}
@@ -183,7 +205,7 @@ export function Modules() {
                       <span className="hidden shrink-0 items-baseline gap-1.5 sm:flex">
                         <span
                           className={`figure text-[30px] leading-none transition-colors duration-500 ${
-                            on ? "text-cyan-deep" : "text-ghost"
+                            on ? "text-accent" : "text-ghost"
                           }`}
                         >
                           {m.stat}
@@ -205,18 +227,25 @@ export function Modules() {
 
           {/* The detail. Sticky so it stays beside whichever row you are on. */}
           <div className="reveal reveal-3 min-w-0 lg:col-span-5">
-            <div ref={glow} className="certificate spotlight p-7 md:p-9 lg:sticky lg:top-28">
+            <div ref={glow} className="card spotlight p-7 shadow-lift md:p-9 lg:sticky lg:top-28 [--cell:2px]">
               <div className="flex items-start justify-between gap-4">
                 <span className="pill-live">Module {current.index}</span>
                 <span className="flex items-baseline gap-1.5 sm:hidden">
-                  <span className="figure text-[26px] leading-none text-cyan-deep">{current.stat}</span>
+                  <span className="figure text-[26px] leading-none text-accent">{current.stat}</span>
                   <span className="font-mono text-nano uppercase text-faint">
                     {current.unit}
                   </span>
                 </span>
               </div>
 
-              <h3 className="mt-8 display text-headline">
+              {/* The object, planted. Keyed so it settles in on every change. */}
+              <div key={`obj-${current.index}`} className="mt-7 flex h-[104px] items-end" aria-hidden>
+                <span style={{ animation: "settle 0.55s cubic-bezier(0.16,1,0.3,1) both" }}>
+                  {OBJECTS[active]}
+                </span>
+              </div>
+
+              <h3 className="mt-7 display text-headline">
                 {current.claim}
               </h3>
 

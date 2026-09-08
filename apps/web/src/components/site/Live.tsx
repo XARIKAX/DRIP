@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { CountUp, Reveal } from "@/components/motion";
 import { DashboardPreview } from "@/components/DashboardPreview";
+import { HeroCounter } from "@/components/HeroCounter";
+import { GroundLine } from "@/components/pixel/Scenery";
 import { Folio } from "@/components/site/Folio";
 
 const NUMBERS = [
@@ -25,7 +27,7 @@ export function Live() {
     <section id="live" className="relative py-band">
       {/* Engineering paper, fading out toward the edges so it reads as a ground and
           not as a pattern laid over the section. */}
-      <div className="pointer-events-none absolute inset-0 grid-bg grid-fade opacity-40" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 sand-bg grid-fade opacity-[0.22]" aria-hidden />
 
       <Reveal className="shell relative">
         <Folio serial="The real thing, running" index={5} />
@@ -51,7 +53,29 @@ export function Live() {
 
           <div className="reveal reveal-2 min-w-0 lg:col-span-8">
             <DashboardPreview />
+            {/* The horizon the panel sits on. */}
+            <div className="mt-[-2px] overflow-hidden opacity-70 [--cell:2px]" aria-hidden>
+              <GroundLine cell="calc(var(--cell) * 2)" className="w-full" />
+            </div>
           </div>
+        </div>
+
+        {/* Paid to holders, and counting. The one figure on the page that moves while
+            you read it — carried down from the old hero, where it was competing with a
+            headline, into the section whose whole claim is that this is running. */}
+        <div className="reveal mt-16 flex flex-wrap items-end justify-between gap-6 border-t border-line pt-10">
+          <div className="min-w-0">
+            <div className="eyebrow">Paid to holders, and counting</div>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="num text-[19px] font-medium text-faint">$</span>
+              <span className="figure text-[clamp(32px,4.4vw,54px)] leading-none">
+                <HeroCounter />
+              </span>
+            </div>
+          </div>
+          <p className="max-w-xs text-[13px] text-muted">
+            In USDG, this quarter. It moves while you read.
+          </p>
         </div>
 
         {/* The numbers band. Four figures, each one a rule in a contract. */}
@@ -59,7 +83,7 @@ export function Live() {
           <div className="rule rule-draw" />
           <div className="grid gap-10 pt-12 lg:grid-cols-12">
             <div className="reveal min-w-0 lg:col-span-3">
-              <div className="serial">The numbers</div>
+              <div className="eyebrow">The numbers</div>
               <p className="kicker mt-4 max-w-xs">
                 Every number here is written into the code. Nobody can change it on a whim.
               </p>
@@ -72,7 +96,7 @@ export function Live() {
                     <span className="figure text-[clamp(44px,5.5vw,76px)] leading-[0.85] text-ink">
                       <CountUp to={n.value} />
                     </span>
-                    <span className="figure text-[clamp(20px,2.4vw,30px)] leading-none text-cyan-dark">
+                    <span className="figure text-[clamp(20px,2.4vw,30px)] leading-none text-accent">
                       {n.unit}
                     </span>
                   </div>

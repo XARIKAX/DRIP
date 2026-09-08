@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { Reveal } from "@/components/motion";
 import { Folio } from "@/components/site/Folio";
+import { Mark } from "@/components/Wordmark";
+import { PetalField } from "@/components/pixel/Petals";
+import { SakuraTree, Torii } from "@/components/pixel/Scenery";
 
 const COMPARISON = [
   { term: "Reinvesting", them: "The day after pay day, market hours only", us: "The same moment you get paid" },
@@ -41,7 +44,7 @@ export function Thesis() {
             </p>
 
             <div className="reveal reveal-2 mt-10 max-w-prose space-y-6 text-[16.5px] leading-[1.75] text-muted">
-              <p className="first-letter:float-left first-letter:mr-2.5 first-letter:mt-1.5 first-letter:font-display first-letter:text-[68px] first-letter:font-semibold first-letter:leading-[0.72] first-letter:text-ink">
+              <p className="first-letter:float-left first-letter:mr-2.5 first-letter:mt-1.5 first-letter:mr-3 first-letter:font-serif first-letter:text-[76px] first-letter:font-semibold first-letter:leading-[0.7] first-letter:text-ink">
                 Say a stock “goes ex” on a Monday. That is the day you must own it to get the
                 next payout. The company pays three weeks later, on a Friday. In between, the
                 money is yours and it does nothing. It sits at a middleman while you wait.
@@ -62,8 +65,11 @@ export function Thesis() {
             </div>
 
             {/* The pull quote. Once per essay, and it has to earn it. */}
-            <blockquote className="reveal reveal-3 my-12 border-l border-cyan py-2 pl-7">
-              <p className="font-editorial text-[24px] italic leading-[1.35] text-ink md:text-[30px]">
+            <blockquote className="reveal reveal-3 my-12 flex gap-6 border-l-2 border-accent py-2 pl-7">
+              <span className="hanko mt-1" aria-hidden>
+                <Mark size={22} />
+              </span>
+              <p className="font-serif text-[24px] italic leading-[1.35] text-ink md:text-[30px]">
                 Put the stock on a blockchain, and every one of those limits goes away.
               </p>
             </blockquote>
@@ -151,23 +157,26 @@ export function Thesis() {
  */
 export function Closing() {
   return (
-    <section className="relative overflow-hidden border-t border-line-soft">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(900px 400px at 50% 120%, rgba(53,194,219,0.16), transparent 70%)",
-        }}
-        aria-hidden
-      />
+    <section className="night dusk-sky relative overflow-hidden bg-night [--cell:2px] md:[--cell:3px]">
+      {/* The gate, in silhouette, and the last of the blossom coming down. */}
+      <div className="pointer-events-none absolute inset-x-0 -bottom-[7%] flex justify-center opacity-[0.22]" aria-hidden>
+        <Torii cell="calc(var(--cell) * 3)" />
+      </div>
+      <div className="pointer-events-none absolute bottom-0 left-[-3%] opacity-70" aria-hidden>
+        <SakuraTree seed={0} cell="calc(var(--cell) * 1.1)" />
+      </div>
+      <div className="pointer-events-none absolute bottom-0 right-[-3%] opacity-65" aria-hidden>
+        <SakuraTree seed={1} cell="calc(var(--cell) * 1)" />
+      </div>
+      <PetalField className="petal-mask absolute inset-0" density={1.5} cell={4} />
 
-      <Reveal className="shell relative py-band">
-        <h2 className="display max-w-5xl text-hero">
+      <Reveal className="shell relative pb-band pt-[26vh]">
+        <h2 className="display max-w-5xl text-hero text-ink">
           <span className="mask-line">
             <span>Let the dividends</span>
           </span>
           <span className="mask-line">
-            <span className="italic">do the work.</span>
+            <span className="font-serif italic">do the work.</span>
           </span>
         </h2>
 
@@ -178,7 +187,7 @@ export function Closing() {
           <Link href="/docs" className="btn-ghost btn-lg">
             Read how it works
           </Link>
-          <span className="font-mono text-nano uppercase text-ghost">
+          <span className="font-mono text-nano uppercase text-faint">
             No wallet needed to look around
           </span>
         </div>

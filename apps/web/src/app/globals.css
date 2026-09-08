@@ -904,6 +904,12 @@
     to { transform: translateX(-100%); }
   }
 
+  /* And crosses a panel on a long loop, entering and leaving off both edges. */
+  @keyframes koi-cross {
+    from { left: -12%; }
+    to { left: 108%; }
+  }
+
   /* A lantern is a flame, and a flame is never quite steady. Two frames, uneven. */
   @keyframes flicker {
     0%, 44% { opacity: 1; }
@@ -1075,9 +1081,21 @@
     mask-image: linear-gradient(180deg, transparent 22%, #000 46%, #000 88%, transparent 100%);
   }
 
-  /* Night rising the other way, so the closing section rhymes with the hero. */
+  /*
+   * Dusk. The closing section makes the hero's descent a second time — paper, then
+   * violet, then night — and hands off to a footer that is already dark, so the page
+   * ends where the garden does rather than snapping back to daylight at the seam.
+   */
   .dusk-sky {
-    background: linear-gradient(180deg, #0a0510 0%, #150a24 34%, #35127a 74%, #7b2ff7 100%);
+    background: linear-gradient(
+      180deg,
+      #f6f4fb 0%,
+      #d8c2f7 8%,
+      #9b5ee9 20%,
+      #4a1a8f 38%,
+      #1e0e33 66%,
+      #0a0510 100%
+    );
   }
 
   /* ------------------------------------------------------------------ */
@@ -1334,6 +1352,7 @@
     .flicker,
     .flow-line,
     .rise-group > *,
+    [style*="koi-cross"],
     .flash-light,
     .flash-dark,
     [class*="koi-swim"] {

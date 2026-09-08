@@ -17,6 +17,16 @@ import {
 } from "./sprites";
 import { gridSize } from "./raster";
 
+/** What every placeable object in the garden accepts. */
+export interface PlaceableProps {
+  /** Whole cells per pixel. */
+  scale?: number;
+  /** Any CSS length, for the cases a whole cell is too coarse. */
+  cell?: string;
+  className?: string;
+  style?: CSSProperties;
+}
+
 /**
  * The garden, as things you can place.
  *
@@ -52,16 +62,11 @@ export function SakuraTree({
   title,
   className = "",
   style,
-}: {
+}: PlaceableProps & {
   /** Picks one of the grown trees. Not a random seed at render time — an index. */
   seed?: number;
-  scale?: number;
-  /** Any CSS length, for a tree that has to be smaller than one whole cell allows. */
-  cell?: string;
   variant?: "full" | "branch";
   title?: string;
-  className?: string;
-  style?: CSSProperties;
 }) {
   const pool = variant === "branch" ? BRANCHES : TREES;
   const grid = pool[Math.abs(seed) % pool.length]!;
@@ -76,13 +81,7 @@ export function StoneLantern({
   lit = true,
   className = "",
   style,
-}: {
-  scale?: number;
-  cell?: string;
-  lit?: boolean;
-  className?: string;
-  style?: CSSProperties;
-}) {
+}: PlaceableProps & { lit?: boolean }) {
   return (
     <PixelSprite
       grid={LANTERN}
@@ -95,20 +94,20 @@ export function StoneLantern({
   );
 }
 
-export function Torii({ scale = 1, cell, className = "", style }: { scale?: number; cell?: string; className?: string; style?: CSSProperties }) {
+export function Torii({ scale = 1, cell, className = "", style }: PlaceableProps) {
   return <PixelSprite grid={TORII_GATE} palette={TORII} scale={scale} cell={cell} className={className} style={style} />;
 }
 
-export function Bridge({ scale = 1, className = "", style }: { scale?: number; className?: string; style?: CSSProperties }) {
-  return <PixelSprite grid={BRIDGE} palette={STONE} scale={scale} className={className} style={style} />;
+export function Bridge({ scale = 1, cell, className = "", style }: PlaceableProps) {
+  return <PixelSprite grid={BRIDGE} palette={STONE} scale={scale} cell={cell} className={className} style={style} />;
 }
 
-export function Sapling({ scale = 1, className = "", style }: { scale?: number; className?: string; style?: CSSProperties }) {
-  return <PixelSprite grid={SAPLING} palette={SAKURA} scale={scale} className={className} style={style} />;
+export function Sapling({ scale = 1, cell, className = "", style }: PlaceableProps) {
+  return <PixelSprite grid={SAPLING} palette={SAKURA} scale={scale} cell={cell} className={className} style={style} />;
 }
 
-export function Bamboo({ scale = 1, className = "", style }: { scale?: number; className?: string; style?: CSSProperties }) {
-  return <PixelSprite grid={BAMBOO} palette={SAKURA} scale={scale} className={className} style={style} />;
+export function Bamboo({ scale = 1, cell, className = "", style }: PlaceableProps) {
+  return <PixelSprite grid={BAMBOO} palette={SAKURA} scale={scale} cell={cell} className={className} style={style} />;
 }
 
 const STONES = [STONE_LARGE, STONE_MID, STONE_SMALL];
@@ -119,18 +118,12 @@ export function Stone({
   cell,
   className = "",
   style,
-}: {
-  size?: 0 | 1 | 2;
-  scale?: number;
-  cell?: string;
-  className?: string;
-  style?: CSSProperties;
-}) {
+}: PlaceableProps & { size?: 0 | 1 | 2 }) {
   return <PixelSprite grid={STONES[size]!} palette={STONE} scale={scale} cell={cell} className={className} style={style} />;
 }
 
-export function PixelCoin({ scale = 1, className = "", style }: { scale?: number; className?: string; style?: CSSProperties }) {
-  return <PixelSprite grid={COIN_SPRITE} palette={COIN} scale={scale} className={className} style={style} />;
+export function PixelCoin({ scale = 1, cell, className = "", style }: PlaceableProps) {
+  return <PixelSprite grid={COIN_SPRITE} palette={COIN} scale={scale} cell={cell} className={className} style={style} />;
 }
 
 const KOI_STRIP_LEFT = strip(KOI_FRAMES);
@@ -149,17 +142,12 @@ export function Koi({
   swim = true,
   facing = "left",
   scale = 1,
+  cell,
   className = "",
   style,
-}: {
-  swim?: boolean;
-  facing?: "left" | "right";
-  scale?: number;
-  className?: string;
-  style?: CSSProperties;
-}) {
+}: PlaceableProps & { swim?: boolean; facing?: "left" | "right" }) {
   const grid = facing === "right" ? KOI_STRIP_RIGHT : KOI_STRIP_LEFT;
-  const unit = `calc(var(--cell) * ${Math.max(1, Math.round(scale))})`;
+  const unit = cell ?? `calc(var(--cell) * ${Math.max(1, Math.round(scale))})`;
   return (
     <span
       className={`inline-block overflow-hidden align-middle ${className}`}
@@ -170,30 +158,31 @@ export function Koi({
         grid={grid}
         palette={KOI}
         scale={scale}
+        cell={cell}
         style={swim ? { animation: "koi-swim 0.45s steps(3) infinite" } : undefined}
       />
     </span>
   );
 }
 
-const SAND_WIDE = sandGrid({ seed: 3, w: 120, h: 44, pitch: 5, rings: 7, focus: [34, 22] });
+const SAND_WIDE = sandGrid({ seed: 3, w: 120, h: 44, pitch: 5, rings: 7, focus: [34, 22], straighten: true });
 const MOSS_STRIP = mossGrid({ seed: 5, w: 64, h: 8, coverage: 45 });
 const SCATTER = scatterGrid({ seed: 7, w: 72, h: 10, count: 30 });
 const GROUND = groundGrid({ seed: 11, w: 120, h: 12 });
 
-export function RakedSand({ scale = 1, className = "", style }: { scale?: number; className?: string; style?: CSSProperties }) {
-  return <PixelSprite grid={SAND_WIDE} palette={SAND} scale={scale} className={className} style={style} />;
+export function RakedSand({ scale = 1, cell, className = "", style }: PlaceableProps) {
+  return <PixelSprite grid={SAND_WIDE} palette={SAND} scale={scale} cell={cell} className={className} style={style} />;
 }
 
-export function MossPatch({ scale = 1, className = "", style }: { scale?: number; className?: string; style?: CSSProperties }) {
-  return <PixelSprite grid={MOSS_STRIP} palette={SAKURA} scale={scale} className={className} style={style} />;
+export function MossPatch({ scale = 1, cell, className = "", style }: PlaceableProps) {
+  return <PixelSprite grid={MOSS_STRIP} palette={SAKURA} scale={scale} cell={cell} className={className} style={style} />;
 }
 
-export function FallenPetals({ scale = 1, className = "", style }: { scale?: number; className?: string; style?: CSSProperties }) {
-  return <PixelSprite grid={SCATTER} palette={SAKURA} scale={scale} className={className} style={style} />;
+export function FallenPetals({ scale = 1, cell, className = "", style }: PlaceableProps) {
+  return <PixelSprite grid={SCATTER} palette={SAKURA} scale={scale} cell={cell} className={className} style={style} />;
 }
 
 /** The hillside that runs under a section and turns a rule into a place. */
-export function GroundLine({ scale = 1, className = "", style }: { scale?: number; className?: string; style?: CSSProperties }) {
-  return <PixelSprite grid={GROUND} palette={SAKURA} scale={scale} className={className} style={style} />;
+export function GroundLine({ scale = 1, cell, className = "", style }: PlaceableProps) {
+  return <PixelSprite grid={GROUND} palette={SAKURA} scale={scale} cell={cell} className={className} style={style} />;
 }
