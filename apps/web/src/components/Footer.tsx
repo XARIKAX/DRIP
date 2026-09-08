@@ -2,6 +2,7 @@ import Link from "next/link";
 import { GhostWordmark, Wordmark } from "@/components/Wordmark";
 import { SakuraTree } from "@/components/pixel/Scenery";
 import { Reveal } from "@/components/motion";
+import { TokenAddress } from "@/components/TokenAddress";
 
 const COLUMNS = [
   {
@@ -69,6 +70,9 @@ export function Footer() {
             <span className="pill">You keep your keys</span>
             <span className="pill-live">Onchain</span>
           </div>
+
+          {/* The one string on the page a visitor is going to move into a wallet. */}
+          <TokenAddress className="mt-8 max-w-sm" />
         </div>
 
         <div className="grid grid-cols-2 gap-10 md:col-span-7 md:grid-cols-3 lg:col-span-7 lg:col-start-6">
