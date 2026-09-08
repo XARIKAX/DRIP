@@ -14,6 +14,7 @@ import {StreamEngine} from "../src/StreamEngine.sol";
 import {Reinvestor} from "../src/Reinvestor.sol";
 import {SplitVault} from "../src/SplitVault.sol";
 import {ChainlinkPriceOracle} from "../src/adapters/ChainlinkPriceOracle.sol";
+import {LendingPool} from "../src/LendingPool.sol";
 import {UniswapV3SwapAdapter} from "../src/adapters/UniswapV3SwapAdapter.sol";
 
 /// @notice A stand in for a listed asset, placed at the real listing address.
@@ -169,7 +170,8 @@ contract DeployProductionTest is Test {
         assertEq(ChainlinkPriceOracle(d.oracle).owner(), admin, "oracle owner");
         assertEq(UniswapV3SwapAdapter(d.adapter).owner(), admin, "adapter owner");
 
-        address[6] memory acl = [d.registry, d.vault, d.core, d.streamEngine, d.reinvestor, d.splitVault];
+        address[7] memory acl =
+            [d.registry, d.vault, d.core, d.streamEngine, d.reinvestor, d.splitVault, d.lendingPool];
         for (uint256 i = 0; i < acl.length; ++i) {
             assertTrue(!DividendRegistry(acl[i]).hasRole(0x00, deployer), "deployer kept admin");
             assertTrue(DividendRegistry(acl[i]).hasRole(0x00, admin), "admin missing admin");
@@ -225,6 +227,27 @@ contract DeployProductionTest is Test {
 
         assertEq(address(AdvanceVault(d.vault).asset()), usdg, "vault asset");
         assertEq(UniswapV3SwapAdapter(d.adapter).usdg(), usdg, "adapter usdg");
+    }
+
+    /// @dev The credit side must come up wired, or Borrow is dead on arrival.
+    function test_lendingPoolIsWiredAndOwnedByAdmin() public view {
+        DeployProduction.Deployment memory d = harness.addresses();
+        LendingPool pool = LendingPool(d.lendingPool);
+
+        assertEq(address(DripCore(d.core).lendingPool()), d.lendingPool, "core -> lendingPool");
+        assertTrue(DripCore(d.core).hasRole(DripCore(d.core).LENDER_ROLE(), d.lendingPool), "core LENDER_ROLE");
+        assertTrue(AdvanceVault(d.vault).hasRole(AdvanceVault(d.vault).LENDER_ROLE(), d.lendingPool), "vault LENDER_ROLE");
+        assertTrue(pool.hasRole(pool.CORE_ROLE(), d.core), "pool CORE_ROLE");
+
+        // Section 13's opening parameters, as deployed.
+        assertEq(pool.maxLtvBps(), 4_000, "max LTV");
+        assertEq(pool.liquidationThresholdBps(), 6_500, "liq threshold");
+        assertEq(pool.liquidationBonusBps(), 500, "bonus");
+        assertEq(pool.closeFactorBps(), 5_000, "close factor");
+        assertEq(pool.borrowRateBps(), 200, "base rate at zero utilisation");
+
+        // It prices from Chainlink, not from the venue it would liquidate through.
+        assertEq(address(pool.priceOracle()), d.oracle, "pool prices from the oracle");
     }
 
     /// @dev Nothing declared. A mainnet calendar comes from the real dividend source.

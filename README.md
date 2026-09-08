@@ -79,6 +79,8 @@ argument.
 | `VERIFY=1` | Verify sources on the chain's Blockscout. `VERIFIER_URL` overrides the endpoint. |
 | `DEPLOY_MOCKS_TO_MAINNET=1` | Required to target a non-testnet chain with the testnet script. See below. |
 | `PRODUCTION=1` + `ADMIN=0x...` | Run the production deploy instead. See "Robinhood Chain mainnet". |
+| `FUND=<usdg>` | Deposit that many whole USDG into the pool from the deployer's wallet. |
+| `DECLARE=1` | Declare the calendar in `contracts/dividends/<chainid>.json`. |
 
 It refuses to start rather than half-deploy: no chain answering, no key, or no gas on
 the deployer each stop it before the first transaction. It also refuses any chain that
@@ -213,22 +215,64 @@ Commit `contracts/deployments/4663.json` and the regenerated
 The app reads `mocks: false` from the mainnet book and hides its faucets; real stock
 tokens have none. Nothing else in the frontend changes.
 
-### What still has to happen by hand
+### Making it a market
 
-The deploy leaves a correct but empty protocol. Three operational jobs make it a
-market, and none of them is code in this repo:
+A deploy leaves correct contracts with nothing in them. Three things fill them, and
+each needs an input the repo cannot produce.
 
-- **The dividend oracle.** ADMIN holds `ORACLE_ROLE`. Someone has to call
-  `declareDividend` from real corporate action data, and `voidDividend` when an
-  issuer cancels. Until that happens the calendar is empty and there is nothing to
-  advance against.
-- **The pay-day keeper.** `settleDividend` and `clawback` on `DripCore`, run when the
-  issuer actually pays. `HANDOFF.md` §6 covers what clawback assumes today.
-- **Pool capital.** The vault fronts every advance. With no LP deposits, Early pays
-  nothing.
+**1. Pool capital.** The pool fronts every advance and every loan. With nothing in it,
+Early pays nothing and Borrow lends nothing.
 
-`LendingPool` is not built (`HANDOFF.md` §13), so Borrow stays on the sample data
-store on mainnet exactly as it does today.
+```bash
+AMOUNT=250000 PRIVATE_KEY=0x... forge script script/FundPool.s.sol \
+  --rpc-url robinhood_mainnet --broadcast --root contracts
+```
+
+The USDG has to already be in that wallet. The depositor gets ERC-4626 shares and can
+withdraw whatever is not currently lent — seeding the pool is not a donation.
+
+**2. The dividend calendar.** `contracts/dividends/<chainid>.json` lists what each
+stock pays and when; `DeclareDividends.s.sol` puts it on the calendar, skipping
+anything already there so a scheduled keeper can re-run it safely.
+
+```bash
+PRIVATE_KEY=0x... forge script script/DeclareDividends.s.sol \
+  --rpc-url robinhood_mainnet --broadcast --root contracts
+```
+
+**That JSON file has to be built from real issuer corporate action data, and nothing
+in this repo can produce it.** A declared dividend makes the pool advance real USDG at
+the ex date; if the issuer never declared it, that money is gone and the loss lands on
+the LPs. Whoever holds `ORACLE_ROLE` is accountable for every row. See
+`contracts/dividends/README.md`.
+
+**3. The pay-day keeper.** When issuers pay, settle:
+
+```bash
+DRY_RUN=1 forge script script/SettleDividends.s.sol --rpc-url robinhood_mainnet --root contracts
+PRIVATE_KEY=0x... forge script script/SettleDividends.s.sol --rpc-url robinhood_mainnet --broadcast --root contracts
+```
+
+The dry run reports what is due and what it costs; run it first, every time. The keeper
+wallet must hold the USDG the settlement pulls. Where that comes from is the open
+question in `HANDOFF.md` §7 — a bank question, not a code one.
+
+On a testnet all three can ride along with the deploy:
+
+```bash
+FUND=250000 DECLARE=1 PRIVATE_KEY=0x... pnpm deploy:chain robinhood_testnet
+```
+
+### What is still not true after all that
+
+- **No audit.** The credit side in particular is new code holding LP money.
+- **`ADMIN` should be a multisig behind a timelock.** The script takes whatever
+  address it is given.
+- **No market for share tokens or dividend tokens.** Split mints them and they are
+  transferable, but nothing trades them, so the Split page's yield number is the
+  stock's own yearly yield, not a price.
+- **Liquidators sell seized stock themselves.** The adapter is wired for an
+  oracle-bounded sale through SwapRouter02; nothing calls it yet.
 
 ## Tests
 

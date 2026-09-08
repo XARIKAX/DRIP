@@ -19,7 +19,7 @@ contract DripInvariantsTest is DripTestBase {
 
         address[3] memory actors = [alice, bob, carol];
 
-        handler = new DripHandler(usdg, aapl, ko, registry, vault, core, stream, actors, lp);
+        handler = new DripHandler(usdg, aapl, ko, registry, vault, core, stream, lending, actors, lp);
 
         bytes32 oracleRole = registry.ORACLE_ROLE();
         bytes32 keeperRole = core.KEEPER_ROLE();
@@ -59,6 +59,36 @@ contract DripInvariantsTest is DripTestBase {
     function invariant_UtilizationWithinCap() public view {
         if (vault.totalAssets() == 0) return;
         assertLe(vault.utilizationBps(), vault.maxUtilizationBps());
+    }
+
+    /// @notice The vault's books are honest about the credit side too.
+    /// @dev Section 13's invariant: cash plus receivables plus loans covers what the
+    ///      vault owes. If this ever fails, the share price is quoting assets that are
+    ///      not there and LPs are being paid with each other's money.
+    function invariant_VaultCoversObligationsIncludingLoans() public view {
+        assertGe(vault.cash() + vault.receivables() + vault.loansOutstanding(), vault.obligations());
+    }
+
+    /// @notice Loan principal on the vault's book matches the principal borrowers owe.
+    /// @dev The two are updated in different contracts on every borrow, repayment,
+    ///      dividend servicing and liquidation. Drift between them is the credit side's
+    ///      version of a missing coin.
+    function invariant_LoanBookMatchesBorrowerPrincipal() public view {
+        uint256 principal;
+        uint256 n = handler.actorCount();
+        for (uint256 i = 0; i < n; ++i) {
+            principal += lending.principalOf(handler.actors(i));
+        }
+        assertEq(vault.loansOutstanding(), principal);
+    }
+
+    /// @notice Debt servicing can never push a borrower's principal below zero.
+    function invariant_PrincipalNeverExceedsDebt() public view {
+        uint256 n = handler.actorCount();
+        for (uint256 i = 0; i < n; ++i) {
+            address actor = handler.actors(i);
+            assertLe(lending.principalOf(actor), lending.debtOf(actor));
+        }
     }
 
     /// @notice A stream pays out exactly what it was opened with, and never a wei more.

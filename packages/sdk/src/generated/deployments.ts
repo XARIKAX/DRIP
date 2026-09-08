@@ -5,9 +5,11 @@ export const deployments: Record<number, Deployment> = {
   "31337": {
     "advanceVault": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
     "chainId": 31337,
-    "deployedAt": 1788863301,
+    "deployedAt": 1788866705,
     "dividendRegistry": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
     "dripCore": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+    "lendingPool": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+    "priceOracle": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
     "prices": {
       "AAPL": 220000000,
       "JNJ": 155000000,
@@ -20,11 +22,11 @@ export const deployments: Record<number, Deployment> = {
     "streamEngine": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
     "swapAdapter": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
     "tokens": {
-      "AAPL": "0xc6e7DF5E7b4f2A278906862b61205850344D4e7d",
-      "JNJ": "0x84eA74d481Ee0A5332c457a4d796187F6Ba67fEB",
-      "KO": "0xc5a5C42992dECbae36851359345FE25997F5C42d",
-      "MSFT": "0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f",
-      "NVDA": "0x851356ae760d987E095750cCeb3bC6014560891C"
+      "AAPL": "0x7a2088a1bFc9d81c55368AE168C2C02570cB814F",
+      "JNJ": "0x4826533B4897376654Bb4d4AD88B7faFD0C98528",
+      "KO": "0x851356ae760d987E095750cCeb3bC6014560891C",
+      "MSFT": "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690",
+      "NVDA": "0x5eb3Bc0a489C5A8288765d2336659EbCA68FCd00"
     },
     "usdg": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
   }

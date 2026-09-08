@@ -4,12 +4,15 @@ import {
   deployments,
   dividendRegistryAbi,
   dripCoreAbi,
+  lendingPoolAbi,
   reinvestorAbi,
   streamEngineAbi,
 } from "./generated";
 import {
   DividendStatus,
   Mode,
+  type CreditParameters,
+  type CreditPosition,
   type Deployment,
   type DividendView,
   type PositionView,
@@ -424,6 +427,75 @@ export class DripReader {
       stocks[t.address] = stockBalances[i]!;
     });
     return { usdg, stocks };
+  }
+
+  // -------------------------------------------------------------------
+  // Credit
+  // -------------------------------------------------------------------
+
+  /** True when this chain's deployment has a credit market. */
+  hasCredit(): boolean {
+    return Boolean(this.deployment.lendingPool);
+  }
+
+  /**
+   * A borrower's whole position, in one call.
+   *
+   * Returns null when no lending pool is deployed on this chain, which is what an
+   * address book written before the credit market existed looks like. Callers render
+   * the Borrow page empty rather than failing.
+   */
+  async getCreditPosition(user: Address): Promise<CreditPosition | null> {
+    const pool = this.deployment.lendingPool;
+    if (!pool) return null;
+
+    const snapshot = (await this.client.readContract({
+      address: pool,
+      abi: lendingPoolAbi,
+      functionName: "accountSnapshot",
+      args: [user],
+    })) as readonly bigint[];
+
+    const [collateralUsdg, borrowingPower, debt, available, accruedInterest, servicedFromDividends, healthFactorBps, borrowRateBps] =
+      snapshot;
+
+    return {
+      collateralUsdg: collateralUsdg!,
+      borrowingPower: borrowingPower!,
+      debt: debt!,
+      available: available!,
+      accruedInterest: accruedInterest!,
+      servicedFromDividends: servicedFromDividends!,
+      healthFactorBps: healthFactorBps!,
+      borrowRateBps: borrowRateBps!,
+    };
+  }
+
+  /** The market's risk parameters as deployed. Constant between admin changes. */
+  async getCreditParameters(): Promise<CreditParameters | null> {
+    const pool = this.deployment.lendingPool;
+    if (!pool) return null;
+
+    const [maxLtvBps, liquidationThresholdBps, liquidationBonusBps, closeFactorBps] = (await Promise.all([
+      this.client.readContract({ address: pool, abi: lendingPoolAbi, functionName: "maxLtvBps" }),
+      this.client.readContract({ address: pool, abi: lendingPoolAbi, functionName: "liquidationThresholdBps" }),
+      this.client.readContract({ address: pool, abi: lendingPoolAbi, functionName: "liquidationBonusBps" }),
+      this.client.readContract({ address: pool, abi: lendingPoolAbi, functionName: "closeFactorBps" }),
+    ])) as [bigint, bigint, bigint, bigint];
+
+    return { maxLtvBps, liquidationThresholdBps, liquidationBonusBps, closeFactorBps };
+  }
+
+  /** Whether this holder has opted into dividends paying down principal too. */
+  async getAutoRepayPrincipal(user: Address): Promise<boolean> {
+    const pool = this.deployment.lendingPool;
+    if (!pool) return false;
+    return (await this.client.readContract({
+      address: pool,
+      abi: lendingPoolAbi,
+      functionName: "autoRepayPrincipal",
+      args: [user],
+    })) as boolean;
   }
 
   // -------------------------------------------------------------------

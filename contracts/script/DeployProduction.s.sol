@@ -13,6 +13,7 @@ import {DripCore} from "../src/DripCore.sol";
 import {StreamEngine} from "../src/StreamEngine.sol";
 import {Reinvestor} from "../src/Reinvestor.sol";
 import {SplitVault} from "../src/SplitVault.sol";
+import {LendingPool, ICollateralCustodian, ILendableVault} from "../src/LendingPool.sol";
 import {ChainlinkPriceOracle, IAggregatorV3} from "../src/adapters/ChainlinkPriceOracle.sol";
 import {UniswapV3SwapAdapter, ISwapRouter02} from "../src/adapters/UniswapV3SwapAdapter.sol";
 import {IDividendRegistry} from "../src/interfaces/IDividendRegistry.sol";
@@ -22,6 +23,7 @@ import {IReinvestor} from "../src/interfaces/IReinvestor.sol";
 import {IDripCore} from "../src/interfaces/IDripCore.sol";
 import {IPriceOracle} from "../src/interfaces/IPriceOracle.sol";
 import {ISwapAdapter} from "../src/interfaces/ISwapAdapter.sol";
+import {ILendingPool} from "../src/interfaces/ILendingPool.sol";
 
 /// @title DeployProduction
 /// @notice Deploys the protocol against a chain's REAL assets. No mocks, no faucets,
@@ -74,6 +76,7 @@ contract DeployProduction is Script {
         address streamEngine;
         address reinvestor;
         address splitVault;
+        address lendingPool;
     }
 
     Deployment internal d;
@@ -190,6 +193,19 @@ contract DeployProduction is Script {
         d.splitVault = address(
             new SplitVault(IDripCore(d.core), IDividendRegistry(d.registry), IERC20(infra.usdg), deployer)
         );
+
+        // The credit side prices from the Chainlink oracle above, never from the
+        // Uniswap adapter it liquidates through.
+        d.lendingPool = address(
+            new LendingPool(
+                IERC20(infra.usdg),
+                ICollateralCustodian(d.core),
+                ILendableVault(d.vault),
+                IPriceOracle(d.oracle),
+                ISwapAdapter(d.adapter),
+                deployer
+            )
+        );
     }
 
     /// @dev One Chainlink feed per listed token, then register the token so it shows up
@@ -231,6 +247,11 @@ contract DeployProduction is Script {
         reinvestor.grantRole(reinvestor.CORE_ROLE(), d.core);
         core.grantRole(core.REINVESTOR_ROLE(), d.reinvestor);
         registry.grantRole(registry.SETTLER_ROLE(), d.core);
+
+        core.setLendingPool(ILendingPool(d.lendingPool));
+        core.grantRole(core.LENDER_ROLE(), d.lendingPool);
+        vault.grantRole(vault.LENDER_ROLE(), d.lendingPool);
+        LendingPool(d.lendingPool).grantRole(LendingPool(d.lendingPool).CORE_ROLE(), d.core);
     }
 
     /// @dev Hand everything to ADMIN and drop the deployer. Ownable contracts transfer;
@@ -246,6 +267,7 @@ contract DeployProduction is Script {
         _handOver(d.streamEngine, deployer, StreamEngine(d.streamEngine).KEEPER_ROLE());
         _handOver(d.reinvestor, deployer, bytes32(0));
         _handOver(d.splitVault, deployer, SplitVault(d.splitVault).KEEPER_ROLE());
+        _handOver(d.lendingPool, deployer, bytes32(0));
     }
 
     /// @dev Grant ADMIN the default admin role plus one operational role, then have the
@@ -269,7 +291,8 @@ contract DeployProduction is Script {
         require(ChainlinkPriceOracle(d.oracle).owner() == admin, "oracle still owned by deployer");
         require(UniswapV3SwapAdapter(d.adapter).owner() == admin, "adapter still owned by deployer");
 
-        address[6] memory acl = [d.registry, d.vault, d.core, d.streamEngine, d.reinvestor, d.splitVault];
+        address[7] memory acl =
+            [d.registry, d.vault, d.core, d.streamEngine, d.reinvestor, d.splitVault, d.lendingPool];
         for (uint256 i = 0; i < acl.length; ++i) {
             require(!IAccessControl(acl[i]).hasRole(0x00, deployer), "deployer still admin");
             require(IAccessControl(acl[i]).hasRole(0x00, admin), "admin missing admin role");
@@ -307,6 +330,7 @@ contract DeployProduction is Script {
         vm.serializeAddress(root, "swapAdapter", d.adapter);
         vm.serializeAddress(root, "splitVault", d.splitVault);
         vm.serializeAddress(root, "priceOracle", d.oracle);
+        vm.serializeAddress(root, "lendingPool", d.lendingPool);
         vm.serializeString(root, "prices", pricesJson);
         string memory out = vm.serializeString(root, "tokens", tokensJson);
 

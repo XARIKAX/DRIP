@@ -216,12 +216,17 @@ Still yours, and none of it is code in this repo:
 
 - [ ] `ADMIN` should be a multisig behind a timelock, not a single key. The script
       takes whatever address you give it.
-- [ ] Feed `ORACLE_ROLE` from the real dividend source. Until someone declares a
-      dividend the calendar is empty and Early has nothing to advance against.
-- [ ] Decide the settlement pipe for `DripCore.settleDividend` — who runs the pay-day
-      keeper, and where the USDG comes from.
-- [ ] Seed the vault with LP capital. No deposits, no advances.
-- [ ] Audit.
+- [ ] Feed `ORACLE_ROLE` from the real dividend source. `script/DeclareDividends.s.sol`
+      is the mechanism and it is idempotent; `contracts/dividends/<chainid>.json` is
+      the input, and **producing that file from real issuer corporate action data is
+      not something this repo can do**. See that directory's README.
+- [ ] Run the pay-day keeper. `script/SettleDividends.s.sol` settles everything past
+      its pay date (`DRY_RUN=1` first, always). The keeper wallet must hold the USDG
+      the settlement pulls — where that comes from is a bank question, not a code one.
+- [ ] Seed the vault with LP capital. `script/FundPool.s.sol`, or `FUND=<usdg>` on the
+      deploy. The USDG has to exist in the funding wallet first.
+- [ ] Audit. The credit side is new code holding LP money and has never been reviewed
+      by anyone but its author.
 
 ## 8. Mainnet listing universe — Robinhood Chain (4663)
 
@@ -325,12 +330,27 @@ additive changes are fine, breaking changes are not.
       activate is possible for an oracle — decide if a minimum notice period is wanted.
 - [ ] `MAX_SETTLEMENT_WINDOW` (90 days) bounds vault duration risk; revisit per market.
 
-## 13. Credit side — LendingPool specification (to build)
+## 13. Credit side — LendingPool (built; this is what shipped)
 
-The web app already ships the Borrow experience in demo mode
-(`apps/web/src/app/app/borrow`, backed by `mock.ts`). The onchain market that
-replaces it should follow Aave's economics with one Osinko twist: dividend income
-on the collateral services the debt.
+`src/LendingPool.sol`, tested in `test/LendingPool.t.sol` (27 tests) and driven by
+the invariant handler alongside everything else. The Borrow page reads it through
+`DripReader.getCreditPosition`; there is no demo-only branch left on the chain path.
+
+Built to the shape below. Four things are worth knowing that the spec did not say:
+
+- **Interest is only an asset once it is cash.** The vault's `loansOutstanding` is
+  principal only. Accrued interest joins `totalFeesAccrued` when a repayment lands,
+  never on accrual — an accrual that lifts the share price before anyone has paid is
+  a way to pay early LPs with later LPs' money.
+- **Servicing takes interest, not principal, by default.** The spec's "principal if
+  the holder opts in" is `setAutoRepayPrincipal`, off unless asked for. The contract
+  exposes it; the Borrow page does not surface a toggle yet.
+- **Borrowing rounds the scaled debt up.** Rounding down let a borrower owe fractionally
+  less than they received, every time, forever, out of the LPs. The invariant suite
+  found it.
+- **Utilisation is shared.** Advances and loans draw on one balance sheet, so
+  `utilizationBps` counts both against one cap. Letting the credit side dodge the cap
+  would have defeated it.
 
 Shape:
 
@@ -353,9 +373,21 @@ Shape:
 - **Liquidation**: repay up to close factor (50%) of debt, seize collateral plus
   bonus, sell through the SwapRouter02 adapter with oracle-bounded minOut. Same
   no-pool-as-oracle rule as everything else.
-- **Invariants to test**: debt of any account ≤ collateral value × liq threshold at
-  action time; vault cash + receivables + loans ≥ obligations; dividend servicing
-  never reduces principal below zero; a stale oracle can never mint debt.
+- **Invariants tested**: `invariant_VaultCoversObligationsIncludingLoans`,
+  `invariant_LoanBookMatchesBorrowerPrincipal` (the vault's loan book and the sum of
+  borrower principal are updated in different contracts on every borrow, repayment,
+  servicing and liquidation — drift is the credit side's missing coin), and
+  `invariant_PrincipalNeverExceedsDebt`.
+
+### Still open on the credit side
+
+- Liquidation hands the seized stock to the liquidator, who sells it themselves. The
+  `swapAdapter` is wired for a future path that sells through SwapRouter02 with an
+  oracle-bounded minOut; nothing calls it yet.
+- `writeOffBadDebt` is admin-only and requires collateral to be fully exhausted. It
+  is the honest floor, not an automated one.
+- No borrow cap per asset and no isolation mode. Every listed stock is collateral at
+  the same 40%.
 
 ## 14. Trade side — SplitVault (already built, here is what to review)
 
@@ -424,7 +456,9 @@ contracts/test/           unit + integration suites, one per contract
 contracts/test/invariant/ handler driven invariant suite
 contracts/script/         Deploy.s.sol (testnet, writes deployments/<chainid>.json),
                           Seed.s.sol, DeployProduction.s.sol (real assets),
-                          VerifyUniverse.s.sol (checks the listing onchain)
+                          VerifyUniverse.s.sol (checks the listing onchain),
+                          FundPool.s.sol, DeclareDividends.s.sol, SettleDividends.s.sol
+contracts/dividends/      corporate action feed per chain — operator supplied
 scripts/deploy.sh         any chain: compile → deploy → seed → sync ABIs → point the app
 scripts/deploy-local.sh   the same, pinned to local anvil (delegates to deploy.sh)
 scripts/sync-abis.mjs     ABIs + address books → packages/sdk/src/generated

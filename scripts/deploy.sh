@@ -182,6 +182,26 @@ if [ "$SEED" = "1" ]; then
   fi
 fi
 
+# Operational steps. Each is optional, each needs something only the operator has:
+# USDG in a wallet, and a corporate action file that reflects reality.
+if [ -n "${FUND:-}" ]; then
+  echo "==> Funding the pool with $FUND USDG"
+  AMOUNT="$FUND" PRIVATE_KEY="$PRIVATE_KEY" forge script script/FundPool.s.sol \
+    --rpc-url "$RPC_URL" --broadcast "${forge_flags[@]}"
+fi
+
+if [ -n "${DECLARE:-}" ]; then
+  if [ ! -f "$ROOT/contracts/dividends/$CHAIN_ID.json" ]; then
+    echo "DECLARE needs contracts/dividends/$CHAIN_ID.json." >&2
+    echo "It has to be built from real issuer corporate action data — see that" >&2
+    echo "directory's README. Nothing in this repo can produce it for you." >&2
+    exit 1
+  fi
+  echo "==> Declaring dividends from dividends/$CHAIN_ID.json"
+  PRIVATE_KEY="$PRIVATE_KEY" forge script script/DeclareDividends.s.sol \
+    --rpc-url "$RPC_URL" --broadcast "${forge_flags[@]}"
+fi
+
 echo "==> Syncing ABIs and addresses into the SDK"
 node "$ROOT/scripts/sync-abis.mjs"
 
@@ -213,6 +233,13 @@ Done. Chain $CHAIN_ID is live and the app is pointed at it.
 
 Next:
   pnpm dev                     http://localhost:3000, connect a wallet on chain $CHAIN_ID
+
+Operational steps this does not do, because none of them is code:
+  the dividend oracle    contracts/dividends/$CHAIN_ID.json, from real corporate
+                         action data, then DECLARE=1 or DeclareDividends.s.sol
+  the pay-day keeper     SettleDividends.s.sol, run when issuers pay; the keeper
+                         wallet needs the USDG to settle with
+  pool capital           FUND=<usdg> or FundPool.s.sol; the USDG has to exist first
 
 To ship it, commit the two generated files and set the same five vars in Vercel:
   NEXT_PUBLIC_CHAIN_ID=$CHAIN_ID
