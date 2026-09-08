@@ -39,6 +39,12 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
     /// @notice Held by DripCore, StreamEngine and Reinvestor. The only callers that move protocol money.
     bytes32 public constant CORE_ROLE = keccak256("CORE_ROLE");
 
+    /// @notice Held by LendingPool alone. The credit side of the same balance sheet.
+    /// @dev Separate from CORE_ROLE deliberately. The advance modules and the lending
+    ///      market draw on the same USDG but under different rules, and a bug in one
+    ///      should not be able to reach for the other's entry points.
+    bytes32 public constant LENDER_ROLE = keccak256("LENDER_ROLE");
+
     /// @dev Basis point denominator.
     uint256 private constant BPS = 10_000;
 
@@ -71,6 +77,16 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
     /// @notice Lifetime losses written off against voided dividends.
     uint256 public totalLosses;
 
+    /// @notice USDG principal currently lent out through LendingPool.
+    /// @dev A receivable like `receivables`, on the credit side rather than the income
+    ///      side. It is principal only: accrued interest is not counted as an asset
+    ///      until it is actually repaid in cash, so an unpayable loan cannot inflate
+    ///      the share price on its way to becoming a loss.
+    uint256 public loansOutstanding;
+
+    /// @notice Lifetime loan principal written off after a liquidation fell short.
+    uint256 public totalLoanLosses;
+
     /// @inheritdoc IAdvanceVault
     uint256 public advanceFeeBps;
 
@@ -86,6 +102,9 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
     event AdvanceFeeSet(uint256 bps);
     event MaxUtilizationSet(uint256 bps);
     event CollateralLiquidated(address indexed stockToken, address indexed to, uint256 amount);
+    event Lent(address indexed to, uint256 amount, uint256 loansOutstanding);
+    event RepaymentReceived(uint256 principal, uint256 interest, uint256 loansOutstanding);
+    event LoanLossRecorded(uint256 amount, uint256 totalLoanLosses);
 
     error FeeTooHigh(uint256 bps);
     error UtilizationTooHigh(uint256 bps);
@@ -93,6 +112,7 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
     error InsufficientCashFloor(uint256 cash, uint256 obligationsAfter);
     error ObligationExceeded(uint256 requested, uint256 available);
     error ReceivableExceeded(uint256 requested, uint256 available);
+    error LoanExceeded(uint256 requested, uint256 available);
     error ZeroAmount();
     error ZeroAddress();
 
@@ -115,10 +135,11 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
     // ---------------------------------------------------------------------
 
     /// @inheritdoc ERC4626
-    /// @dev Cash plus what issuers owe us minus what we owe holders. Saturates at zero
-    ///      so a catastrophic write down can never make the vault unreadable.
+    /// @dev Cash, plus what issuers owe us, plus loan principal out with borrowers,
+    ///      minus what we owe holders. Saturates at zero so a catastrophic write down
+    ///      can never make the vault unreadable.
     function totalAssets() public view override returns (uint256) {
-        uint256 gross = IERC20(asset()).balanceOf(address(this)) + receivables;
+        uint256 gross = IERC20(asset()).balanceOf(address(this)) + receivables + loansOutstanding;
         uint256 owed = obligations;
         return gross > owed ? gross - owed : 0;
     }
@@ -223,9 +244,12 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
         uint256 c = cash();
         if (c < obligationsAfter) revert InsufficientCashFloor(c, obligationsAfter);
 
-        // Utilisation cap: the vault is never fully lent out.
-        uint256 assetsAfter = c + receivablesAfter - obligationsAfter;
-        uint256 utilAfter = assetsAfter == 0 ? type(uint256).max : (receivablesAfter * BPS) / assetsAfter;
+        // Utilisation cap: the vault is never fully lent out. Loan principal counts
+        // as lent alongside receivables — both are capital that is not cash today,
+        // and letting the credit side dodge the cap would defeat it entirely.
+        uint256 assetsAfter = c + receivablesAfter + loansOutstanding - obligationsAfter;
+        uint256 deployedAfter = receivablesAfter + loansOutstanding;
+        uint256 utilAfter = assetsAfter == 0 ? type(uint256).max : (deployedAfter * BPS) / assetsAfter;
         if (utilAfter > maxUtilizationBps) revert UtilizationCapBreached(utilAfter, maxUtilizationBps);
 
         receivables = receivablesAfter;
@@ -315,6 +339,61 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
     }
 
     // ---------------------------------------------------------------------
+    // Loan lifecycle. LENDER_ROLE only.
+    // ---------------------------------------------------------------------
+
+    /// @notice Send loan principal to a borrower and book it as outstanding.
+    /// @dev Guarded by the same two limits that bound an advance. The cash floor keeps
+    ///      every holder mid stream payable: lending out cash a streaming holder is
+    ///      owed would turn a solvent vault into one that cannot pay today.
+    function lend(address to, uint256 amount) external onlyRole(LENDER_ROLE) whenNotPaused nonReentrant {
+        if (to == address(0)) revert ZeroAddress();
+        if (amount == 0) revert ZeroAmount();
+
+        uint256 c = cash();
+        if (c < obligations + amount) revert InsufficientCashFloor(c, obligations + amount);
+
+        uint256 loansAfter = loansOutstanding + amount;
+        uint256 assetsAfter = (c - amount) + receivables + loansAfter - obligations;
+        uint256 deployedAfter = receivables + loansAfter;
+        uint256 utilAfter = assetsAfter == 0 ? type(uint256).max : (deployedAfter * BPS) / assetsAfter;
+        if (utilAfter > maxUtilizationBps) revert UtilizationCapBreached(utilAfter, maxUtilizationBps);
+
+        loansOutstanding = loansAfter;
+        IERC20(asset()).safeTransfer(to, amount);
+        emit Lent(to, amount, loansAfter);
+    }
+
+    /// @notice Take a repayment in. Principal retires the loan; interest is LP yield.
+    /// @dev The caller must have approved `principal + interest` to this vault. Interest
+    ///      lands as cash and joins totalFeesAccrued, exactly like an advance fee: the
+    ///      share price rises when the money arrives, never when it is merely accrued.
+    function receiveRepayment(address from, uint256 principal, uint256 interest)
+        external
+        onlyRole(LENDER_ROLE)
+        nonReentrant
+    {
+        if (principal > loansOutstanding) revert LoanExceeded(principal, loansOutstanding);
+        uint256 total = principal + interest;
+        if (total == 0) revert ZeroAmount();
+
+        loansOutstanding -= principal;
+        if (interest > 0) totalFeesAccrued += interest;
+        IERC20(asset()).safeTransferFrom(from, address(this), total);
+        emit RepaymentReceived(principal, interest, loansOutstanding);
+    }
+
+    /// @notice Write off loan principal a liquidation could not recover.
+    /// @dev Symmetric with recordLoss on the advance side: the loss lands on the share
+    ///      price at the moment it is recognised, not later.
+    function recordLoanLoss(uint256 amount) external onlyRole(LENDER_ROLE) {
+        if (amount > loansOutstanding) revert LoanExceeded(amount, loansOutstanding);
+        loansOutstanding -= amount;
+        totalLoanLosses += amount;
+        emit LoanLossRecorded(amount, totalLoanLosses);
+    }
+
+    // ---------------------------------------------------------------------
     // Views and admin
     // ---------------------------------------------------------------------
 
@@ -332,7 +411,7 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
     function utilizationBps() external view returns (uint256) {
         uint256 assets = totalAssets();
         if (assets == 0) return 0;
-        return (receivables * BPS) / assets;
+        return ((receivables + loansOutstanding) * BPS) / assets;
     }
 
     /// @notice Set the advance fee. Capped at 5 percent by MAX_FEE_BPS.

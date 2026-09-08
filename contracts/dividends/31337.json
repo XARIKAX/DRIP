@@ -1,0 +1,7 @@
+{
+  "_comment": "Local anvil only. Worthless tokens, invented numbers, safe to edit.",
+  "dividends": [
+    { "symbol": "NVDA", "amountPerToken": 10000, "exDate": 4102444800, "payDate": 4103913600 },
+    { "symbol": "JNJ", "amountPerToken": 124000, "exDate": 4102444800, "payDate": 4103913600 }
+  ]
+}

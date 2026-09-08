@@ -114,6 +114,71 @@ export function useVaultStats() {
   return useQuery(readerQuery(["vaultStats", chainId], reader, (r) => r.getVaultStats()));
 }
 
+export function useCredit() {
+  const reader = useReader();
+  const { address } = useAccount();
+  return useQuery(
+    readerQuery(["credit", chainId, address], reader, (r) => r.getCreditPosition(address!), {
+      enabled: Boolean(address),
+      // Debt accrues every second and the health factor moves with the oracle.
+      refetchInterval: 10_000,
+    })
+  );
+}
+
+export function useCreditParameters() {
+  const reader = useReader();
+  return useQuery(
+    readerQuery(["creditParams", chainId], reader, (r) => r.getCreditParameters(), {
+      // Constant between admin changes; no reason to poll it.
+      staleTime: Infinity,
+    })
+  );
+}
+
+export function useAutoRepayPrincipal() {
+  const reader = useReader();
+  const { address } = useAccount();
+  return useQuery(
+    readerQuery(["autoRepay", chainId, address], reader, (r) => r.getAutoRepayPrincipal(address!), {
+      enabled: Boolean(address),
+    })
+  );
+}
+
+export function useSplitSeriesList() {
+  const reader = useReader();
+  return useQuery(readerQuery(["splitSeries", chainId], reader, (r) => r.getSplitSeries(), {
+    refetchInterval: 30_000,
+  }));
+}
+
+export function useSplitPositionFor(seriesId: number) {
+  const reader = useReader();
+  const { address } = useAccount();
+  return useQuery(
+    readerQuery(
+      ["splitPosition", chainId, seriesId, address],
+      reader,
+      (r) => r.getSplitPosition(BigInt(seriesId), address!),
+      { enabled: Boolean(address) && seriesId > 0 }
+    )
+  );
+}
+
+export function useSplitDividendsFor(seriesId: number) {
+  const reader = useReader();
+  const { address } = useAccount();
+  return useQuery(
+    readerQuery(
+      ["splitDividends", chainId, seriesId, address],
+      reader,
+      (r) => r.getSplitDividends(BigInt(seriesId), address!),
+      { enabled: Boolean(address) && seriesId > 0, refetchInterval: 20_000 }
+    )
+  );
+}
+
 export function useVaultPosition() {
   const reader = useReader();
   const { address } = useAccount();

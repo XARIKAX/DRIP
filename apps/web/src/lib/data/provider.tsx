@@ -21,8 +21,17 @@ import {
   buildVaultDeposit,
   buildVaultWithdraw,
   buildWithdraw,
+  estimateApyBps,
+  buildBorrow,
+  buildRepay,
+  buildSetAutoRepayPrincipal,
+  buildSplit,
+  buildMerge,
+  buildRedeemPrincipal,
+  buildHarvestDividend,
+  buildClaimYield,
 } from "@drip-markets/sdk";
-import { isDeployed } from "@/lib/chain.config";
+import { hasFaucets, isDeployed } from "@/lib/chain.config";
 import {
   useActivity as useChainActivity,
   useCalendar as useChainCalendar,
@@ -33,6 +42,13 @@ import {
   useVaultStats as useChainVaultStats,
   useWalletBalances as useChainWallet,
   useActivatable as useChainActivatable,
+  useCredit as useChainCredit,
+  useCreditParameters as useChainCreditParams,
+  useAutoRepayPrincipal as useChainAutoRepay,
+  useSplitSeriesList as useChainSplitSeries,
+  useSplitPositionFor as useChainSplitPosition,
+  useSplitDividendsFor as useChainSplitDividends,
+  useWalletBalances as useChainWalletBalances,
   useDeployment,
 } from "@/lib/hooks";
 import { useTxRunner } from "@/lib/tx";
@@ -92,6 +108,11 @@ function useMockVersion(): number {
 const USDG = 1e6;
 const STOCK = 1e18;
 
+/** UI decimal shares to the 18 decimal base unit, via a 6dp intermediate. */
+function toStockBase(shares: number): bigint {
+  return BigInt(Math.round(shares * 1e6)) * 10n ** 12n;
+}
+
 const MODE_FROM_CHAIN: Record<number, ModeName> = { 0: "CASH_EARLY", 1: "STREAM", 2: "REINVEST" };
 const MODE_TO_CHAIN: Record<ModeName, ChainMode> = {
   CASH_EARLY: ChainMode.CASH_EARLY,
@@ -99,17 +120,16 @@ const MODE_TO_CHAIN: Record<ModeName, ChainMode> = {
   REINVEST: ChainMode.REINVEST,
 };
 
-/** Deterministic visual walk for chain mode, where no intraday series exists. */
-function visualSpark(symbol: string): number[] {
-  let seed = 0;
-  for (const c of symbol) seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
-  let a = seed || 7;
-  const out = [1];
-  for (let i = 1; i < 60; i++) {
-    a = (a * 1103515245 + 12345) >>> 0;
-    out.push(out[i - 1]! * (1 + 0.0001 + ((a / 4294967296) - 0.5) * 0.006));
-  }
-  return out;
+/**
+ * Annualised dividend yield from the declared calendar.
+ *
+ * Four quarters of the next declared dividend over the current price. Null when
+ * nothing is declared for that token, because the honest answer then is "we do not
+ * know yet", not zero.
+ */
+function annualYieldPct(perShare: number | undefined, priceUsd: number): number | null {
+  if (perShare === undefined || priceUsd <= 0) return null;
+  return ((perShare * 4) / priceUsd) * 100;
 }
 
 // ---------------------------------------------------------------------------
@@ -128,14 +148,20 @@ export function useTokensView(): TokenInfo[] {
       const next = (chainCalendar.data ?? [])
         .filter((d) => d.symbol === t.symbol && d.exDate * 1000 > Date.now())
         .sort((x, y) => x.exDate - y.exDate)[0];
+      const priceUsd = Number(t.priceUsdg) / USDG;
+      const perShare = next ? Number(next.amountPerToken) / USDG : undefined;
+      const nowSec = Date.now() / 1000;
       return {
         symbol: t.symbol,
         name: t.name,
-        priceUsd: Number(t.priceUsdg) / USDG,
-        yieldPct: 0,
-        perShare: next ? Number(next.amountPerToken) / USDG : 0,
+        priceUsd,
+        yieldPct: annualYieldPct(perShare, priceUsd),
+        perShare: perShare ?? 0,
         nextExDate: next ? next.exDate : null,
-        payingNow: false,
+        // Paying now means the calendar has this token between its ex and pay dates.
+        payingNow: (chainCalendar.data ?? []).some(
+          (d) => d.symbol === t.symbol && d.exDate <= nowSec && nowSec < d.payDate
+        ),
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -150,16 +176,17 @@ export function useHoldings(): { rows: Holding[]; loading: boolean } {
 
   const rows = useMemo(() => {
     if (source === "demo") return mockStore.holdings();
-    const priceOf = new Map((tokens.data ?? []).map((t) => [t.address, Number(t.priceUsdg) / USDG]));
     return (positions.data ?? []).map((p) => {
-      const spark = visualSpark(p.symbol);
       return {
         symbol: p.symbol,
         amount: Number(p.amount) / STOCK,
         valueUsd: Number(p.valueUsdg) / USDG,
         mode: MODE_FROM_CHAIN[p.mode] ?? "STREAM",
-        movePct: (spark[59]! / spark[0]! - 1) * 100,
-        spark,
+        // No intraday history onchain: the oracle answers one price, now. The
+        // reference portfolio draws a walk to show the shape of the UI; drawing one
+        // here would put an invented price movement next to somebody's real money.
+        movePct: null,
+        spark: [],
       } satisfies Holding;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -249,15 +276,22 @@ export function useVaultView(): { vault: VaultView; loading: boolean } {
   const version = useMockVersion();
   const stats = useChainVaultStats();
   const position = useChainVaultPosition();
+  const deployedAt = useDeployment()?.deployedAt ?? 0;
 
   const vault = useMemo(() => {
     if (source === "demo" || !stats.data) return mockStore.vault();
     const s = stats.data;
     const p = position.data;
-    const history = mockStore.vault().apyHistory;
+
+    // Fees earned over the pool's actual life, annualised. The old formula multiplied
+    // the fee ratio by a constant and fell back to the reference store's history when
+    // no fees had accrued, which drew an invented APY curve on a real pool.
+    const secondsLive = deployedAt ? Math.max(Date.now() / 1000 - deployedAt, 1) : 0;
+    const apyPct = estimateApyBps(s.totalFeesAccrued, s.totalAssets, secondsLive) / 100;
+
     return {
       tvlUsd: Number(s.totalAssets) / USDG,
-      apyPct: Number(s.totalFeesAccrued) > 0 ? (Number(s.totalFeesAccrued) / Math.max(Number(s.totalAssets), 1)) * 400 : history[history.length - 1]!,
+      apyPct,
       utilizationPct: Number(s.utilizationBps) / 100,
       capPct: Number(s.maxUtilizationBps) / 100,
       advancesOutstandingUsd: Number(s.receivables) / USDG,
@@ -267,10 +301,12 @@ export function useVaultView(): { vault: VaultView; loading: boolean } {
       yourShares: p ? Number(p.shares) / STOCK : 0,
       yourAssetsUsd: p ? Number(p.assets) / USDG : 0,
       maxWithdrawUsd: p ? Number(p.maxWithdraw) / USDG : 0,
-      apyHistory: history,
+      // One point, not a curve. There is no historical series onchain to read, and
+      // borrowing the reference store's would draw a past this pool never had.
+      apyHistory: [apyPct],
     } satisfies VaultView;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, version, stats.data, position.data]);
+  }, [source, version, stats.data, position.data, deployedAt]);
 
   return { vault, loading: source === "chain" && stats.isLoading };
 }
@@ -313,16 +349,75 @@ export function usePendingAdvances(): PendingAdvance[] {
 export function useCreditView(): CreditView {
   const source = useDataSource();
   const version = useMockVersion();
+  const credit = useChainCredit();
+  const params = useChainCreditParams();
+  const { rows: holdings } = useHoldings();
+  const { rows: calendar } = useCalendarRows();
+
   return useMemo(() => {
-    // The lending market exists in demo mode today; the chain deployment follows the
-    // audited LendingPool. Chain mode shows the same shape with nothing drawn.
-    if (source === "chain") {
+    if (source === "demo") return mockStore.credit();
+
+    const c = credit.data;
+    const p = params.data;
+    // No lending pool on this chain, or the read has not landed yet. Render the page
+    // with nothing drawn rather than throwing; the address book may predate the market.
+    if (!c || !p) {
       const empty = mockStore.credit();
-      return { ...empty, borrowedUsd: 0, availableUsd: empty.maxBorrowUsd, healthFactor: Infinity, servicedBaseUsd: 0, servicedRatePerSec: 0 };
+      return {
+        ...empty,
+        collateralValueUsd: 0,
+        maxBorrowUsd: 0,
+        borrowedUsd: 0,
+        availableUsd: 0,
+        healthFactor: Infinity,
+        dividendsPerYearUsd: 0,
+        interestPerYearUsd: 0,
+        netCarryPerYearUsd: 0,
+        servicedBaseUsd: 0,
+        servicedRatePerSec: 0,
+      };
     }
-    return mockStore.credit();
+
+    const borrowedUsd = Number(c.debt) / USDG;
+    const borrowAprPct = Number(c.borrowRateBps) / 100;
+
+    // Annualised from the declared calendar: what each holding's next dividend pays,
+    // four times over. The same quarterly assumption the reference portfolio makes,
+    // and the honest one until a full year of real declarations exists to average.
+    const perShare = new Map(calendar.map((d) => [d.symbol, d.perShare]));
+    const dividendsPerYearUsd = holdings.reduce(
+      (sum, h) => sum + h.amount * (perShare.get(h.symbol) ?? 0) * 4,
+      0
+    );
+    const interestPerYearUsd = (borrowedUsd * borrowAprPct) / 100;
+
+    // Dividends can only service interest that exists, so the rate is bounded by both.
+    const servicedRatePerSec = Math.min(dividendsPerYearUsd, interestPerYearUsd) / (365 * 24 * 3600);
+
+    return {
+      collateralValueUsd: Number(c.collateralUsdg) / USDG,
+      maxBorrowUsd: Number(c.borrowingPower) / USDG,
+      borrowedUsd,
+      availableUsd: Number(c.available) / USDG,
+      healthFactor: borrowedUsd > 0 ? Number(c.healthFactorBps) / 10_000 : Infinity,
+      maxLtvPct: Number(p.maxLtvBps) / 100,
+      liqThresholdPct: Number(p.liquidationThresholdBps) / 100,
+      borrowAprPct,
+      dividendsPerYearUsd,
+      interestPerYearUsd,
+      netCarryPerYearUsd: dividendsPerYearUsd - interestPerYearUsd,
+      servicedBaseUsd: Number(c.servicedFromDividends) / USDG,
+      servicedRatePerSec,
+    } satisfies CreditView;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, version]);
+  }, [source, version, credit.data, params.data, holdings, calendar]);
+}
+
+/** Whether this holder lets dividends pay down principal, not just interest. */
+export function useAutoRepayPrincipal(): boolean {
+  const source = useDataSource();
+  const chain = useChainAutoRepay();
+  return source === "demo" ? false : Boolean(chain.data);
 }
 
 /**
@@ -333,41 +428,84 @@ export function useCreditView(): CreditView {
 export function useSplitSeries(): SplitSeries[] {
   const source = useDataSource();
   const version = useMockVersion();
+  const chain = useChainSplitSeries();
+
   return useMemo(() => {
-    if (source === "chain") return [];
-    return mockStore.splitSeriesList();
+    if (source === "demo") return mockStore.splitSeriesList();
+    return (chain.data ?? []).map((s) => {
+      const priceUsd = Number(s.priceUsdg) / USDG;
+      return {
+        seriesId: Number(s.seriesId),
+        symbol: s.symbol,
+        name: s.name,
+        maturity: s.maturity,
+        splitFeeBps: s.splitFeeBps,
+        ptSupply: Number(s.ptSupply) / STOCK,
+        ytSupply: Number(s.ytSupply) / STOCK,
+        underlyingPriceUsd: priceUsd,
+        // The stock's own annualised dividend, not a market price: nothing trades
+        // these tokens yet, so there is no implied anything to read.
+        impliedYieldApr: 0,
+      } satisfies SplitSeries;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, version]);
+  }, [source, version, chain.data]);
 }
 
 export function useSplitPosition(seriesId: number): SplitPosition | null {
   const source = useDataSource();
   const version = useMockVersion();
+  const chain = useChainSplitPosition(seriesId);
+
   return useMemo(() => {
-    if (source === "chain") return null;
-    return mockStore.splitPosition(seriesId);
+    if (source === "demo") return mockStore.splitPosition(seriesId);
+    const p = chain.data;
+    if (!p) return null;
+    return {
+      seriesId: Number(p.seriesId),
+      ptBalance: Number(p.ptBalance) / STOCK,
+      ytBalance: Number(p.ytBalance) / STOCK,
+    } satisfies SplitPosition;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, version, seriesId]);
+  }, [source, version, seriesId, chain.data]);
 }
 
 export function useSplitDividendRows(seriesId: number): SplitDividendRow[] {
   const source = useDataSource();
   const version = useMockVersion();
+  const chain = useChainSplitDividends(seriesId);
+
   return useMemo(() => {
-    if (source === "chain") return [];
-    return mockStore.splitDividendRows(seriesId);
+    if (source === "demo") return mockStore.splitDividendRows(seriesId);
+    return (chain.data ?? []).map((d) => ({
+      seriesId: Number(d.seriesId),
+      dividendId: Number(d.dividendId),
+      symbol: d.symbol,
+      perShare: Number(d.amountPerToken) / USDG,
+      exDate: d.exDate,
+      eligible: d.eligible,
+      harvested: d.harvested,
+      poolUsd: Number(d.pool) / USDG,
+      claimableUsd: Number(d.claimable) / USDG,
+      claimed: d.claimed,
+    } satisfies SplitDividendRow));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, version, seriesId]);
+  }, [source, version, seriesId, chain.data]);
 }
 
 export function useSplitWalletBalance(symbol: string): number {
   const source = useDataSource();
   const version = useMockVersion();
+  const wallet = useChainWalletBalances();
+  const tokens = useChainTokens();
+
   return useMemo(() => {
-    if (source === "chain") return 0;
-    return mockStore.splitWalletBalance(symbol);
+    if (source === "demo") return mockStore.splitWalletBalance(symbol);
+    const token = (tokens.data ?? []).find((t) => t.symbol === symbol);
+    if (!token) return 0;
+    return Number(wallet.data?.stocks[token.address] ?? 0n) / STOCK;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, version, symbol]);
+  }, [source, version, symbol, wallet.data, tokens.data]);
 }
 
 export function usePortfolioSummary(): PortfolioSummary {
@@ -406,6 +544,12 @@ export function usePortfolioSummary(): PortfolioSummary {
 export interface DataActions {
   source: Source;
   busy: boolean;
+  /**
+   * Whether a faucet exists to offer. The sample portfolio always has one; a chain
+   * only does while it runs the mock stock tokens. On a production book the real
+   * stock token has no faucet() and the button would only ever revert.
+   */
+  canFaucet: boolean;
   setMode: (symbol: string, mode: ModeName) => Promise<void>;
   claimStream: (id: number) => Promise<void>;
   startPending: (dividendId: number) => Promise<void>;
@@ -416,6 +560,8 @@ export interface DataActions {
   vaultWithdraw: (usd: number) => Promise<void>;
   borrow: (usd: number) => Promise<void>;
   repay: (usd: number) => Promise<void>;
+  /** Opt dividend income into paying down principal, not just interest. */
+  setAutoRepayPrincipal: (enabled: boolean) => Promise<void>;
   split: (seriesId: number, amount: number) => Promise<void>;
   merge: (seriesId: number, amount: number) => Promise<void>;
   redeemPrincipal: (seriesId: number, amount: number) => Promise<void>;
@@ -436,6 +582,12 @@ export function useDataActions(): DataActions {
     [tokens.data]
   );
 
+  const seriesList = useChainSplitSeries();
+  const seriesSymbol = useCallback(
+    (seriesId: number) => (seriesList.data ?? []).find((s) => Number(s.seriesId) === seriesId)?.symbol ?? "",
+    [seriesList.data]
+  );
+
   /** Demo actions land instantly; the tiny delay keeps button feedback honest. */
   const demo = useCallback(async (fn: () => void) => {
     setDemoBusy(true);
@@ -449,6 +601,7 @@ export function useDataActions(): DataActions {
       return {
         source,
         busy: demoBusy,
+        canFaucet: true,
         setMode: (symbol, mode) => demo(() => mockStore.setMode(symbol, mode)),
         claimStream: (id) => demo(() => void mockStore.claimStream(id)),
         startPending: (id) => demo(() => mockStore.startPending(id)),
@@ -463,6 +616,7 @@ export function useDataActions(): DataActions {
         vaultWithdraw: (usd) => demo(() => mockStore.vaultWithdraw(usd)),
         borrow: (usd) => demo(() => mockStore.borrow(usd)),
         repay: (usd) => demo(() => mockStore.repay(usd)),
+        setAutoRepayPrincipal: async () => {},
         split: (seriesId, amount) => demo(() => mockStore.split(seriesId, amount)),
         merge: (seriesId, amount) => demo(() => mockStore.merge(seriesId, amount)),
         redeemPrincipal: (seriesId, amount) => demo(() => mockStore.redeemPrincipal(seriesId, amount)),
@@ -480,6 +634,7 @@ export function useDataActions(): DataActions {
     return {
       source,
       busy,
+      canFaucet: hasFaucets,
       setMode: async (symbol, mode) => {
         const d = need(deployment, "deployment");
         const token = need(addressOf(symbol), symbol);
@@ -496,7 +651,7 @@ export function useDataActions(): DataActions {
       deposit: async (symbol, shares, mode) => {
         const d = need(deployment, "deployment");
         const token = need(addressOf(symbol), symbol);
-        const base = BigInt(Math.round(shares * 1e6)) * 10n ** 12n;
+        const base = toStockBase(shares);
         const txs = [buildApprove(token, d.dripCore, base, symbol), buildDeposit(d, token, base, symbol)];
         if (mode) txs.push(buildSetMode(d, token, MODE_TO_CHAIN[mode], symbol));
         await run(txs);
@@ -504,9 +659,10 @@ export function useDataActions(): DataActions {
       withdraw: async (symbol, shares) => {
         const d = need(deployment, "deployment");
         const token = need(addressOf(symbol), symbol);
-        await run([buildWithdraw(d, token, BigInt(Math.round(shares * 1e6)) * 10n ** 12n, symbol)]);
+        await run([buildWithdraw(d, token, toStockBase(shares), symbol)]);
       },
       faucet: async (symbol) => {
+        if (!hasFaucets) throw new Error("This network uses real stock tokens; there is no faucet.");
         const token = need(addressOf(symbol), symbol);
         await run([buildStockFaucet(token, symbol)]);
       },
@@ -521,27 +677,46 @@ export function useDataActions(): DataActions {
         const owner = need(address, "wallet");
         await run([buildVaultWithdraw(d, BigInt(Math.round(usd * 1e6)), owner, owner)]);
       },
-      borrow: async () => {
-        throw new Error("The lending market is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
+      borrow: async (usd) => {
+        const d = need(deployment, "deployment");
+        await run([buildBorrow(d, BigInt(Math.round(usd * 1e6)))]);
       },
-      repay: async () => {
-        throw new Error("The lending market is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
+      repay: async (usd) => {
+        const d = need(deployment, "deployment");
+        const owner = need(address, "wallet");
+        const base = BigInt(Math.round(usd * 1e6));
+        await run([buildApprove(d.usdg, need(d.lendingPool, "lending pool"), base, "USDG"), buildRepay(d, owner, base)]);
       },
-      split: async () => {
-        throw new Error("SplitVault is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
+      setAutoRepayPrincipal: async (enabled) => {
+        const d = need(deployment, "deployment");
+        await run([buildSetAutoRepayPrincipal(d, enabled)]);
       },
-      merge: async () => {
-        throw new Error("SplitVault is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
+      split: async (seriesId, amount) => {
+        const d = need(deployment, "deployment");
+        const vault = need(d.splitVault, "split vault");
+        const symbol = seriesSymbol(seriesId);
+        const token = need(addressOf(symbol), symbol);
+        const base = toStockBase(amount);
+        await run([buildApprove(token, vault, base, symbol), buildSplit(d, BigInt(seriesId), base, symbol)]);
       },
-      redeemPrincipal: async () => {
-        throw new Error("SplitVault is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
+      merge: async (seriesId, amount) => {
+        const d = need(deployment, "deployment");
+        // Merging burns both halves; the vault holds the stock already, so there is
+        // nothing to approve.
+        await run([buildMerge(d, BigInt(seriesId), toStockBase(amount), seriesSymbol(seriesId))]);
       },
-      harvestDividend: async () => {
-        throw new Error("SplitVault is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
+      redeemPrincipal: async (seriesId, amount) => {
+        const d = need(deployment, "deployment");
+        await run([buildRedeemPrincipal(d, BigInt(seriesId), toStockBase(amount), seriesSymbol(seriesId))]);
       },
-      claimYield: async () => {
-        throw new Error("SplitVault is not deployed onchain yet. Disconnect the wallet to use the reference portfolio.");
+      harvestDividend: async (seriesId, dividendId) => {
+        const d = need(deployment, "deployment");
+        await run([buildHarvestDividend(d, BigInt(seriesId), BigInt(dividendId))]);
+      },
+      claimYield: async (seriesId, dividendId) => {
+        const d = need(deployment, "deployment");
+        await run([buildClaimYield(d, BigInt(seriesId), BigInt(dividendId))]);
       },
     };
-  }, [source, demoBusy, demo, state.status, deployment, address, addressOf, run]);
+  }, [source, demoBusy, demo, state.status, deployment, address, addressOf, seriesSymbol, run]);
 }

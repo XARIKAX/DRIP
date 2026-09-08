@@ -15,6 +15,7 @@ import {IAdvanceVault} from "./interfaces/IAdvanceVault.sol";
 import {IStreamEngine} from "./interfaces/IStreamEngine.sol";
 import {IReinvestor} from "./interfaces/IReinvestor.sol";
 import {ISwapAdapter} from "./interfaces/ISwapAdapter.sol";
+import {ILendingPool} from "./interfaces/ILendingPool.sol";
 import {Mode, Dividend, DividendStatus} from "./interfaces/DripTypes.sol";
 
 /// @title DripCore
@@ -48,6 +49,9 @@ contract DripCore is IDripCore, AccessControl, Pausable, ReentrancyGuard {
     /// @notice Held by Reinvestor. The only caller allowed to grow a position without a deposit.
     bytes32 public constant REINVESTOR_ROLE = keccak256("REINVESTOR_ROLE");
 
+    /// @notice Held by LendingPool alone. May seize collateral from a liquidatable position.
+    bytes32 public constant LENDER_ROLE = keccak256("LENDER_ROLE");
+
     /// @dev One whole stock token. Dividends are quoted per this.
     uint256 private constant ONE_STOCK = 1e18;
 
@@ -65,6 +69,13 @@ contract DripCore is IDripCore, AccessControl, Pausable, ReentrancyGuard {
 
     /// @notice The DRIP module.
     IReinvestor public reinvestor;
+
+    /// @notice The credit market, when one is deployed. Optional by design.
+    /// @dev Zero until wired, and every call site treats zero as "no debt anywhere".
+    ///      The custody contract must keep working if the lending market is paused,
+    ///      replaced, or never deployed at all — Early, Stream, Reinvest and Split all
+    ///      predate it and none of them needs it.
+    ILendingPool public lendingPool;
 
     /// @notice Price source used only to size a clawback seizure.
     ISwapAdapter public swapAdapter;
@@ -94,6 +105,9 @@ contract DripCore is IDripCore, AccessControl, Pausable, ReentrancyGuard {
     event StreamEngineSet(address indexed streamEngine);
     event ReinvestorSet(address indexed reinvestor);
     event SwapAdapterSet(address indexed adapter);
+    event LendingPoolSet(address indexed lendingPool);
+    event CollateralSeized(address indexed user, address indexed stockToken, uint256 amount, address to);
+    event DebtServiced(address indexed user, uint256 amount);
 
     error ZeroAddress();
     error ZeroAmount();
@@ -141,6 +155,14 @@ contract DripCore is IDripCore, AccessControl, Pausable, ReentrancyGuard {
         emit ReinvestorSet(address(reinvestor_));
     }
 
+    /// @notice Point at the credit market. Zero disables debt servicing entirely.
+    /// @dev Not on IDripCore: the lending market is optional, and the interface is the
+    ///      contract the frontend and the other modules are frozen against.
+    function setLendingPool(ILendingPool pool_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        lendingPool = pool_;
+        emit LendingPoolSet(address(pool_));
+    }
+
     /// @notice Point at the price source used to size clawback seizures.
     function setSwapAdapter(ISwapAdapter adapter_) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (address(adapter_) == address(0)) revert ZeroAddress();
@@ -169,6 +191,13 @@ contract DripCore is IDripCore, AccessControl, Pausable, ReentrancyGuard {
         if (amount == 0) revert ZeroAmount();
         Position storage p = _positions[msg.sender][stockToken];
         if (p.amount < amount) revert InsufficientBalance(p.amount, amount);
+
+        // Collateral backing a loan cannot walk out of the door. The market owns that
+        // judgement because it is the only contract that knows the whole position:
+        // every token this holder has on deposit, priced, against what they owe.
+        if (address(lendingPool) != address(0)) {
+            lendingPool.requireWithdrawAllowed(msg.sender, stockToken, amount);
+        }
 
         uint256 newBalance = p.amount - amount;
         p.amount = newBalance;
@@ -295,11 +324,18 @@ contract DripCore is IDripCore, AccessControl, Pausable, ReentrancyGuard {
         e.mode = _positions[msg.sender][d.stockToken].mode;
         settledPool[dividendId] -= amount;
 
-        if (e.mode == Mode.REINVEST && address(reinvestor) != address(0)) {
-            usdg.safeTransfer(address(reinvestor), amount);
-            reinvestor.reinvest(msg.sender, d.stockToken, amount);
-        } else {
-            usdg.safeTransfer(msg.sender, amount);
+        // Debt first, whatever the holder's mode. A loan being serviced outranks a
+        // reinvest instruction: buying more stock while the position is underwater is
+        // the opposite of what the holder asked this collateral to do.
+        uint256 toHolder = _serviceDebt(msg.sender, amount);
+
+        if (toHolder > 0) {
+            if (e.mode == Mode.REINVEST && address(reinvestor) != address(0)) {
+                usdg.safeTransfer(address(reinvestor), toHolder);
+                reinvestor.reinvest(msg.sender, d.stockToken, toHolder);
+            } else {
+                usdg.safeTransfer(msg.sender, toHolder);
+            }
         }
 
         emit SettledEntitlementClaimed(msg.sender, dividendId, amount);
@@ -364,6 +400,30 @@ contract DripCore is IDripCore, AccessControl, Pausable, ReentrancyGuard {
     // Views
     // ---------------------------------------------------------------------
 
+    /// @notice Move collateral out of a borrower's position during liquidation.
+    /// @dev LENDER_ROLE only, and the market is responsible for having established
+    ///      that the position is liquidatable first. Writes the same checkpoints an
+    ///      ordinary withdrawal does, so the historical balances that price every
+    ///      dividend stay correct: a seized share must stop earning at the moment it
+    ///      leaves, not at the next time someone touches the position.
+    function seizeCollateral(address user, address stockToken, uint256 amount, address to)
+        external
+        onlyRole(LENDER_ROLE)
+        nonReentrant
+    {
+        if (amount == 0) revert ZeroAmount();
+        if (to == address(0)) revert ZeroAddress();
+        Position storage p = _positions[user][stockToken];
+        if (p.amount < amount) revert InsufficientBalance(p.amount, amount);
+
+        uint256 newBalance = p.amount - amount;
+        p.amount = newBalance;
+        _writeCheckpoints(user, stockToken, newBalance, _totalDeposited(stockToken) - amount);
+
+        IERC20(stockToken).safeTransfer(to, amount);
+        emit CollateralSeized(user, stockToken, amount, to);
+    }
+
     /// @inheritdoc IDripCore
     function balanceOf(address user, address stockToken) external view returns (uint256) {
         return _positions[user][stockToken].amount;
@@ -414,6 +474,27 @@ contract DripCore is IDripCore, AccessControl, Pausable, ReentrancyGuard {
     // ---------------------------------------------------------------------
 
     /// @dev Grow a position and write both checkpoints. Used by deposit and reinvest.
+    /// @dev Route a holder's dividend cash at their debt before their wallet.
+    ///      This is the Osinko twist in section 13, and the whole of it: income the
+    ///      collateral produced pays the loan the collateral backs, so at a
+    ///      conservative LTV the position services itself. Returns what is left for
+    ///      the holder, which is the full amount whenever they owe nothing.
+    ///
+    ///      The USDG must already be held by this contract when this is called.
+    function _serviceDebt(address user, uint256 amount) private returns (uint256 remaining) {
+        if (address(lendingPool) == address(0) || amount == 0) return amount;
+
+        uint256 due = lendingPool.debtServiceDue(user, amount);
+        if (due == 0) return amount;
+
+        usdg.forceApprove(address(lendingPool), due);
+        lendingPool.serviceDebt(user, due);
+        usdg.forceApprove(address(lendingPool), 0);
+
+        emit DebtServiced(user, due);
+        return amount - due;
+    }
+
     function _credit(address user, address stockToken, uint256 amount) private returns (uint256 newBalance) {
         Position storage p = _positions[user][stockToken];
 
@@ -475,8 +556,16 @@ contract DripCore is IDripCore, AccessControl, Pausable, ReentrancyGuard {
         e.net = net;
 
         if (mode == Mode.CASH_EARLY) {
-            // Weeks early, in one payment, at the ex date.
-            vault.releaseAdvance(dividendId, user, net);
+            // Weeks early, in one payment, at the ex date. Released to this contract
+            // rather than straight to the holder so the debt hook can take its cut
+            // first; with no lending pool wired the two are the same transfer.
+            if (address(lendingPool) == address(0)) {
+                vault.releaseAdvance(dividendId, user, net);
+            } else {
+                vault.releaseAdvance(dividendId, address(this), net);
+                uint256 toHolder = _serviceDebt(user, net);
+                if (toHolder > 0) usdg.safeTransfer(user, toHolder);
+            }
         } else {
             // Per second from the ex date to the pay date. REINVEST routes each claim
             // through the swap on the way out.

@@ -4,17 +4,25 @@ import {
   deployments,
   dividendRegistryAbi,
   dripCoreAbi,
-  mockSwapAdapterAbi,
+  lendingPoolAbi,
+  principalTokenAbi,
   reinvestorAbi,
+  splitVaultAbi,
+  yieldTokenAbi,
   streamEngineAbi,
 } from "./generated";
 import {
   DividendStatus,
   Mode,
+  type CreditParameters,
+  type CreditPosition,
   type Deployment,
   type DividendView,
   type PositionView,
   type StockToken,
+  type SplitDividendView,
+  type SplitPositionView,
+  type SplitSeriesView,
   type StreamView,
   type VaultPosition,
   type VaultStats,
@@ -33,9 +41,38 @@ export function getDeployment(chainId: number): Deployment {
   return d;
 }
 
+/**
+ * The one function every swap adapter answers for a price.
+ *
+ * Read through the interface rather than either implementation: this call used to go
+ * through mockSwapAdapterAbi, which exposed priceUsdg only because the mock happened
+ * to declare it as a public mapping. ISwapAdapter declares it now, so both adapters
+ * answer it and neither implementation's ABI is the right thing to depend on.
+ */
+const swapAdapterPriceAbi = [
+  {
+    type: "function",
+    name: "priceUsdg",
+    stateMutability: "view",
+    inputs: [{ name: "stockToken", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+] as const;
+
 /** Every chain the repo has an address book for. */
 export function knownChainIds(): number[] {
   return Object.keys(deployments).map(Number);
+}
+
+/**
+ * True when this deployment runs the testnet stand ins, and so has faucets.
+ *
+ * Books written before the `mocks` field existed were all testnet deploys, so a
+ * missing field means mocks. Production books set it to false explicitly. Read this
+ * rather than the field, so an old book never turns a faucet button into a revert.
+ */
+export function usesMocks(d: Deployment): boolean {
+  return d.mocks !== false;
 }
 
 /**
@@ -80,7 +117,7 @@ export class DripReader {
           this.client.readContract({ address, abi: erc20Abi, functionName: "decimals" }),
           this.client.readContract({
             address: d.swapAdapter,
-            abi: mockSwapAdapterAbi,
+            abi: swapAdapterPriceAbi,
             functionName: "priceUsdg",
             args: [address],
           }),
@@ -158,7 +195,7 @@ export class DripReader {
           this.client.readContract({ address: stockToken, abi: erc20Abi, functionName: "symbol" }),
           this.client.readContract({
             address: d.swapAdapter,
-            abi: mockSwapAdapterAbi,
+            abi: swapAdapterPriceAbi,
             functionName: "priceUsdg",
             args: [stockToken],
           }),
@@ -396,6 +433,224 @@ export class DripReader {
       stocks[t.address] = stockBalances[i]!;
     });
     return { usdg, stocks };
+  }
+
+  // -------------------------------------------------------------------
+  // Credit
+  // -------------------------------------------------------------------
+
+  /** True when this chain's deployment has a credit market. */
+  hasCredit(): boolean {
+    return Boolean(this.deployment.lendingPool);
+  }
+
+  /**
+   * A borrower's whole position, in one call.
+   *
+   * Returns null when no lending pool is deployed on this chain, which is what an
+   * address book written before the credit market existed looks like. Callers render
+   * the Borrow page empty rather than failing.
+   */
+  async getCreditPosition(user: Address): Promise<CreditPosition | null> {
+    const pool = this.deployment.lendingPool;
+    if (!pool) return null;
+
+    const snapshot = (await this.client.readContract({
+      address: pool,
+      abi: lendingPoolAbi,
+      functionName: "accountSnapshot",
+      args: [user],
+    })) as readonly bigint[];
+
+    const [collateralUsdg, borrowingPower, debt, available, accruedInterest, servicedFromDividends, healthFactorBps, borrowRateBps] =
+      snapshot;
+
+    return {
+      collateralUsdg: collateralUsdg!,
+      borrowingPower: borrowingPower!,
+      debt: debt!,
+      available: available!,
+      accruedInterest: accruedInterest!,
+      servicedFromDividends: servicedFromDividends!,
+      healthFactorBps: healthFactorBps!,
+      borrowRateBps: borrowRateBps!,
+    };
+  }
+
+  /** The market's risk parameters as deployed. Constant between admin changes. */
+  async getCreditParameters(): Promise<CreditParameters | null> {
+    const pool = this.deployment.lendingPool;
+    if (!pool) return null;
+
+    const [maxLtvBps, liquidationThresholdBps, liquidationBonusBps, closeFactorBps] = (await Promise.all([
+      this.client.readContract({ address: pool, abi: lendingPoolAbi, functionName: "maxLtvBps" }),
+      this.client.readContract({ address: pool, abi: lendingPoolAbi, functionName: "liquidationThresholdBps" }),
+      this.client.readContract({ address: pool, abi: lendingPoolAbi, functionName: "liquidationBonusBps" }),
+      this.client.readContract({ address: pool, abi: lendingPoolAbi, functionName: "closeFactorBps" }),
+    ])) as [bigint, bigint, bigint, bigint];
+
+    return { maxLtvBps, liquidationThresholdBps, liquidationBonusBps, closeFactorBps };
+  }
+
+  /** Whether this holder has opted into dividends paying down principal too. */
+  async getAutoRepayPrincipal(user: Address): Promise<boolean> {
+    const pool = this.deployment.lendingPool;
+    if (!pool) return false;
+    return (await this.client.readContract({
+      address: pool,
+      abi: lendingPoolAbi,
+      functionName: "autoRepayPrincipal",
+      args: [user],
+    })) as boolean;
+  }
+
+  // -------------------------------------------------------------------
+  // Split
+  // -------------------------------------------------------------------
+
+  /** True when this chain's deployment has a SplitVault. */
+  hasSplit(): boolean {
+    return Boolean(this.deployment.splitVault);
+  }
+
+  /**
+   * Every series the vault has opened, newest last.
+   *
+   * Series ids start at 1 and are never reused, so walking the counter is exact.
+   * A deployment with no series returns an empty list rather than throwing.
+   */
+  async getSplitSeries(): Promise<SplitSeriesView[]> {
+    const vault = this.deployment.splitVault;
+    if (!vault) return [];
+
+    const [count, splitFeeBps] = (await Promise.all([
+      this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "seriesCount" }),
+      this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "splitFeeBps" }),
+    ])) as [bigint, bigint];
+
+    if (count === 0n) return [];
+
+    const ids = Array.from({ length: Number(count) }, (_, i) => BigInt(i + 1));
+    const rows = await Promise.all(
+      ids.map(async (seriesId) => {
+        const s = (await this.client.readContract({
+          address: vault,
+          abi: splitVaultAbi,
+          functionName: "series",
+          args: [seriesId],
+        })) as readonly [Address, bigint, Address, Address, boolean];
+
+        const [stockToken, maturity, principalToken, yieldToken, exists] = s;
+        if (!exists) return null;
+
+        const [symbol, name, ptSupply, ytSupply, priceUsdg] = await Promise.all([
+          this.client.readContract({ address: stockToken, abi: erc20Abi, functionName: "symbol" }),
+          this.client.readContract({ address: stockToken, abi: erc20Abi, functionName: "name" }),
+          this.client.readContract({ address: principalToken, abi: principalTokenAbi, functionName: "totalSupply" }),
+          this.client.readContract({ address: yieldToken, abi: yieldTokenAbi, functionName: "totalSupply" }),
+          this.client.readContract({
+            address: this.deployment.swapAdapter,
+            abi: swapAdapterPriceAbi,
+            functionName: "priceUsdg",
+            args: [stockToken],
+          }),
+        ]);
+
+        return {
+          seriesId,
+          stockToken,
+          symbol,
+          name,
+          maturity: Number(maturity),
+          principalToken,
+          yieldToken,
+          ptSupply: ptSupply as bigint,
+          ytSupply: ytSupply as bigint,
+          priceUsdg: priceUsdg as bigint,
+          splitFeeBps: Number(splitFeeBps),
+        } satisfies SplitSeriesView;
+      })
+    );
+
+    return rows.filter((r): r is SplitSeriesView => r !== null);
+  }
+
+  /** A holder's share token and dividend token balances in one series. */
+  async getSplitPosition(seriesId: bigint, user: Address): Promise<SplitPositionView | null> {
+    const vault = this.deployment.splitVault;
+    if (!vault) return null;
+
+    const s = (await this.client.readContract({
+      address: vault,
+      abi: splitVaultAbi,
+      functionName: "series",
+      args: [seriesId],
+    })) as readonly [Address, bigint, Address, Address, boolean];
+    if (!s[4]) return null;
+
+    const [ptBalance, ytBalance] = await Promise.all([
+      this.client.readContract({ address: s[2], abi: principalTokenAbi, functionName: "balanceOf", args: [user] }),
+      this.client.readContract({ address: s[3], abi: yieldTokenAbi, functionName: "balanceOf", args: [user] }),
+    ]);
+
+    return { seriesId, ptBalance: ptBalance as bigint, ytBalance: ytBalance as bigint };
+  }
+
+  /**
+   * The dividends a series has seen, with this holder's claim on each.
+   *
+   * Every dividend on the series' own stock, whatever its ex date. It is tempting to
+   * filter to the ones already ex, but the only clock available here is the caller's
+   * wall clock and the ex date is a chain timestamp — on any chain whose time has
+   * drifted from the browser's, that comparison hides dividends that are genuinely
+   * harvestable. The row carries its ex date; the UI gates the button on it.
+   */
+  async getSplitDividends(seriesId: bigint, user: Address): Promise<SplitDividendView[]> {
+    const vault = this.deployment.splitVault;
+    if (!vault) return [];
+
+    const s = (await this.client.readContract({
+      address: vault,
+      abi: splitVaultAbi,
+      functionName: "series",
+      args: [seriesId],
+    })) as readonly [Address, bigint, Address, Address, boolean];
+    if (!s[4]) return [];
+
+    const calendar = await this.getCalendar();
+    const mine = calendar.filter((d) => d.stockToken.toLowerCase() === s[0].toLowerCase());
+
+    return Promise.all(
+      mine.map(async (d) => {
+        const [harvested, pool, claimable, claimed, balanceAtEx] = await Promise.all([
+          this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "harvested", args: [seriesId, d.id] }),
+          this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "dividendPool", args: [seriesId, d.id] }),
+          this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "pendingYield", args: [seriesId, d.id, user] }),
+          this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "yieldClaimed", args: [seriesId, d.id, user] }),
+          // What the series held when the dividend went ex. Zero means this dividend
+          // predates the series having a balance, and there is nothing to harvest.
+          this.client.readContract({
+            address: this.deployment.dripCore,
+            abi: dripCoreAbi,
+            functionName: "balanceOfAt",
+            args: [vault, s[0], BigInt(d.exDate)],
+          }),
+        ]);
+
+        return {
+          seriesId,
+          dividendId: d.id,
+          symbol: d.symbol,
+          amountPerToken: d.amountPerToken,
+          exDate: d.exDate,
+          eligible: (balanceAtEx as bigint) > 0n,
+          harvested: harvested as boolean,
+          pool: pool as bigint,
+          claimable: claimable as bigint,
+          claimed: claimed as boolean,
+        } satisfies SplitDividendView;
+      })
+    );
   }
 
   // -------------------------------------------------------------------

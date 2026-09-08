@@ -12,6 +12,7 @@
     "contracts:build": "forge build --root contracts",
     "contracts:test": "forge test --root contracts -vv",
     "contracts:deploy:local": "bash scripts/deploy-local.sh",
+    "deploy:chain": "bash scripts/deploy.sh",
     "abis": "node scripts/sync-abis.mjs",
     "mcp": "pnpm --filter @drip-markets/mcp start",
     "shots": "node scripts/capture-shots.mjs"

@@ -8,6 +8,7 @@ import {DividendRegistry} from "../../src/DividendRegistry.sol";
 import {AdvanceVault} from "../../src/AdvanceVault.sol";
 import {DripCore} from "../../src/DripCore.sol";
 import {StreamEngine} from "../../src/StreamEngine.sol";
+import {LendingPool} from "../../src/LendingPool.sol";
 import {IStreamEngine} from "../../src/interfaces/IStreamEngine.sol";
 import {Mode, Dividend, DividendStatus} from "../../src/interfaces/DripTypes.sol";
 
@@ -23,6 +24,7 @@ contract DripHandler is Test {
     AdvanceVault public vault;
     DripCore public core;
     StreamEngine public stream;
+    LendingPool public lending;
 
     address[3] public actors;
     address public lp;
@@ -40,6 +42,7 @@ contract DripHandler is Test {
         AdvanceVault vault_,
         DripCore core_,
         StreamEngine stream_,
+        LendingPool lending_,
         address[3] memory actors_,
         address lp_
     ) {
@@ -49,6 +52,7 @@ contract DripHandler is Test {
         vault = vault_;
         core = core_;
         stream = stream_;
+        lending = lending_;
         actors = actors_;
         lp = lp_;
     }
@@ -107,6 +111,36 @@ contract DripHandler is Test {
         Mode mode = Mode(bound(modeSeed, 0, 2));
         vm.prank(actor);
         core.setMode(address(token), mode);
+    }
+
+    // ------------------------------------------------------------------
+    // Credit side
+    // ------------------------------------------------------------------
+
+    function borrow(uint256 actorSeed, uint256 amount) public {
+        address actor = _actor(actorSeed);
+        uint256 max = lending.availableToBorrow(actor);
+        if (max == 0) return;
+        uint256 amt = bound(amount, 1, max);
+        vm.prank(actor);
+        lending.borrow(amt);
+    }
+
+    function repay(uint256 actorSeed, uint256 amount) public {
+        address actor = _actor(actorSeed);
+        uint256 debt = lending.debtOf(actor);
+        if (debt == 0) return;
+        uint256 amt = bound(amount, 1, debt);
+        if (usdg.balanceOf(actor) < amt) return;
+        vm.startPrank(actor);
+        usdg.approve(address(lending), amt);
+        lending.repay(actor, amt);
+        vm.stopPrank();
+    }
+
+    function toggleAutoRepay(uint256 actorSeed, bool on) public {
+        vm.prank(_actor(actorSeed));
+        lending.setAutoRepayPrincipal(on);
     }
 
     // ------------------------------------------------------------------

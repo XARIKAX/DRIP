@@ -16,6 +16,8 @@ build/
 contracts/out/
 contracts/cache/
 contracts/broadcast/
+# forge writes the invariant corpus next to the invocation, not the project root
+cache/
 
 # env
 .env

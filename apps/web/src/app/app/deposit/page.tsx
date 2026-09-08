@@ -98,7 +98,7 @@ export default function DepositPage() {
                         <span className="num text-[13px]">${fmt(t.priceUsd)}</span>
                       </span>
                       <span className={`mt-0.5 flex items-baseline justify-between gap-2 text-micro font-bold uppercase ${active ? "text-ink/60" : "text-muted"}`}>
-                        <span>{t.yieldPct.toFixed(2)}% yield</span>
+                        <span>{t.yieldPct === null ? "Yield unknown" : `${t.yieldPct.toFixed(2)}% yield`}</span>
                         <span>{t.nextExDate ? `Ex ${shortDate(t.nextExDate)}` : t.payingNow ? "Paying now" : "None set"}</span>
                       </span>
                     </span>
@@ -137,7 +137,7 @@ export default function DepositPage() {
                   ≈ <AnimatedNumber value={shares * (token?.priceUsd ?? 0)} prefix="$" flash="light" /> USD
                 </span>
               )}
-              {walletShares === 0 && token ? (
+              {walletShares === 0 && token && actions.canFaucet ? (
                 <button type="button" className="text-micro font-bold uppercase underline decoration-accent decoration-2 underline-offset-4" onClick={() => void actions.faucet(token.symbol)}>
                   Get test {token.symbol}
                 </button>

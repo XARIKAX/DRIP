@@ -14,12 +14,16 @@ import {DripCore} from "../src/DripCore.sol";
 import {StreamEngine} from "../src/StreamEngine.sol";
 import {Reinvestor} from "../src/Reinvestor.sol";
 import {SplitVault} from "../src/SplitVault.sol";
+import {LendingPool, ICollateralCustodian, ILendableVault} from "../src/LendingPool.sol";
+import {MockPriceOracle} from "../src/mocks/MockPriceOracle.sol";
 import {IDividendRegistry} from "../src/interfaces/IDividendRegistry.sol";
 import {IAdvanceVault} from "../src/interfaces/IAdvanceVault.sol";
 import {IStreamEngine} from "../src/interfaces/IStreamEngine.sol";
 import {IReinvestor} from "../src/interfaces/IReinvestor.sol";
 import {IDripCore} from "../src/interfaces/IDripCore.sol";
 import {ISwapAdapter} from "../src/interfaces/ISwapAdapter.sol";
+import {ILendingPool} from "../src/interfaces/ILendingPool.sol";
+import {IPriceOracle} from "../src/interfaces/IPriceOracle.sol";
 
 /// @title Deploy
 /// @notice Deploys the whole protocol plus testnet mocks and writes the address book
@@ -52,6 +56,8 @@ contract Deploy is Script {
         address reinvestor;
         address adapter;
         address splitVault;
+        address priceOracle;
+        address lendingPool;
     }
 
     Deployment internal d;
@@ -106,6 +112,21 @@ contract Deploy is Script {
         d.splitVault = address(
             new SplitVault(IDripCore(d.core), IDividendRegistry(d.registry), IERC20(d.usdg), deployer)
         );
+
+        // The credit side prices from an oracle, never from the swap venue it would
+        // liquidate through. On testnet that is a mock kept in step with the adapter's
+        // prices in _deployStockTokens; production wires ChainlinkPriceOracle instead.
+        d.priceOracle = address(new MockPriceOracle(deployer));
+        d.lendingPool = address(
+            new LendingPool(
+                IERC20(d.usdg),
+                ICollateralCustodian(d.core),
+                ILendableVault(d.vault),
+                IPriceOracle(d.priceOracle),
+                ISwapAdapter(d.adapter),
+                deployer
+            )
+        );
     }
 
     /// @dev Module pointers and roles. Only protocol contracts move protocol money.
@@ -131,6 +152,14 @@ contract Deploy is Script {
         reinvestor.grantRole(reinvestor.CORE_ROLE(), d.core);
         core.grantRole(core.REINVESTOR_ROLE(), d.reinvestor);
         registry.grantRole(registry.SETTLER_ROLE(), d.core);
+
+        // Credit side. DripCore may service debt; the pool may seize collateral and
+        // draw on the vault. Kept as three distinct roles so a bug in one module
+        // cannot reach the others' entry points.
+        core.setLendingPool(ILendingPool(d.lendingPool));
+        core.grantRole(core.LENDER_ROLE(), d.lendingPool);
+        vault.grantRole(vault.LENDER_ROLE(), d.lendingPool);
+        LendingPool(d.lendingPool).grantRole(LendingPool(d.lendingPool).CORE_ROLE(), d.core);
         // SplitVault deposits into DripCore like any ordinary holder — it needs no
         // role there. Its own KEEPER_ROLE (createSeries, pause) is granted to the
         // deployer at construction time, same pattern as every other module.
@@ -142,6 +171,7 @@ contract Deploy is Script {
             MockStockToken token = new MockStockToken(stocks[i].name, stocks[i].symbol, deployer);
             stockAddresses[i] = address(token);
             MockSwapAdapter(d.adapter).setPrice(address(token), stocks[i].priceUsdg);
+            MockPriceOracle(d.priceOracle).setPrice(address(token), stocks[i].priceUsdg);
             DividendRegistry(d.registry).addSupportedToken(address(token));
             token.mint(d.adapter, 5_000_000e18);
             console2.log(stocks[i].symbol, address(token));
@@ -173,6 +203,8 @@ contract Deploy is Script {
         vm.serializeAddress(root, "reinvestor", d.reinvestor);
         vm.serializeAddress(root, "swapAdapter", d.adapter);
         vm.serializeAddress(root, "splitVault", d.splitVault);
+        vm.serializeAddress(root, "priceOracle", d.priceOracle);
+        vm.serializeAddress(root, "lendingPool", d.lendingPool);
         vm.serializeString(root, "prices", pricesJson);
         string memory out = vm.serializeString(root, "tokens", tokensJson);
 

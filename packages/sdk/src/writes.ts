@@ -1,6 +1,8 @@
 import { encodeFunctionData, erc20Abi, maxUint256, type Address } from "viem";
 import {
   dripCoreAbi,
+  lendingPoolAbi,
+  splitVaultAbi,
   streamEngineAbi,
   advanceVaultAbi,
   reinvestorAbi,
@@ -8,6 +10,7 @@ import {
   mockStockTokenAbi,
 } from "./generated";
 import { Mode, MODE_LABELS, type Deployment, type UnsignedTx } from "./types";
+import { formatStock, formatUsdg } from "./format";
 
 /**
  * Every write in the protocol, as an unsigned transaction.
@@ -127,5 +130,114 @@ export function buildUsdgFaucet(d: Deployment): UnsignedTx {
     d.usdg,
     encodeFunctionData({ abi: mockUSDGAbi, functionName: "faucet" }),
     `Mint test USDG`
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Credit
+// ---------------------------------------------------------------------------
+
+/** The credit market's address, or a readable failure. */
+function pool(d: Deployment): Address {
+  if (!d.lendingPool) {
+    throw new Error("No lending pool on this chain. Redeploy to get one; the address book predates the credit market.");
+  }
+  return d.lendingPool;
+}
+
+/** Draw USDG against stock already on deposit. */
+export function buildBorrow(d: Deployment, amount: bigint): UnsignedTx {
+  return tx(
+    pool(d),
+    encodeFunctionData({ abi: lendingPoolAbi, functionName: "borrow", args: [amount] }),
+    `Borrow ${formatUsdg(amount)} USDG against your stock`
+  );
+}
+
+/**
+ * Repay a debt.
+ *
+ * Pass viem's maxUint256 to clear the whole thing: the debt grows every second, so an
+ * amount computed in the browser is stale by the time it is signed, and repaying
+ * "the exact balance" would always leave dust behind.
+ */
+export function buildRepay(d: Deployment, user: Address, amount: bigint): UnsignedTx {
+  const whole = amount === maxUint256;
+  return tx(
+    pool(d),
+    encodeFunctionData({ abi: lendingPoolAbi, functionName: "repay", args: [user, amount] }),
+    whole ? "Repay the whole loan" : `Repay ${formatUsdg(amount)} USDG`
+  );
+}
+
+/** Choose whether dividend income also pays down principal, not just interest. */
+export function buildSetAutoRepayPrincipal(d: Deployment, enabled: boolean): UnsignedTx {
+  return tx(
+    pool(d),
+    encodeFunctionData({ abi: lendingPoolAbi, functionName: "setAutoRepayPrincipal", args: [enabled] }),
+    enabled ? "Let dividends pay down the loan itself" : "Dividends pay the interest only"
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Split
+// ---------------------------------------------------------------------------
+
+/** The split vault's address, or a readable failure. */
+function splitVault(d: Deployment): Address {
+  if (!d.splitVault) {
+    throw new Error("No split vault on this chain. Redeploy to get one; the address book predates it.");
+  }
+  return d.splitVault;
+}
+
+/** Cut stock into a share token and a dividend token. */
+export function buildSplit(d: Deployment, seriesId: bigint, amount: bigint, symbol = ""): UnsignedTx {
+  return tx(
+    splitVault(d),
+    encodeFunctionData({ abi: splitVaultAbi, functionName: "split", args: [seriesId, amount] }),
+    `Split ${formatStock(amount)} ${symbol || "stock"} into a share token and a dividend token`
+  );
+}
+
+/** Put the two halves back together at par. */
+export function buildMerge(d: Deployment, seriesId: bigint, amount: bigint, symbol = ""): UnsignedTx {
+  return tx(
+    splitVault(d),
+    encodeFunctionData({ abi: splitVaultAbi, functionName: "merge", args: [seriesId, amount] }),
+    `Rejoin ${formatStock(amount)} ${symbol || "stock"} from its two halves`
+  );
+}
+
+/** Redeem share tokens for the underlying stock, on or after the end date. */
+export function buildRedeemPrincipal(d: Deployment, seriesId: bigint, amount: bigint, symbol = ""): UnsignedTx {
+  return tx(
+    splitVault(d),
+    encodeFunctionData({ abi: splitVaultAbi, functionName: "redeemPrincipal", args: [seriesId, amount] }),
+    `Redeem ${formatStock(amount)} share tokens for ${symbol || "stock"}`
+  );
+}
+
+/**
+ * Pull a dividend into the series' pool so dividend token holders can collect it.
+ *
+ * Permissionless on purpose: anyone may harvest, and the money lands in the series
+ * rather than with whoever called. Without that, a series would depend on one holder
+ * remembering to act.
+ */
+export function buildHarvestDividend(d: Deployment, seriesId: bigint, dividendId: bigint): UnsignedTx {
+  return tx(
+    splitVault(d),
+    encodeFunctionData({ abi: splitVaultAbi, functionName: "harvestDividend", args: [seriesId, dividendId] }),
+    "Pull this dividend into the series so it can be collected"
+  );
+}
+
+/** Collect this holder's share of a harvested dividend. */
+export function buildClaimYield(d: Deployment, seriesId: bigint, dividendId: bigint): UnsignedTx {
+  return tx(
+    splitVault(d),
+    encodeFunctionData({ abi: splitVaultAbi, functionName: "claimYield", args: [seriesId, dividendId] }),
+    "Collect your share of this dividend"
   );
 }
