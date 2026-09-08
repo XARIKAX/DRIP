@@ -61,6 +61,14 @@ for bin in forge cast node; do
   command -v "$bin" >/dev/null 2>&1 || { echo "Missing '$bin' on PATH." >&2; exit 1; }
 done
 
+# forge-std and openzeppelin are submodules. Without them `forge build` fails with
+# "Source not found", which reads like a broken repo rather than an unfinished clone.
+if [ ! -f "$ROOT/contracts/lib/forge-std/src/Script.sol" ]; then
+  echo "Contract dependencies are missing (git submodules)." >&2
+  echo "Run: git submodule update --init --recursive" >&2
+  exit 1
+fi
+
 # The documented local flow starts anvil in one terminal and runs this in the next,
 # so give the chain a moment to come up. A rate limited public RPC can flake on a
 # first call too; both are worth a retry, neither is worth a long stall.

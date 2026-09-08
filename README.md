@@ -36,6 +36,10 @@ Three terminals, or one if you background the first two:
 
 ```bash
 # 0. prerequisites: node 22+, pnpm 9+, foundry
+#    forge-std and openzeppelin are git submodules, so a plain clone has neither and
+#    `forge build` fails with "Source not found". Either clone with --recursive or:
+git submodule update --init --recursive
+
 pnpm install
 
 # 1. a local chain
