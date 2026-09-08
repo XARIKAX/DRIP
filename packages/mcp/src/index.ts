@@ -92,7 +92,9 @@ server.tool(
         symbol: p.symbol,
         stockToken: p.stockToken,
         amount: formatStock(p.amount),
-        valueUsdg: formatUsdg(p.valueUsdg),
+        // Null when the stock's feed has gone stale. Say so rather than printing a
+        // number the oracle refused to give.
+        valueUsdg: p.valueUsdg === null ? "unavailable" : formatUsdg(p.valueUsdg),
         mode: MODE_LABELS[p.mode],
       }))
     );

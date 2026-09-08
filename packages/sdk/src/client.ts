@@ -96,6 +96,26 @@ export class DripReader {
   // Tokens and calendar
   // -------------------------------------------------------------------
 
+  /**
+   * A token's price, or null if the oracle refuses to answer.
+   *
+   * Reads that only feed a display must not take the whole page down because one
+   * feed went quiet. Everything that moves money keeps calling the oracle directly
+   * and keeps failing closed.
+   */
+  private async priceOrNull(stockToken: Address): Promise<bigint | null> {
+    try {
+      return (await this.client.readContract({
+        address: this.deployment.swapAdapter,
+        abi: swapAdapterPriceAbi,
+        functionName: "priceUsdg",
+        args: [stockToken],
+      })) as bigint;
+    } catch {
+      return null;
+    }
+  }
+
   /** Every stock token the registry knows about, with metadata and price. */
   async getStockTokens(): Promise<StockToken[]> {
     const d = this.deployment;
@@ -115,12 +135,7 @@ export class DripReader {
           this.client.readContract({ address, abi: erc20Abi, functionName: "symbol" }),
           this.client.readContract({ address, abi: erc20Abi, functionName: "name" }),
           this.client.readContract({ address, abi: erc20Abi, functionName: "decimals" }),
-          this.client.readContract({
-            address: d.swapAdapter,
-            abi: swapAdapterPriceAbi,
-            functionName: "priceUsdg",
-            args: [address],
-          }),
+          this.priceOrNull(address),
         ]);
         return { address, symbol, name, decimals: Number(decimals), priceUsdg };
       })
@@ -193,19 +208,14 @@ export class DripReader {
             args: [user, stockToken],
           }),
           this.client.readContract({ address: stockToken, abi: erc20Abi, functionName: "symbol" }),
-          this.client.readContract({
-            address: d.swapAdapter,
-            abi: swapAdapterPriceAbi,
-            functionName: "priceUsdg",
-            args: [stockToken],
-          }),
+          this.priceOrNull(stockToken),
         ]);
         return {
           stockToken,
           symbol,
           amount: position.amount,
           mode: position.mode as Mode,
-          valueUsdg: (position.amount * price) / 10n ** 18n,
+          valueUsdg: price === null ? null : (position.amount * price) / 10n ** 18n,
         };
       })
     );

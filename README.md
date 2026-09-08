@@ -250,6 +250,16 @@ the ex date; if the issuer never declared it, that money is gone and the loss la
 the LPs. Whoever holds `ORACLE_ROLE` is accountable for every row. See
 `contracts/dividends/README.md`.
 
+**2b. A split series.** The Split page needs one open series per stock before anyone
+can cut a share in two. `ADMIN` holds `KEEPER_ROLE`:
+
+```bash
+SYMBOL=AAPL MATURITY_DAYS=180 PRIVATE_KEY=0x... \
+  forge script script/OpenSplitSeries.s.sol --rpc-url robinhood_mainnet --broadcast --root contracts
+```
+
+One series per stock at a time. Until one exists the page renders correctly and empty.
+
 **3. The pay-day keeper.** When issuers pay, settle:
 
 ```bash
@@ -289,6 +299,10 @@ dash rather than a figure:
   the Split page shows no implied yield rather than inventing one.
 - **Liquidators sell seized stock themselves.** The adapter is wired for an
   oracle-bounded sale through SwapRouter02; nothing calls it yet.
+- **The feed heartbeats are observed, not documented.** A mainnet read showed update
+  ages from 0 to 74 minutes across the listing, so `listings/4663.json` sets 6 hours
+  per feed. Confirm each against Chainlink's published heartbeat before carrying real
+  size: too tight refuses live prices, too loose accepts dead ones.
 
 ## Tests
 
