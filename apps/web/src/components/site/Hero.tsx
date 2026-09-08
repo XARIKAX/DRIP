@@ -1,314 +1,145 @@
 "use client";
 
-import Link from "next/link";
-import { MaskLine, Reveal, useMagnetic, useTilt } from "@/components/motion";
-import { EngravedBand, EngravedField, Perforation, Rosette } from "@/components/Guilloche";
-import { HeroCounter } from "@/components/HeroCounter";
-import { usePortfolioSummary, useTokensView } from "@/lib/data/provider";
-import { fmt, shortDate } from "@/components/live";
-
-const RAIL = [
-  { value: "21", unit: "days", label: "Paid early, on average" },
-  { value: "1", unit: "sec", label: "How often you get paid" },
-  { value: "5.8", unit: "%", label: "Interest on a loan today" },
-  { value: "40", unit: "%", label: "Most you can borrow against your stock" },
-];
-
-const ONES = [
-  "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
-  "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen",
-];
-const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
-
-/**
- * Shares written out in words, the way a certificate states them.
- *
- * The numeral is already on the document in mono; the words are the legal statement of
- * it. Two renderings of one quantity is not redundancy on an instrument like this — it
- * is the convention that makes it an instrument.
- */
-function inWords(n: number): string {
-  if (n < 20) return ONES[n];
-  if (n < 100) {
-    const t = TENS[Math.floor(n / 10)];
-    const o = n % 10;
-    return o ? `${t}-${ONES[o]}` : t;
-  }
-  const h = Math.floor(n / 100);
-  const rest = n % 100;
-  return rest ? `${ONES[h]} hundred and ${inWords(rest)}` : `${ONES[h]} hundred`;
-}
+import Image from "next/image";
+import { GhostWordmark } from "@/components/Wordmark";
+import { MaskLine, Reveal, useParallax, useViewportScroll } from "@/components/motion";
+import { PetalField } from "@/components/pixel/Petals";
+import { SakuraTree, Stone, StoneLantern } from "@/components/pixel/Scenery";
+import { HeroNav } from "@/components/site/HeroNav";
 
 /**
  * The hero.
  *
- * One argument, stated three ways: a headline that says what you get, a document that
- * shows the mechanism, and a number that proves it is already running.
+ * One plate, inset from the page and bordered with a hairline that runs blossom into
+ * iris, holding a single lit object under a two-line claim. Everything else is
+ * atmosphere: a sky that falls from a lavender dawn to a violet midnight across one
+ * screen, a bloom behind the coin that breathes, a garden growing in at both lower
+ * corners, and the name at the bottom, too large to fit and cropped by the frame.
  *
- * The document is the point. Osinko replaces the oldest paperwork in finance, so the
- * page opens with that paperwork — engraved, serialised, stamped, and still holding a
- * detachable dividend coupon along a perforation.
+ * The composition is the argument. A dividend is a thing you are handed; so the page
+ * opens on a thing being handed to you, and the only instruction on the screen is in
+ * the corner where a person looks last.
  */
 export function Hero() {
-  const tokens = useTokensView();
-  const summary = usePortfolioSummary();
-  const primary = useMagnetic<HTMLAnchorElement>(7, 140);
-  const secondary = useMagnetic<HTMLAnchorElement>(5, 120);
-
-  const lead = tokens.find((t) => t.symbol === "AAPL") ?? tokens[0];
+  const t = useViewportScroll();
+  const hand = useParallax<HTMLDivElement>(10);
 
   return (
-    <section className="relative isolate overflow-hidden">
-      {/* The engraved ground. Security printing, at the opacity of a watermark. */}
-      <EngravedField
-        width={1600}
-        height={520}
-        lines={54}
-        amplitude={34}
-        frequency={2.1}
-        opacity={0.5}
-        className="pointer-events-none absolute -top-12 left-0 h-[520px] w-full text-ink/[0.055]"
-      />
+    <section className="relative isolate p-[9px] md:p-[13px]">
+      {/* The plate. `svh` rather than `vh`: mobile browser chrome makes `vh` overshoot,
+          and the one thing that must never be pushed off screen is the frame's own
+          bottom edge. */}
+      <div className="grain-local relative flex h-[calc(100svh-18px)] min-h-[620px] flex-col overflow-hidden rounded-2xl md:h-[calc(100svh-26px)] [--cell:2px] sm:[--cell:3px] xl:[--cell:4px]">
+        {/* The sky, in three layers rather than one impossible gradient: the fall from
+            dawn to midnight, the bloom the coin sits in, and the light coming in over
+            the top-left shoulder. */}
+        <div className="hero-sky absolute inset-0" aria-hidden />
+        <div className="hero-bloom breathe absolute inset-0" aria-hidden />
+        <div className="hero-dawn absolute inset-0" aria-hidden />
+        <div className="hero-floor absolute inset-0" aria-hidden />
 
-      <Reveal className="shell relative pb-16 pt-12 md:pb-24 md:pt-16">
-        {/* The issue line. Every document here is numbered. */}
-        <div className="reveal flex flex-wrap items-center justify-between gap-4">
-          <span className="serial">Issue No. 0001 · Series A</span>
-          <span className="serial hidden sm:inline">Robinhood Chain · Paid in USDG</span>
-        </div>
-        <div className="reveal rule-double mt-4" />
-
-        <div className="mt-14 grid items-start gap-16 lg:grid-cols-12 lg:gap-12">
-          {/* The argument */}
-          <div className="min-w-0 lg:col-span-7">
-            {/* Three beats, a lifecycle: the SplitVault separates the share into principal
-                and yield, the yield token is an ERC-20 anyone can trade, and the credit
-                line borrows against the stock while the dividend services the interest.
-                Each line is something a contract in this repository does; "both" in the
-                last line is the stock and the dividend the first two lines just named.
-                The h1 is sized on its own clamp rather than text-hero because the column
-                is a fixed 7/12 of a capped shell while vw keeps growing past it; the clamp
-                is fit so the longest line, the second, clears the column at 1024 through
-                1600 without wrapping — measured by rendering, not guessed. */}
-            <h1 className="display text-[clamp(40px,6.1vw,92px)] leading-[0.94] tracking-[-0.025em]">
-              <MaskLine>
-                <span>Split the stock.</span>
-              </MaskLine>
-              <MaskLine>
-                <span className="italic">Trade the dividend.</span>
-              </MaskLine>
-            </h1>
-            <div className="display-light mt-4 text-[clamp(24px,3vw,44px)] leading-none text-muted">
-              <MaskLine>
-                <span className="whitespace-nowrap italic">Borrow on both.</span>
-              </MaskLine>
-            </div>
-
-            <p className="reveal reveal-4 mt-10 max-w-lg text-[17px] leading-[1.7] text-muted">
-              Stocks pay dividends. Today the cash shows up weeks after you earned it, then
-              sits there. Osinko changes that. Deposit your stock and the dividend pays out
-              the day you earn it. Split it off and sell it on its own. Or borrow against the
-              stock and let the dividends cover the interest.
-            </p>
-
-            <div className="reveal reveal-5 mt-11 flex flex-wrap items-center gap-3">
-              <Link ref={primary} href="/app" className="btn-primary btn-lg magnetic">
-                Open the app
-              </Link>
-              <Link ref={secondary} href="#mechanism" className="btn-ghost btn-lg magnetic">
-                See how it works
-              </Link>
-            </div>
-
-            <div className="reveal reveal-6 mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
-              {["You keep your keys", "Leave any time", "Rules live in code"].map((t) => (
-                <span key={t} className="serial">
-                  {t}
-                </span>
-              ))}
-            </div>
+        {/* The garden. Two trees at the corners the reference gives to flowers, drawn
+            crisp and stood in soft light rather than blurred — a blurred sprite is just
+            a bad photograph of pixel art. They sit in a `.night` context so the bark
+            darkens and the blossom gains the luminance it needs against a violet sky. */}
+        {/*
+         * The grove.
+         *
+         * Two ranks a side: a near tree at full cell and a far one at three quarters,
+         * dimmed and set higher, which is the cheapest honest depth cue there is. The
+         * reference puts a soft field of flowers in these corners; this is that field,
+         * with every petal on the grid.
+         */}
+        <div
+          className="night pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[52%] select-none"
+          aria-hidden
+          style={{ transform: `translate3d(0, ${t * -22}px, 0)` }}
+        >
+          <div className="absolute bottom-[7%] left-[7%] hidden opacity-55 sm:block">
+            <SakuraTree seed={1} cell="calc(var(--cell) * 0.62)" />
           </div>
+          <div className="absolute bottom-0 left-[-3%] sm:left-0">
+            <div className="absolute inset-0 -m-14 rounded-full bg-[radial-gradient(closest-side,rgb(255_187_211_/_0.2),transparent)]" />
+            <SakuraTree seed={0} cell="calc(var(--cell) * 0.86)" className="relative" />
+          </div>
+          <div className="absolute bottom-0 left-[19%] hidden md:block">
+            <StoneLantern cell="calc(var(--cell) * 0.8)" />
+          </div>
+          <div className="absolute bottom-0 left-[14%] hidden sm:block">
+            <Stone size={1} cell="calc(var(--cell) * 0.8)" />
+          </div>
+        </div>
 
-          {/* The document */}
-          <div className="reveal reveal-3 min-w-0 lg:col-span-5">
-            <Certificate
-              symbol={lead?.symbol ?? "AAPL"}
-              name={lead?.name ?? "Apple Inc"}
-              price={lead?.priceUsd ?? 230.1}
-              perShare={0.26}
-              exDate={summary.nextDividend?.exDate}
+        <div
+          className="night pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[52%] select-none"
+          aria-hidden
+          style={{ transform: `translate3d(0, ${t * -34}px, 0)` }}
+        >
+          <div className="absolute bottom-[9%] right-[8%] hidden opacity-50 lg:block">
+            <SakuraTree seed={4} cell="calc(var(--cell) * 0.6)" />
+          </div>
+          <div className="absolute bottom-0 right-[-4%] sm:right-0">
+            <div className="absolute inset-0 -m-14 rounded-full bg-[radial-gradient(closest-side,rgb(255_187_211_/_0.18),transparent)]" />
+            <SakuraTree seed={1} cell="calc(var(--cell) * 0.9)" className="relative" />
+          </div>
+          <div className="absolute bottom-[3%] right-[23%] hidden xl:block">
+            <Stone size={1} cell="calc(var(--cell) * 0.8)" />
+          </div>
+        </div>
+
+        <PetalField className="petal-mask absolute inset-0 z-[3]" density={1.6} cell={4} />
+
+        {/* The name, too large for the plate on purpose. */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[10vw] overflow-hidden text-night-2"
+          aria-hidden
+          style={{ transform: `translate3d(0, ${t * 22}px, 0)` }}
+        >
+          <GhostWordmark style={{ transform: "translateY(7%)" }} />
+        </div>
+
+        <HeroNav />
+
+        <Reveal className="relative z-10 flex min-h-0 flex-1 flex-col items-center px-5 pt-[5vh] text-center md:pt-[6vh]">
+          <p className="eyebrow-pill reveal">Split, borrow, and earn with your stocks</p>
+
+          <h1 className="display mt-7 max-w-[15ch] text-hero text-ink md:mt-9">
+            <MaskLine>
+              <span>The On-Chain</span>
+            </MaskLine>
+            <MaskLine>
+              <span>Dividend Engine</span>
+            </MaskLine>
+          </h1>
+
+          {/*
+           * The object, overlapping the claim it illustrates and cropped by the plate.
+           * `priority` so it is the largest paint rather than the thing that delays it;
+           * `sizes` so a phone is never sent the desktop rendition. The intrinsic size
+           * is stated exactly — a pixel off and Next scales it.
+           */}
+          <div
+            ref={hand}
+            className="parallax reveal reveal-3 relative -mt-[3vh] w-[min(122vw,660px)] shrink-0 sm:w-[min(96vw,660px)] md:-mt-[4vh] xl:w-[700px]"
+          >
+            <Image
+              src="/hero-hand.png"
+              alt=""
+              width={1254}
+              height={1254}
+              priority
+              quality={82}
+              sizes="(min-width: 1280px) 700px, (min-width: 640px) 96vw, 122vw"
+              className="drift block h-auto w-full select-none"
             />
           </div>
-        </div>
+        </Reveal>
 
-        {/* The proof. */}
-        <div className="reveal reveal-6 mt-24 md:mt-32">
-          <div className="rule-double" />
-          <div className="grid gap-12 pt-10 lg:grid-cols-12 lg:gap-8">
-            <div className="min-w-0 lg:col-span-4">
-              <div className="serial">Paid to holders, and counting</div>
-              <div className="mt-5 flex items-baseline gap-2">
-                <span className="num text-[19px] font-medium text-faint">$</span>
-                <span className="figure text-[clamp(30px,4.2vw,50px)] leading-none">
-                  <HeroCounter />
-                </span>
-              </div>
-              <div className="mt-3 text-[13px] text-muted">
-                In USDG, this quarter. It moves while you read.
-              </div>
-            </div>
-
-            <div className="grid min-w-0 grid-cols-2 gap-x-8 gap-y-9 lg:col-span-8 lg:grid-cols-4">
-              {RAIL.map((r) => (
-                <div key={r.label} className="min-w-0 border-l border-line pl-5">
-                  <div className="flex items-baseline gap-1">
-                    <span className="figure text-[clamp(26px,3vw,38px)] leading-none">{r.value}</span>
-                    <span className="num text-[13px] font-medium text-cyan-deep">{r.unit}</span>
-                  </div>
-                  <div className="mt-3 text-[12px] leading-snug text-faint">{r.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Reveal>
+        {/* The stroke, over everything. A gradient `border-image` ignores
+            `border-radius`, and the fill behind this one cannot be opaque, so the ring
+            is cut out of a gradient with two composited masks. */}
+        <div className="frame-gradient z-30 rounded-2xl" aria-hidden />
+      </div>
     </section>
-  );
-}
-
-/**
- * The certificate.
- *
- * Engraved border, corner ornaments, a rose-engine watermark turning behind the
- * quantity, the shares stated in both words and numerals, an inked ex-date stamp, and
- * a dividend coupon still attached along its perforation. Everything the product does
- * to a dividend, this object states in the language of the document it replaces.
- */
-function Certificate({
-  symbol,
-  name,
-  price,
-  perShare,
-  exDate,
-}: {
-  symbol: string;
-  name: string;
-  price: number;
-  perShare: number;
-  exDate?: number;
-}) {
-  const tiltRef = useTilt<HTMLDivElement>(2.5);
-  const shares = 150;
-  const coupon = shares * perShare;
-
-  return (
-    <div ref={tiltRef} className="tilt mx-auto max-w-[520px] lg:mx-0 lg:max-w-none">
-      <div className="certificate overflow-hidden">
-        {/* Engraved bands at head and foot. Unambiguously printing, unlike a rosette
-            cropped into a corner, which at watermark opacity reads as a scuff. */}
-        <EngravedBand height={22} className="absolute inset-x-0 top-0 h-[22px] w-full text-ink/25" />
-        <EngravedBand
-          height={22}
-          flip
-          className="absolute inset-x-0 bottom-0 h-[22px] w-full text-ink/25"
-        />
-
-        {/* The rose engine turns behind the number, clipped by the sheet — closer and
-            brighter than a background watermark should be, because this is the one
-            ornament on the page allowed to compete for attention with the type. */}
-        <div
-          className="pointer-events-none absolute -right-8 top-20 text-ink/[0.24]"
-          aria-hidden
-        >
-          <Rosette size={330} rings={36} R={100} r={28} a={68} drift={0.78} spin={90} />
-        </div>
-
-        <div className="relative px-8 py-11 md:px-10 md:py-12">
-          {/* Masthead */}
-          <div className="flex items-start justify-between gap-6">
-            <div className="min-w-0">
-              <div className="display text-[19px] leading-none">Osinko</div>
-              <div className="serial mt-2">Share certificate</div>
-            </div>
-            <div className="text-right">
-              <div className="serial">No.</div>
-              <div className="num mt-1.5 text-[13px] font-medium text-ink">000150</div>
-            </div>
-          </div>
-
-          <div className="rule-double mt-5" />
-
-          {/* The holding, stated the way a document states it. */}
-          <div className="relative mt-7">
-            <div className="serial">This certifies the holding of</div>
-            {/* The one number on the page allowed to shimmer. A foil strip, not a
-                gradient: the base glyphs stay solid ink, embossed with a hairline of
-                light on top and shadow beneath, and a specular band sweeps across them
-                the way a hologram catches the light as a certificate tilts. */}
-            <div
-              className="foil-text display mt-3.5 text-[clamp(36px,4.6vw,52px)] leading-[1]"
-              style={{ textShadow: "0 1px 0 rgba(255,255,255,0.7), 0 -1px 0 rgba(10,10,10,0.14)" }}
-              data-text={inWords(shares)}
-            >
-              {inWords(shares)}
-            </div>
-            <div className="display-light mt-1 text-[20px] italic text-muted">
-              shares of {name}
-            </div>
-
-            {/* auto-fit/minmax rather than a fixed 3-column grid: at the certificate's
-                narrowest width (a 5/12 column at 1024px) three fixed columns forced
-                "150.0000" to overflow its track into "AAPL" with no visible gap between
-                them — this wraps to two rows instead of colliding when the content
-                genuinely doesn't fit three across. */}
-            <div className="mt-6 grid grid-cols-[repeat(auto-fit,minmax(84px,1fr))] gap-x-4 gap-y-5 border-t border-line-soft pt-5">
-              <div className="min-w-0">
-                <div className="serial">Quantity</div>
-                <div className="figure mt-2 text-[22px] leading-none">{fmt(shares, 4)}</div>
-              </div>
-              <div className="min-w-0">
-                <div className="serial">Ticker</div>
-                <div className="mt-2 text-[20px] font-bold leading-none tracking-tight">
-                  {symbol}
-                </div>
-              </div>
-              <div className="min-w-0">
-                <div className="serial">Value</div>
-                <div className="figure mt-2 text-[22px] leading-none">
-                  ${fmt(shares * price, 0)}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* The perforation, and the coupon still attached to it. */}
-          <Perforation className="mt-7 text-ink/45" label="tear off on the ex date" />
-
-          <div className="mt-6 flex flex-wrap items-end justify-between gap-5">
-            <div className="min-w-0">
-              <div className="serial">Dividend coupon</div>
-              <div className="mt-2.5 flex items-baseline gap-2.5">
-                <span className="figure text-[28px] leading-none text-cyan-deep">
-                  ${fmt(coupon, 2)}
-                </span>
-                <span className="num text-[12px] text-faint">
-                  ${fmt(perShare)} × {fmt(shares, 0)}
-                </span>
-              </div>
-            </div>
-
-            <span className="stamp stamp-in shrink-0">
-              {exDate ? `Ex ${shortDate(exDate)}` : "Declared"}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* The countersignature line: the last thing on a real certificate. */}
-      <div className="mt-4 flex items-center justify-between gap-6 px-1">
-        <span className="serial">Recorded onchain</span>
-        <span className="serial">Held by you, not by us</span>
-      </div>
-    </div>
   );
 }

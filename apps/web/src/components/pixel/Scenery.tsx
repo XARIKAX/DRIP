@@ -25,11 +25,18 @@ import { gridSize } from "./raster";
  * for the same answer on every paint — and on the mechanism scene, sixty times a second.
  */
 
+/*
+ * A tree does not carry its own ground. The section it stands in provides that, and a
+ * sprite that brings a strip of moss with it leaves a green hairline every time it is
+ * cropped by an edge — which, in a corner of the hero, is always.
+ */
 const TREES = [
-  sakuraGrid({ seed: 7, w: 62, h: 70, bloom: 6, depth: 5, lean: -2 }),
-  sakuraGrid({ seed: 23, w: 58, h: 66, bloom: 5, depth: 5, lean: 2 }),
-  sakuraGrid({ seed: 41, w: 46, h: 52, bloom: 5, depth: 4 }),
-  sakuraGrid({ seed: 89, w: 40, h: 44, bloom: 4, depth: 4, lean: 1 }),
+  sakuraGrid({ seed: 7, w: 62, h: 70, bloom: 6, depth: 5, lean: -2, ground: false }),
+  sakuraGrid({ seed: 23, w: 58, h: 66, bloom: 5, depth: 5, lean: 2, ground: false }),
+  sakuraGrid({ seed: 41, w: 46, h: 52, bloom: 5, depth: 4, ground: false }),
+  sakuraGrid({ seed: 89, w: 40, h: 46, bloom: 4, depth: 4, lean: 1, ground: false }),
+  sakuraGrid({ seed: 137, w: 44, h: 50, bloom: 5, depth: 4, lean: -1, ground: false }),
+  sakuraGrid({ seed: 211, w: 38, h: 42, bloom: 4, depth: 4, ground: false }),
 ];
 
 const BRANCHES = [
@@ -40,6 +47,7 @@ const BRANCHES = [
 export function SakuraTree({
   seed = 0,
   scale = 1,
+  cell,
   variant = "full",
   title,
   className = "",
@@ -48,6 +56,8 @@ export function SakuraTree({
   /** Picks one of the grown trees. Not a random seed at render time — an index. */
   seed?: number;
   scale?: number;
+  /** Any CSS length, for a tree that has to be smaller than one whole cell allows. */
+  cell?: string;
   variant?: "full" | "branch";
   title?: string;
   className?: string;
@@ -55,16 +65,20 @@ export function SakuraTree({
 }) {
   const pool = variant === "branch" ? BRANCHES : TREES;
   const grid = pool[Math.abs(seed) % pool.length]!;
-  return <PixelSprite grid={grid} palette={SAKURA} scale={scale} title={title} className={className} style={style} />;
+  return (
+    <PixelSprite grid={grid} palette={SAKURA} scale={scale} cell={cell} title={title} className={className} style={style} />
+  );
 }
 
 export function StoneLantern({
   scale = 1,
+  cell,
   lit = true,
   className = "",
   style,
 }: {
   scale?: number;
+  cell?: string;
   lit?: boolean;
   className?: string;
   style?: CSSProperties;
@@ -74,14 +88,15 @@ export function StoneLantern({
       grid={LANTERN}
       palette={lit ? STONE : { ...STONE, f: "var(--pk-stone-dark)", F: "var(--pk-stone)" }}
       scale={scale}
+      cell={cell}
       className={`${lit ? "flicker" : ""} ${className}`}
       style={style}
     />
   );
 }
 
-export function Torii({ scale = 1, className = "", style }: { scale?: number; className?: string; style?: CSSProperties }) {
-  return <PixelSprite grid={TORII_GATE} palette={TORII} scale={scale} className={className} style={style} />;
+export function Torii({ scale = 1, cell, className = "", style }: { scale?: number; cell?: string; className?: string; style?: CSSProperties }) {
+  return <PixelSprite grid={TORII_GATE} palette={TORII} scale={scale} cell={cell} className={className} style={style} />;
 }
 
 export function Bridge({ scale = 1, className = "", style }: { scale?: number; className?: string; style?: CSSProperties }) {
@@ -101,15 +116,17 @@ const STONES = [STONE_LARGE, STONE_MID, STONE_SMALL];
 export function Stone({
   size = 0,
   scale = 1,
+  cell,
   className = "",
   style,
 }: {
   size?: 0 | 1 | 2;
   scale?: number;
+  cell?: string;
   className?: string;
   style?: CSSProperties;
 }) {
-  return <PixelSprite grid={STONES[size]!} palette={STONE} scale={scale} className={className} style={style} />;
+  return <PixelSprite grid={STONES[size]!} palette={STONE} scale={scale} cell={cell} className={className} style={style} />;
 }
 
 export function PixelCoin({ scale = 1, className = "", style }: { scale?: number; className?: string; style?: CSSProperties }) {

@@ -1,6 +1,5 @@
 import { ReadProgress } from "@/components/motion";
-import { LandingNav } from "@/components/site/LandingNav";
-import { UtilityBar } from "@/components/UtilityBar";
+import { StickyNav } from "@/components/site/StickyNav";
 import { TickerStrip } from "@/components/TickerStrip";
 import { Hero } from "@/components/site/Hero";
 import { Mechanism } from "@/components/site/Mechanism";
@@ -21,12 +20,11 @@ export default function HomePage() {
   return (
     <div className="grain relative min-h-screen bg-ground">
       <ReadProgress />
-      <UtilityBar />
-      <LandingNav />
-      <TickerStrip />
+      <StickyNav />
 
       <main className="relative z-[2]">
         <Hero />
+        <TickerStrip />
         <Mechanism />
         <Modules />
         <Universe />
