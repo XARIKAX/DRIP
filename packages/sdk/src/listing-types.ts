@@ -35,28 +35,18 @@ export interface ListedToken {
   route: (string | number)[];
   liquidity: LiquidityStatus;
   /**
-   * Dividend payments this stock makes in a year: 4 for a normal quarterly payer, 2
-   * for a semi annual one, 0 for a stock that pays nothing.
+   * What Osinko pays a holder for keeping this stock on deposit, percent a year.
    *
-   * The displayed yield annualises the next declared payment by this figure. It used
-   * to assume 4 for everything, which silently doubles the yield of a semi annual
-   * payer and invents one entirely for a stock that has never paid a dividend.
-   * Absent, no yield is shown — the honest answer when nobody has said how often the
-   * stock pays.
+   * This is Osinko's rate, not the company's dividend yield, and for several of these
+   * stocks the company pays nothing at all — presenting it as a dividend yield would
+   * be a claim about the issuer that is not true. What it funds is the reward vault:
+   * USDG paid in, handed out as YT, redeemable one for one.
+   *
+   * Discretionary. It describes the intended rate, and a holder is only ever paid
+   * what has actually been funded, which is the property RewardVault enforces rather
+   * than this number.
    */
-  dividendsPerYear?: number;
-  /**
-   * What the underlying stock pays per share across a year, in USD.
-   *
-   * This is a fact about the real company, not about Osinko: it is what drives the
-   * yield figure shown beside each stock, computed live against the Chainlink price,
-   * so the percentage moves as the price does. It is separate from the declared
-   * calendar, which says what Osinko will actually pay and when.
-   *
-   * Absent means no yield is shown. Zero is a different and equally valid statement —
-   * this stock pays nothing — and several in a mega cap technology basket do.
-   */
-  annualDividendPerShare?: number;
+  rewardRatePct?: number;
   /** A token with enabled false is never shown, quoted, or routed. */
   enabled: boolean;
   note?: string;
