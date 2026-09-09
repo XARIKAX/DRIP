@@ -186,8 +186,13 @@ export interface SplitSeriesView {
   /** Share tokens outstanding. Backed 1:1 by stock in custody. */
   ptSupply: bigint;
   ytSupply: bigint;
-  /** USDG per whole stock token, 6 decimals. */
-  priceUsdg: bigint;
+  /**
+   * USDG per whole stock token, 6 decimals, or null when the oracle will not price it.
+   * Null is a series whose underlying has a quiet feed — the series is still real and
+   * still splittable, only its dollar figures are unknown. It is not a reason to hide
+   * the series, which is what throwing here used to do to all of them at once.
+   */
+  priceUsdg: bigint | null;
   splitFeeBps: number;
 }
 

@@ -34,6 +34,29 @@ export interface ListedToken {
   /** Hop sequence, e.g. ["WETH", 3000, "USDG", 3000, "NVDA"]. No direct ETH pools exist. */
   route: (string | number)[];
   liquidity: LiquidityStatus;
+  /**
+   * Dividend payments this stock makes in a year: 4 for a normal quarterly payer, 2
+   * for a semi annual one, 0 for a stock that pays nothing.
+   *
+   * The displayed yield annualises the next declared payment by this figure. It used
+   * to assume 4 for everything, which silently doubles the yield of a semi annual
+   * payer and invents one entirely for a stock that has never paid a dividend.
+   * Absent, no yield is shown — the honest answer when nobody has said how often the
+   * stock pays.
+   */
+  dividendsPerYear?: number;
+  /**
+   * What the underlying stock pays per share across a year, in USD.
+   *
+   * This is a fact about the real company, not about Osinko: it is what drives the
+   * yield figure shown beside each stock, computed live against the Chainlink price,
+   * so the percentage moves as the price does. It is separate from the declared
+   * calendar, which says what Osinko will actually pay and when.
+   *
+   * Absent means no yield is shown. Zero is a different and equally valid statement —
+   * this stock pays nothing — and several in a mega cap technology basket do.
+   */
+  annualDividendPerShare?: number;
   /** A token with enabled false is never shown, quoted, or routed. */
   enabled: boolean;
   note?: string;

@@ -28,13 +28,19 @@ import {DividendStatus} from "../src/interfaces/DripTypes.sol";
 ///        {
 ///          "dividends": [
 ///            { "symbol": "AAPL", "amountPerToken": 260000,
-///              "exDate": 1790000000, "payDate": 1791800000 }
+///              "exDate": 1790000000, "payDate": 1791800000,
+///              "fundedBy": "reserve", "source": "<the declaration this came from>" }
 ///          ]
 ///        }
 ///
 ///      amountPerToken is USDG per whole share, 6 decimals: 260000 is $0.26. Dates are
 ///      unix seconds. Re-running is safe: an entry already on the calendar with the same
 ///      token, amount and ex date is skipped rather than declared twice.
+///
+///      fundedBy says who repays the vault at the pay date — "issuer" when the payment
+///      arrives from outside, "reserve" when Osinko pays it from its own USDG and
+///      carries the cost. Both are required on every row, and both are refused if
+///      missing: see dividends/<chainid>.example.json.
 contract DeclareDividends is Script {
     using stdJson for string;
 
@@ -61,6 +67,20 @@ contract DeclareDividends is Script {
             uint64 exDate = uint64(feed.readUint(string.concat(base, ".exDate")));
             uint64 payDate = uint64(feed.readUint(string.concat(base, ".payDate")));
 
+            // Provenance is required, not decorative. ORACLE_ROLE is the protocol's
+            // largest trust assumption and a row that cannot say where its number came
+            // from, or who repays the vault at the pay date, is not one to advance real
+            // USDG against. Refusing here costs a file edit; declaring it wrong costs
+            // the pool.
+            string memory fundedBy = feed.readString(string.concat(base, ".fundedBy"));
+            require(
+                keccak256(bytes(fundedBy)) == keccak256("issuer")
+                    || keccak256(bytes(fundedBy)) == keccak256("reserve"),
+                "fundedBy must be 'issuer' or 'reserve'"
+            );
+            string memory source = feed.readString(string.concat(base, ".source"));
+            require(bytes(source).length > 0, "source required: where did this number come from");
+
             if (_alreadyDeclared(registry, token, amountPerToken, exDate)) {
                 console2.log(string.concat("SKIP  ", symbol, " (already on the calendar)"));
                 ++skipped;
@@ -72,6 +92,9 @@ contract DeclareDividends is Script {
             } else {
                 uint256 id = registry.declareDividend(token, amountPerToken, exDate, payDate);
                 console2.log(string.concat("DECLARE ", symbol), id);
+                console2.log(string.concat("        per share (6dp): "), amountPerToken);
+                console2.log(string.concat("        funded by: ", fundedBy));
+                console2.log(string.concat("        source:    ", source));
                 ++declared;
             }
             unchecked {

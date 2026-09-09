@@ -582,12 +582,11 @@ export class DripReader {
           this.client.readContract({ address: stockToken, abi: erc20Abi, functionName: "name" }),
           this.client.readContract({ address: principalToken, abi: principalTokenAbi, functionName: "totalSupply" }),
           this.client.readContract({ address: yieldToken, abi: yieldTokenAbi, functionName: "totalSupply" }),
-          this.client.readContract({
-            address: this.deployment.swapAdapter,
-            abi: swapAdapterPriceAbi,
-            functionName: "priceUsdg",
-            args: [stockToken],
-          }),
+          // Through priceOrNull, never raw. A raw read here threw on one stale feed and
+          // rejected the whole Promise.all, so a quiet AAPL emptied the Split page of
+          // all eleven series rather than one. Same failure the token list had; this
+          // call site was missed.
+          this.priceOrNull(stockToken),
         ]);
 
         return {
@@ -600,7 +599,7 @@ export class DripReader {
           yieldToken,
           ptSupply: ptSupply as bigint,
           ytSupply: ytSupply as bigint,
-          priceUsdg: priceUsdg as bigint,
+          priceUsdg: priceUsdg as bigint | null,
           splitFeeBps: Number(splitFeeBps),
         } satisfies SplitSeriesView;
       })
