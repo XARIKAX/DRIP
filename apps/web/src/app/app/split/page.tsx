@@ -25,7 +25,11 @@ import type { SplitSeries } from "@/lib/data/types";
  */
 export default function SplitPage() {
   const series = useSplitSeries();
-  const active = series[0] ?? null;
+  // One series per stock, and eleven are open. Rendering series[0] showed NVDA and
+  // made the other ten unreachable — fine when a single series existed at a time,
+  // wrong the moment the opener started doing the whole listing in one run.
+  const [selected, setSelected] = useState<number | null>(null);
+  const active = series.find((s) => s.seriesId === selected) ?? series[0] ?? null;
 
   return (
     <div className="rise-group space-y-10" data-shot="split">
@@ -40,7 +44,32 @@ export default function SplitPage() {
       </header>
 
       {active ? (
-        <SplitSeriesPage series={active} />
+        <>
+          {series.length > 1 ? (
+            <div className="flex flex-wrap gap-2" role="tablist" aria-label="Pick a stock to split">
+              {series.map((s) => {
+                const on = s.seriesId === active.seriesId;
+                return (
+                  <button
+                    key={s.seriesId}
+                    type="button"
+                    role="tab"
+                    aria-selected={on}
+                    onClick={() => setSelected(s.seriesId)}
+                    className={`num rounded-full px-4 py-2 text-[13px] font-semibold transition ${
+                      on
+                        ? "bg-accent text-ground"
+                        : "border border-line text-muted hover:border-accent hover:text-ink"
+                    }`}
+                  >
+                    {s.symbol}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          <SplitSeriesPage key={active.seriesId} series={active} />
+        </>
       ) : (
         <div className="border border-line-soft bg-ground-2 px-6 py-14 text-center">
           <div className="display text-title">Nothing to split yet</div>
