@@ -89,9 +89,9 @@ function Totals() {
             note: "Sitting as YT, one dollar each",
           },
           {
-            label: "Put into rewards",
+            label: "Paid In",
             value: `$${fmt(tracker.fundedUsd)}`,
-            note: "Osinko's own USDG, cumulative",
+            note: "USDG Dividends",
           },
           {
             label: "Still to hand out",

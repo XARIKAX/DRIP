@@ -270,6 +270,15 @@ export interface SplitDividendRow {
 export interface RewardView {
   /** YT this wallet holds, redeemable one for one for USDG. */
   yoursUsd: number;
+  /** Everything THIS wallet has ever been paid, collected or not. */
+  yourEarnedUsd: number;
+  /** Everything THIS wallet has redeemed for USDG. */
+  yourCollectedUsd: number;
+  /**
+   * False when the per wallet history could not be read, so the two figures above are
+   * unknown rather than zero. The UI must not print a zero it cannot stand behind.
+   */
+  yourHistoryRead: boolean;
   /** YT in circulation across everyone. */
   outstandingUsd: number;
   /** USDG paid into the vault, cumulative. */
