@@ -403,6 +403,30 @@ export function useTrackerView(): { tracker: TrackerView | null; loading: boolea
   return { tracker, loading: totals.isLoading };
 }
 
+/**
+ * A pool with nothing read yet. Not the sample pool.
+ *
+ * The seeded store describes a pool with millions in it, which is the right thing to
+ * show a visitor reading the pitch and exactly the wrong thing to show a holder whose
+ * read has not landed: for as long as the query is in flight the page claimed a TVL
+ * three orders of magnitude off, then swapped it for the truth. A number nobody should
+ * act on must not be rendered as though somebody could.
+ */
+const EMPTY_VAULT: VaultView = {
+  tvlUsd: 0,
+  apyPct: 0,
+  utilizationPct: 0,
+  capPct: 0,
+  advancesOutstandingUsd: 0,
+  feesEarnedUsd: 0,
+  sharePrice: 0,
+  freeLiquidityUsd: 0,
+  yourShares: 0,
+  yourAssetsUsd: 0,
+  maxWithdrawUsd: 0,
+  apyHistory: [],
+};
+
 export function useVaultView(): { vault: VaultView; loading: boolean } {
   const source = useDataSource();
   const { store, version } = useMockData();
@@ -411,7 +435,9 @@ export function useVaultView(): { vault: VaultView; loading: boolean } {
   const deployedAt = useDeployment()?.deployedAt ?? 0;
 
   const vault = useMemo(() => {
-    if (source === "demo" || !stats.data) return store.vault();
+    if (source === "demo") return store.vault();
+    // On chain and not read yet: zeros, never the sample pool's millions.
+    if (!stats.data) return EMPTY_VAULT;
     const s = stats.data;
     const p = position.data;
 
@@ -648,11 +674,15 @@ export function usePortfolioSummary(): PortfolioSummary {
   const { rows: holdings } = useHoldings();
   const { rows: streams } = useStreamRows();
   const { rows: calendar } = useCalendarRows();
+  const { reward } = useRewardView();
 
   return useMemo(() => {
     if (source === "demo") return store.summary();
     const nowMs = Date.now();
-    let value = holdings.reduce((sum, h) => sum + (h.valueUsd ?? 0), 0);
+    // Stock plus what it has earned and not yet been collected, which is what the tile
+    // says it is. Uncollected YT is money the holder already owns — leaving it out
+    // understated a $36 position holding $48 of rewards by more than half.
+    const value = holdings.reduce((sum, h) => sum + (h.valueUsd ?? 0), 0) + (reward?.yoursUsd ?? 0);
     const unpricedHoldings = holdings.filter((h) => h.valueUsd === null).length;
     let rate = 0;
     for (const s of streams) {
@@ -666,12 +696,17 @@ export function usePortfolioSummary(): PortfolioSummary {
       valueUsd: value,
       unpricedHoldings,
       streamRatePerSec: rate,
-      earnedThisWeekUsd: streams.reduce((sum, s) => sum + s.claimedBaseUsd, 0),
+      // Streams pay per second and rewards land in lumps; both are money earned. The
+      // tile counted only the first, so a wallet that had just been paid $48 of
+      // rewards read zero.
+      earnedUsd:
+        streams.reduce((sum, s) => sum + s.claimedBaseUsd, 0) +
+        (reward ? reward.yoursUsd + reward.redeemedUsd : 0),
       activeRules: holdings.length,
       nextDividend: next ? { symbol: next.symbol, exDate: next.exDate } : null,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, version, holdings, streams, calendar]);
+  }, [source, version, holdings, streams, calendar, reward]);
 }
 
 // ---------------------------------------------------------------------------
