@@ -205,7 +205,7 @@ export interface PortfolioSummary {
   unpricedHoldings: number;
   /** Combined per second accrual across open streams, for live interpolation. */
   streamRatePerSec: number;
-  earnedThisWeekUsd: number;
+  earnedUsd: number;
   activeRules: number;
   nextDividend: { symbol: string; exDate: number } | null;
 }

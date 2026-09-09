@@ -88,11 +88,11 @@ function TopStrip() {
         </div>
       </div>
       <div className="bg-ground p-6">
-        <div className="panel-title">Earned this week</div>
+        <div className="panel-title">Earned so far</div>
         <div className="mt-3 text-[clamp(26px,2.6vw,38px)] font-semibold tracking-tighter text-accent">
-          <AnimatedNumber value={summary.earnedThisWeekUsd} decimals={2} prefix="$" flash="dark" />
+          <AnimatedNumber value={summary.earnedUsd} decimals={2} prefix="$" flash="dark" />
         </div>
-        <div className="mt-1 text-[12px] text-muted">Paid early, collected, and reinvested</div>
+        <div className="mt-1 text-[12px] text-muted">Rewards and dividends, collected or not</div>
       </div>
       <div className="bg-ground p-6">
         <div className="panel-title">Stocks on deposit</div>

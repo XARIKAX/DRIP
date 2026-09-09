@@ -624,7 +624,7 @@ export class MockStore {
       valueUsd: value,
       unpricedHoldings: 0,
       streamRatePerSec: rate,
-      earnedThisWeekUsd: earned,
+      earnedUsd: earned,
       activeRules: [...this.state.holdings.values()].filter((h) => h.amount > 0).length,
       nextDividend: nextDiv ? { symbol: nextDiv.symbol, exDate: nextDiv.exDate } : null,
     };

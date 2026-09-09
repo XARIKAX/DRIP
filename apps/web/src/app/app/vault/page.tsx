@@ -36,10 +36,15 @@ export default function VaultPage() {
 }
 
 function HeroStats() {
-  const { vault } = useVaultView();
+  const { vault, loading } = useVaultView();
 
   return (
-    <section className="panel" aria-label="Vault statistics" data-shot="vault">
+    <section
+      className={`panel transition-opacity ${loading ? "opacity-40" : ""}`}
+      aria-label="Vault statistics"
+      aria-busy={loading}
+      data-shot="vault"
+    >
       <div className="grid grid-cols-2 gap-px bg-line lg:grid-cols-4">
         <div className="bg-ground p-6">
           <div className="panel-title">In the pool</div>
@@ -93,20 +98,33 @@ function HeroStats() {
 }
 
 function YieldChart() {
-  const { vault } = useVaultView();
+  const { vault, loading } = useVaultView();
+
+  // A real pool has one point, not ninety: there is no historical series onchain to
+  // read. The axis labels only make sense over a series, so they go with it.
+  const series = vault.apyHistory.length > 1;
+
   return (
-    <section className="panel lg:col-span-2" aria-label="Yield history">
+    <section className="panel lg:col-span-2" aria-label="Yield history" aria-busy={loading}>
       <div className="panel-head">
-        <span className="panel-title">Yearly return · last 90 days</span>
-        <span className="num text-micro font-bold uppercase text-accent">{vault.apyPct.toFixed(2)}% now</span>
+        <span className="panel-title">{series ? "Yearly return · last 90 days" : "Yearly return"}</span>
+        <span className="num text-micro font-bold uppercase text-accent">
+          {loading ? "Reading…" : `${vault.apyPct.toFixed(2)}% now`}
+        </span>
       </div>
       <div className="p-5">
-        <AreaChart
-          points={vault.apyHistory}
-          labelLeft="90 days ago"
-          labelRight="Today"
-          formatValue={(v) => `${v.toFixed(1)}%`}
-        />
+        {vault.apyHistory.length === 0 ? (
+          <div className="flex h-[180px] items-center justify-center text-[13px] text-muted">
+            {loading ? "Reading the chain…" : "No fees earned yet, so there is no return to plot."}
+          </div>
+        ) : (
+          <AreaChart
+            points={vault.apyHistory}
+            labelLeft={series ? "90 days ago" : ""}
+            labelRight={series ? "Today" : "Today"}
+            formatValue={(v) => `${v.toFixed(1)}%`}
+          />
+        )}
       </div>
     </section>
   );

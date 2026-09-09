@@ -66,9 +66,9 @@ function PreviewBody() {
             </div>
           </div>
           <div className="bg-ground p-4">
-            <div className="panel-title">Earned this week</div>
+            <div className="panel-title">Earned so far</div>
             <div className="figure mt-2.5 text-[clamp(19px,2vw,26px)] leading-none text-accent">
-              ${fmt(summary.earnedThisWeekUsd)}
+              ${fmt(summary.earnedUsd)}
             </div>
           </div>
           <div className="hidden bg-ground p-4 md:block">
