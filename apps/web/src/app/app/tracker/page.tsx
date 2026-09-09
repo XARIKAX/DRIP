@@ -108,9 +108,8 @@ function Totals() {
       </dl>
 
       <p className="border-t border-line px-6 py-3 text-[12px] leading-snug text-faint">
-        &ldquo;Paid out&rdquo; counts reward redemptions only. Dividend advances and streams
-        keep no running total on chain, so they are not in this number; none have been paid
-        on this deployment yet.
+        &ldquo;Paid out&rdquo; counts reward redemptions only. Tracks the total amount users
+        have redeemed from YT to USDG.
       </p>
     </section>
   );
@@ -185,21 +184,9 @@ function Rates() {
         ))}
       </div>
       <p className="border-t border-line px-5 py-3 text-[12px] leading-snug text-faint">
-        {realised ? (
-          <>
-            What a dollar deposited in each stock has actually been paid, cumulative since
-            launch. Not annualised: the rewards are discretionary amounts Osinko pays when it
-            chooses, so stretching them into a yearly rate would invent a number nobody should
-            deposit against.
-          </>
-        ) : (
-          <>
-            What Osinko is aiming to pay, not what it has paid — nothing has been distributed
-            yet. These become live figures the moment the first pot goes out.
-          </>
-        )}{" "}
-        Osinko funds this itself out of its own USDG. It is not the dividend the company pays,
-        and Osinko can change or stop it.
+        {realised
+          ? "What a dollar deposited in each stock has actually been paid, cumulative. Not annualised."
+          : "What Osinko is aiming to pay, not what it has paid. APY rate is variable."}
       </p>
     </section>
   );
