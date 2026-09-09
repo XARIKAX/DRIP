@@ -107,6 +107,15 @@ export interface ProtocolTotals {
     /** Stock tokens on deposit across everyone, in the token's own decimals. */
     amount: bigint;
     valueUsdg: bigint | null;
+    /**
+     * What a dollar on deposit in this stock has actually been paid, as a percentage
+     * of the amount deposited. Realised and cumulative, not a forecast and not
+     * annualised — see `realisedPct` in the client for why annualising a discretionary
+     * drop produces a number nobody should act on.
+     *
+     * Null before anything has been distributed, or when this stock cannot be priced.
+     */
+     realisedPct: number | null;
   }[];
   /** USDG holders have redeemed and taken to their wallets, cumulative. */
   paidOutUsdg: bigint;
@@ -114,6 +123,14 @@ export interface ProtocolTotals {
   owedUsdg: bigint;
   /** USDG paid into the reward vault, cumulative. */
   fundedUsdg: bigint;
+  /**
+   * Every YT ever handed out, taken or not: what holders have actually been given.
+   *
+   * This is the numerator of the realised return. `paidOutUsdg` is only the part that
+   * has been walked to a wallet, which says more about how often people press a button
+   * than about what the protocol paid.
+   */
+  rewardedUsdg: bigint;
 }
 
 /** A stock token the protocol knows about. */

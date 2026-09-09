@@ -4,11 +4,6 @@ import type { KeeperConfig } from "./config.js";
 import type { HolderIndex } from "./holders.js";
 import { log } from "./log.js";
 
-/** Seconds in the year the posted rates are quoted against. */
-const YEAR = 365n * 24n * 60n * 60n;
-/** Rates are given to two decimals, so carry them as basis points of a percent. */
-const RATE_SCALE = 10_000n;
-
 const swapAdapterPriceAbi = [
   {
     type: "function",
@@ -19,134 +14,123 @@ const swapAdapterPriceAbi = [
   },
 ] as const;
 
-interface Rated {
+interface Priced {
   token: Address;
   symbol: string;
-  /** rewardRatePct * 10_000, e.g. 0.62% -> 6200. */
-  rateBps: bigint;
   /** USDG per whole token, 6 decimals. Null when the feed will not answer. */
   priceUsdg: bigint | null;
+  /** The listing's rewardRatePct, times 10_000. Weights the split; see distributeRewards. */
+  rateBps: bigint;
   decimals: bigint;
 }
 
+/** Rates are quoted to two decimals, so carry them as hundredths of a percent. */
+const RATE_SCALE = 10_000;
+
 /**
- * The tokens carrying a posted reward rate, priced.
+ * Every listed token, priced.
  *
- * A token whose feed has gone quiet is carried with a null price and then skipped for
- * this cycle rather than valued at zero. Zero would silently pay its holders nothing
- * while paying everyone else in full, which is a worse failure than paying nobody and
- * saying so: the accrual is not lost, it lands next cycle once the feed answers.
+ * A token whose feed has gone quiet is carried with a null price and then skipped.
+ * Valuing it at zero would silently cut its holders out of the split while paying
+ * everyone else in full, which is a worse failure than waiting: the pot is not spent,
+ * so the next cycle divides the same money once the feed answers.
  */
-async function ratedTokens(config: KeeperConfig, client: PublicClient): Promise<Rated[]> {
+async function pricedTokens(config: KeeperConfig, client: PublicClient): Promise<Priced[]> {
   const universe = listings[config.chain.id];
   if (!universe) return [];
 
-  const rows = universe.tokens.filter((t) => t.enabled && typeof t.rewardRatePct === "number");
-
   return Promise.all(
-    rows.map(async (t) => {
-      let priceUsdg: bigint | null = null;
-      try {
-        priceUsdg = (await client.readContract({
-          address: config.deployment.swapAdapter,
-          abi: swapAdapterPriceAbi,
-          functionName: "priceUsdg",
-          args: [t.address as Address],
-        })) as bigint;
-      } catch {
-        priceUsdg = null;
-      }
-      return {
-        token: t.address as Address,
-        symbol: t.symbol,
-        rateBps: BigInt(Math.round((t.rewardRatePct ?? 0) * Number(RATE_SCALE))),
-        priceUsdg,
-        decimals: 18n,
-      };
-    })
+    universe.tokens
+      .filter((t) => t.enabled)
+      .map(async (t) => {
+        let priceUsdg: bigint | null = null;
+        try {
+          priceUsdg = (await client.readContract({
+            address: config.deployment.swapAdapter,
+            abi: swapAdapterPriceAbi,
+            functionName: "priceUsdg",
+            args: [t.address as Address],
+          })) as bigint;
+        } catch {
+          priceUsdg = null;
+        }
+        return {
+          token: t.address as Address,
+          symbol: t.symbol,
+          priceUsdg,
+          rateBps: BigInt(Math.round((t.rewardRatePct ?? 0) * RATE_SCALE)),
+          decimals: 18n,
+        };
+      })
   );
 }
 
 /**
- * When the last distribution happened, read back off the chain.
+ * Split the pot by the largest remainder method, so the whole pot goes out.
  *
- * The keeper keeps no state of its own — Railway recycles the disk and a restart must
- * not re-pay a window that was already paid. The block timestamp of the most recent
- * Distributed log is that state, and it is authoritative: if the distribution landed,
- * the log exists; if it did not, it does not. Before the first distribution there is
- * nothing to read, so REWARD_EPOCH_START names where accrual begins.
+ * Plain `pot * share / total` floors every holder and leaves a few base units behind.
+ * Those units would sit in the vault as permanently unallocated dust, and the next
+ * cycle would try to divide them, floor everyone to zero, and find nothing to do —
+ * for ever. Handing the remainder to the largest fractional parts costs a sort and
+ * clears the pot exactly.
  */
-async function lastDistributionAt(
-  config: KeeperConfig,
-  client: PublicClient,
-  head: bigint
-): Promise<bigint | null> {
-  const vault = config.deployment.rewardVault;
-  if (!vault) return null;
+function splitPot(pot: bigint, weights: [Address, bigint][]): [Address, bigint][] {
+  const total = weights.reduce((a, [, w]) => a + w, 0n);
+  if (total === 0n) return [];
 
-  const event = rewardVaultAbi.find((e) => e.type === "event" && e.name === "Distributed") as never;
+  const rows = weights.map(([who, w]) => {
+    const exact = pot * w;
+    return { who, amount: exact / total, remainder: exact % total };
+  });
 
-  // Walk back from the head rather than forward from the deploy: the answer is almost
-  // always in the last few thousand blocks, and this is a per cycle read.
-  let to = head;
-  const floor = config.startBlock;
-  while (to >= floor) {
-    const from = to - config.logChunk + 1n < floor ? floor : to - config.logChunk + 1n;
-    const logs = await client.getLogs({ address: vault, event, fromBlock: from, toBlock: to });
-    if (logs.length > 0) {
-      // The event is cast to never to satisfy getLogs' overload, which makes the
-      // entries never too. The block number is the only field this needs.
-      const last = logs[logs.length - 1] as unknown as { blockNumber: bigint };
-      const block = await client.getBlock({ blockNumber: last.blockNumber });
-      return block.timestamp;
-    }
-    if (from === floor) break;
-    to = from - 1n;
+  let handed = rows.reduce((a, r) => a + r.amount, 0n);
+  // Descending remainder, then by address so a tie is decided the same way every run
+  // rather than by whatever order the holder index happened to be in.
+  rows.sort((a, b) => (b.remainder === a.remainder ? (a.who < b.who ? -1 : 1) : b.remainder > a.remainder ? 1 : -1));
+  for (const row of rows) {
+    if (handed >= pot) break;
+    row.amount += 1n;
+    handed += 1n;
   }
-  return null;
+
+  return rows.filter((r) => r.amount > 0n).map((r) => [r.who, r.amount]);
 }
 
 /**
- * Hand out the reward pot, pro rata by the dollar value of what people have deposited.
+ * Hand out whatever USDG is sitting in the reward vault, split across holders by the
+ * dollar value of what they have on deposit right now.
  *
- * Each stock carries a posted yearly rate. A holder accrues, per stock, on the balance
- * they had at the START of the window — not the end, so a deposit made two minutes
- * before the keeper runs earns from the next window rather than collecting a full
- * period it was not present for.
+ * The reward is discretionary: Osinko funds the vault when it chooses, and the whole
+ * unallocated balance goes straight out on the next cycle. There is no accrual and no
+ * clock — funding is the trigger, and the pot is the amount.
  *
- * The pot is the hard bound. If the accruals add up to more than the vault holds
- * unallocated, every holder is scaled down by the same factor: the posted rate is what
- * Osinko intends to pay, the pot is what Osinko has, and the pot wins. That scaling is
- * also exactly the "split what is in the contract proportionally by deposit value"
- * behaviour, since each holder's accrual is their deposit value times its rate.
+ * Each position is weighted by `value x the listing's rate`, not by value alone. Value
+ * alone would make every dollar on deposit earn exactly the same, whatever it was
+ * deposited in, so the eleven different rates the app displays would all be the same
+ * number in reality and the per stock figures would be decoration. Multiplying by the
+ * rate is what makes them true: after any distribution, what a dollar of MSFT earned
+ * over what a dollar of NVDA earned is precisely the ratio of their posted rates.
  *
- * The vault refuses to mint more YT than it holds USDG, so the worst a bug here can do
- * is revert. That is the invariant doing its job, not a reason to lean on it: this
- * function scales first and lets the contract be the second opinion.
+ * If no token carries a rate the weighting falls back to plain value, which is the
+ * same split with every rate equal.
+ *
+ * That makes the job naturally idempotent, which is the reason to prefer it over a
+ * time based accrual. `unallocated()` is `usdgHeld - ytSupply`: once a distribution
+ * lands, supply equals the balance and there is nothing left to hand out, so a restart,
+ * a duplicated cycle or a crash between simulate and broadcast cannot pay twice. The
+ * chain holds the whole of the state and the keeper holds none of it.
  */
 export async function distributeRewards(
   config: KeeperConfig,
   client: PublicClient,
   wallet: WalletClient,
-  index: HolderIndex,
-  head: { number: bigint; timestamp: bigint }
+  index: HolderIndex
 ): Promise<void> {
   const vault = config.deployment.rewardVault;
   if (!vault) {
     log.info("no reward vault on this deployment; skipping rewards");
     return;
   }
-
-  const since = (await lastDistributionAt(config, client, head.number)) ?? config.rewardEpochStart;
-  if (since === null) {
-    log.warn("no previous distribution and no REWARD_EPOCH_START; skipping rewards");
-    return;
-  }
-  if (head.timestamp <= since) {
-    log.info("reward window is empty", { since });
-    return;
-  }
-  const elapsed = head.timestamp - since;
 
   const pot = (await client.readContract({
     address: vault,
@@ -155,18 +139,31 @@ export async function distributeRewards(
   })) as bigint;
 
   if (pot === 0n) {
-    log.info("reward pot is empty; nothing to distribute", { windowSeconds: elapsed });
+    log.info("reward pot is empty; nothing to distribute");
+    return;
+  }
+  if (pot < config.rewardMinTotal) {
+    log.info("reward pot below the distribution floor; leaving it to accumulate", {
+      pot,
+      floor: config.rewardMinTotal,
+    });
     return;
   }
 
-  const tokens = (await ratedTokens(config, client)).filter((t) => t.rateBps > 0n);
+  const tokens = await pricedTokens(config, client);
   const quiet = tokens.filter((t) => t.priceUsdg === null).map((t) => t.symbol);
   if (quiet.length > 0) log.warn("skipping tokens with no price this cycle", { symbols: quiet });
   const priced = tokens.filter((t) => t.priceUsdg !== null);
   if (priced.length === 0) {
-    log.warn("no priced tokens carry a reward rate; skipping rewards");
+    log.warn("no token has a price this cycle; not distributing");
     return;
   }
+
+  // Every rate zero means the listing carries none at all; weight by value alone
+  // rather than by nothing, which would give every holder a weight of zero and split
+  // the pot between nobody.
+  const rated = priced.some((t) => t.rateBps > 0n);
+  if (!rated) log.warn("no token carries a reward rate; weighting by deposit value alone");
 
   const holders = index.list();
   if (holders.length === 0) {
@@ -174,67 +171,44 @@ export async function distributeRewards(
     return;
   }
 
-  // Balance at the START of the window, per holder per token. One read each; the
-  // holder set is small and this is the number the accrual is actually owed on.
-  const accrued = new Map<Address, bigint>();
+  // Deposit value per holder, right now. Parallel across tokens, serial across
+  // holders: eleven reads at a time is polite to the RPC, eleven times the holder
+  // count at once is not.
+  const weights: [Address, bigint][] = [];
   for (const holder of holders) {
-    // Parallel across tokens, serial across holders: eleven reads at a time is polite
-    // to the RPC, eleven times the holder count at once is not.
     const perToken = await Promise.all(
       priced.map(async (t) => {
         const balance = (await client.readContract({
           address: config.deployment.dripCore,
           abi: dripCoreAbi,
-          functionName: "balanceOfAt",
-          args: [holder, t.token, since],
+          functionName: "balanceOf",
+          args: [holder, t.token],
         })) as bigint;
         if (balance === 0n) return 0n;
-
-        // value(6dp) = balance(18dp) * price(6dp) / 1e18
-        const valueUsdg = (balance * t.priceUsdg!) / 10n ** t.decimals;
-        // Multiply before dividing, always: the rate is hundredths of a percent, so
-        // the divisor is 100 * RATE_SCALE, with a year of seconds on top.
-        return (valueUsdg * t.rateBps * elapsed) / (100n * RATE_SCALE * YEAR);
+        // value(6dp) = balance(18dp) * price(6dp) / 1e18, then weighted by the rate.
+        // Kept unscaled: only the ratio between weights matters to the split, so
+        // dividing out the rate scale here would only throw away precision.
+        const value = (balance * t.priceUsdg!) / 10n ** t.decimals;
+        return rated ? value * t.rateBps : value;
       })
     );
-    const owed = perToken.reduce((a, b) => a + b, 0n);
-    if (owed > 0n) accrued.set(holder, owed);
+    const weight = perToken.reduce((a, b) => a + b, 0n);
+    if (weight > 0n) weights.push([holder, weight]);
   }
 
-  let total = [...accrued.values()].reduce((a, b) => a + b, 0n);
-  if (total === 0n) {
-    log.info("nothing accrued this window", { windowSeconds: elapsed, holders: holders.length });
+  if (weights.length === 0) {
+    log.info("nobody has stock on deposit; not distributing", { pot, holders: holders.length });
     return;
   }
 
-  // Scale to the pot when the posted rates outrun it. Integer division rounds every
-  // holder down, so the scaled total is always at or under the pot, never over.
-  let scaled = new Map(accrued);
-  if (total > pot) {
-    scaled = new Map([...accrued].map(([who, amount]) => [who, (amount * pot) / total]));
-    log.warn("accruals exceed the pot; scaling every holder down", { accrued: total, pot });
-  }
+  const totalWeight = weights.reduce((a, [, w]) => a + w, 0n);
+  const rows = splitPot(pot, weights);
 
-  const rows = [...scaled].filter(([, amount]) => amount > 0n);
-  total = rows.reduce((a, [, amount]) => a + amount, 0n);
-
-  if (total < config.rewardMinTotal) {
-    // Do not distribute dust. Skipping writes no log, so the window does not advance
-    // and this accrual is not lost — it simply keeps accumulating until it is worth
-    // the gas. This is why the floor is safe to set generously.
-    log.info("accrual below the distribution floor; letting it accumulate", {
-      accrued: total,
-      floor: config.rewardMinTotal,
-      windowSeconds: elapsed,
-    });
-    return;
-  }
-
-  // One transaction, deliberately not chunked. The window this job pays for is derived
-  // from the last Distributed log, so a run that landed batch one and reverted on batch
-  // two would advance the window past holders who were never paid. All or nothing keeps
-  // the accounting honest; when the holder set outgrows a single transaction the answer
-  // is a claim tree, not a chunked loop that quietly drops people.
+  // One transaction, deliberately not chunked. A run that landed batch one and
+  // reverted on batch two would leave the pot part spent and the rest to be divided
+  // again on different weights — same money, two different splits. All or nothing.
+  // When the holder set outgrows a single transaction the answer is a claim tree, not
+  // a chunked loop that quietly pays some people.
   if (rows.length > config.rewardMaxHolders) {
     log.error("too many holders for one distribution; refusing rather than paying some", {
       holders: rows.length,
@@ -244,14 +218,15 @@ export async function distributeRewards(
     return;
   }
 
-  log.info("distributing rewards", {
-    holders: rows.length,
-    usdg: total,
-    pot,
-    windowSeconds: elapsed,
-    since,
-  });
-  for (const [who, amount] of rows) log.info("  accrual", { holder: who, usdg: amount });
+  log.info("distributing the reward pot", { pot, holders: rows.length, rateWeighted: rated });
+  for (const [who, amount] of rows) {
+    const weight = weights.find(([w]) => w === who)?.[1] ?? 0n;
+    log.info("  share", {
+      holder: who,
+      usdg: amount,
+      sharePct: totalWeight === 0n ? "0" : ((Number(weight) / Number(totalWeight)) * 100).toFixed(2),
+    });
+  }
 
   if (config.dryRun) {
     log.warn("DRY_RUN; not broadcasting the distribution");
@@ -268,13 +243,13 @@ export async function distributeRewards(
     });
     const hash = await wallet.writeContract(sim.request);
     await client.waitForTransactionReceipt({ hash });
-    log.info("rewards distributed", { holders: rows.length, usdg: total, hash });
+    log.info("reward pot distributed", { holders: rows.length, usdg: pot, hash });
   } catch (err) {
     // The likeliest cause by far is the keeper not holding DISTRIBUTOR_ROLE. Say the
     // whole reason rather than the first line of a revert nobody can read.
     log.error("distribution failed", {
       holders: rows.length,
-      usdg: total,
+      usdg: pot,
       keeper: config.account.address,
       reason: (err as Error).message.split("\n")[0],
       hint: "the keeper needs DISTRIBUTOR_ROLE on the reward vault",

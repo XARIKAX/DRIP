@@ -17,7 +17,7 @@ const COLUMNS: { key: SortKey; label: string; align: "left" | "right" }[] = [
   { key: "symbol", label: "Stock", align: "left" },
   { key: "priceUsd", label: "Price", align: "right" },
   { key: "perShare", label: "Dividend / share", align: "right" },
-  { key: "yieldPct", label: "Yield", align: "right" },
+  { key: "yieldPct", label: "Rewards", align: "right" },
   { key: "nextExDate", label: "Next ex date", align: "right" },
 ];
 
@@ -183,7 +183,16 @@ export function Universe() {
                       {t.perShare > 0 ? `$${fmt(t.perShare)}` : "—"}
                     </td>
                     <td className="num text-right text-accent">
-                      {t.yieldPct ? `${fmt(t.yieldPct, 2)}%` : "—"}
+                      {t.yieldPct ? (
+                        <>
+                          {fmt(t.yieldPct, 2)}%
+                          {t.yieldRealised ? null : (
+                            <span className="ml-1 text-micro font-bold uppercase text-faint">target</span>
+                          )}
+                        </>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="num text-right text-muted">
                       {t.nextExDate ? shortDate(t.nextExDate) : "—"}
