@@ -191,11 +191,8 @@ const MODE_TO_CHAIN: Record<ModeName, ChainMode> = {
  * right and manufactures one outright for a stock that has never paid a dividend at
  * all, which is most of a mega cap technology basket.
  */
-function annualYieldPct(symbol: string, priceUsd: number | null): number | null {
-  if (priceUsd === null || priceUsd <= 0) return null;
-  const annual = listings[chainId]?.tokens.find((t) => t.symbol === symbol)?.annualDividendPerShare;
-  if (annual === undefined) return null;
-  return (annual / priceUsd) * 100;
+function annualYieldPct(symbol: string): number | null {
+  return listings[chainId]?.tokens.find((t) => t.symbol === symbol)?.rewardRatePct ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -222,7 +219,7 @@ export function useTokensView(): TokenInfo[] {
         symbol: t.symbol,
         name: t.name,
         priceUsd,
-        yieldPct: annualYieldPct(t.symbol, priceUsd),
+        yieldPct: annualYieldPct(t.symbol),
         perShare: perShare ?? 0,
         nextExDate: next ? next.exDate : null,
         // Paying now means the calendar has this token between its ex and pay dates.

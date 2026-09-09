@@ -35,7 +35,8 @@
       ],
       "liquidity": "live",
       "enabled": true,
-      "heartbeat": 86400
+      "heartbeat": 86400,
+      "rewardRatePct": 0.03
     },
     {
       "symbol": "TSLA",
@@ -50,7 +51,8 @@
       ],
       "liquidity": "live",
       "enabled": true,
-      "heartbeat": 86400
+      "heartbeat": 86400,
+      "rewardRatePct": 0.32
     },
     {
       "symbol": "AAPL",
@@ -65,7 +67,8 @@
       ],
       "liquidity": "live",
       "enabled": true,
-      "heartbeat": 86400
+      "heartbeat": 86400,
+      "rewardRatePct": 0.62
     },
     {
       "symbol": "GOOGL",
@@ -80,7 +83,8 @@
       ],
       "liquidity": "live",
       "enabled": true,
-      "heartbeat": 86400
+      "heartbeat": 86400,
+      "rewardRatePct": 0.75
     },
     {
       "symbol": "MSFT",
@@ -95,7 +99,8 @@
       ],
       "liquidity": "live",
       "enabled": true,
-      "heartbeat": 86400
+      "heartbeat": 86400,
+      "rewardRatePct": 1.07
     },
     {
       "symbol": "AMZN",
@@ -110,7 +115,8 @@
       ],
       "liquidity": "live",
       "enabled": true,
-      "heartbeat": 86400
+      "heartbeat": 86400,
+      "rewardRatePct": 0.32
     },
     {
       "symbol": "META",
@@ -125,7 +131,8 @@
       ],
       "liquidity": "live",
       "enabled": true,
-      "heartbeat": 86400
+      "heartbeat": 86400,
+      "rewardRatePct": 0.45
     },
     {
       "symbol": "COIN",
@@ -172,7 +179,8 @@
       ],
       "liquidity": "quote_first",
       "enabled": true,
-      "heartbeat": 86400
+      "heartbeat": 86400,
+      "rewardRatePct": 0.32
     },
     {
       "symbol": "CRWV",
@@ -203,7 +211,8 @@
       ],
       "liquidity": "quote_first",
       "enabled": true,
-      "heartbeat": 86400
+      "heartbeat": 86400,
+      "rewardRatePct": 0.32
     },
     {
       "symbol": "INTC",
@@ -218,7 +227,8 @@
       ],
       "liquidity": "live",
       "enabled": true,
-      "heartbeat": 86400
+      "heartbeat": 86400,
+      "rewardRatePct": 0.32
     },
     {
       "symbol": "MU",
@@ -233,7 +243,8 @@
       ],
       "liquidity": "live",
       "enabled": true,
-      "heartbeat": 86400
+      "heartbeat": 86400,
+      "rewardRatePct": 0.62
     },
     {
       "symbol": "SNDK",
