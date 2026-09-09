@@ -6,6 +6,7 @@ import {
   streamEngineAbi,
   advanceVaultAbi,
   reinvestorAbi,
+  rewardVaultAbi,
   mockUSDGAbi,
   mockStockTokenAbi,
 } from "./generated";
@@ -112,6 +113,22 @@ export function buildVaultWithdraw(d: Deployment, assets: bigint, receiver: Addr
     d.advanceVault,
     encodeFunctionData({ abi: advanceVaultAbi, functionName: "withdraw", args: [assets, receiver, owner] }),
     `Withdraw USDG from the advance vault`
+  );
+}
+
+/**
+ * Burn YT, take the USDG behind it.
+ *
+ * Touches nothing else a holder owns: the stock stays on deposit, still earning,
+ * still borrowable against. That separation is the point of the reward being its own
+ * token rather than something carved out of the position.
+ */
+export function buildRewardRedeem(d: Deployment, amount: bigint): UnsignedTx {
+  if (!d.rewardVault) throw new Error("This deployment has no reward vault");
+  return tx(
+    d.rewardVault,
+    encodeFunctionData({ abi: rewardVaultAbi, functionName: "redeem", args: [amount] }),
+    `Redeem YT for USDG`
   );
 }
 

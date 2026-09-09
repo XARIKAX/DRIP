@@ -28,6 +28,7 @@ const CONTRACTS = [
   "MockSwapAdapter",
   "LendingPool",
   "SplitVault",
+  "RewardVault",
   "PrincipalToken",
   "YieldToken",
   // Production adapters. Carried so a mainnet book is readable with the same

@@ -249,3 +249,47 @@ export interface SplitDividendRow {
   claimableUsd: number;
   claimed: boolean;
 }
+
+/**
+ * The reward programme, as the app sees it.
+ *
+ * Every YT is a dollar the vault is holding, so `yours` is both a balance and a
+ * redeemable amount — there is no exchange rate to quote and no wait to explain.
+ * Null means this deployment has no reward vault, which is different from one that
+ * exists and is empty.
+ */
+export interface RewardView {
+  /** YT this wallet holds, redeemable one for one for USDG. */
+  yoursUsd: number;
+  /** YT in circulation across everyone. */
+  outstandingUsd: number;
+  /** USDG paid into the vault, cumulative. */
+  fundedUsd: number;
+  /** USDG holders have actually taken out, cumulative. */
+  redeemedUsd: number;
+  /** Funded USDG no YT has a claim on yet. */
+  unallocatedUsd: number;
+}
+
+/**
+ * The public scoreboard: how much stock the platform is holding and how much money
+ * has actually reached holders. Null when this chain has no address book to read.
+ *
+ * `paidOutUsd` is deliberately only what has left the reward vault. Dividend advances
+ * keep no cumulative counter onchain, so a figure that claimed to include them would
+ * be a guess. When dividends go live here this needs an indexer behind it.
+ */
+export interface TrackerView {
+  /** USDG value of the priced stock on deposit. */
+  stockUsd: number;
+  /** Tickers holding stock the oracle would not price, so `stockUsd` is a floor. */
+  unpriced: string[];
+  /** Per ticker, biggest first. `valueUsd` null means the feed is quiet. */
+  rows: { symbol: string; amount: number; valueUsd: number | null }[];
+  /** USDG holders have redeemed and taken away, cumulative. */
+  paidOutUsd: number;
+  /** YT outstanding: earned, redeemable, not yet taken. */
+  owedUsd: number;
+  /** USDG paid into the reward vault, cumulative. */
+  fundedUsd: number;
+}

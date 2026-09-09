@@ -7,6 +7,7 @@ import {
   lendingPoolAbi,
   principalTokenAbi,
   reinvestorAbi,
+  rewardVaultAbi,
   splitVaultAbi,
   yieldTokenAbi,
   streamEngineAbi,
@@ -26,6 +27,9 @@ import {
   type StreamView,
   type VaultPosition,
   type VaultStats,
+  type RewardStats,
+  type RewardPosition,
+  type ProtocolTotals,
 } from "./types";
 
 /** Address book for a chain. Throws loudly rather than returning a half configured object. */
@@ -422,6 +426,100 @@ export class DripReader {
       advanceFeeBps,
       totalSupply,
       sharePrice,
+    };
+  }
+
+  // -------------------------------------------------------------------
+  // Rewards
+  // -------------------------------------------------------------------
+
+  /**
+   * The reward vault's state, or null on a deployment that predates it.
+   *
+   * Null rather than a throw: the protocol shipped before this contract existed and a
+   * book without one is a valid book, so the app renders the rest of itself either way.
+   */
+  async getRewardStats(): Promise<RewardStats | null> {
+    const address = this.deployment.rewardVault;
+    if (!address) return null;
+    const abi = rewardVaultAbi;
+
+    const [totalSupply, totalFunded, totalRedeemed, unallocated] = await Promise.all([
+      this.client.readContract({ address, abi, functionName: "totalSupply" }),
+      this.client.readContract({ address, abi, functionName: "totalFunded" }),
+      this.client.readContract({ address, abi, functionName: "totalRedeemed" }),
+      this.client.readContract({ address, abi, functionName: "unallocated" }),
+    ]);
+
+    return { totalSupply, totalFunded, totalRedeemed, unallocated };
+  }
+
+  /** What one holder can redeem for USDG right now. */
+  async getRewardPosition(user: Address): Promise<RewardPosition | null> {
+    const address = this.deployment.rewardVault;
+    if (!address) return null;
+    const balance = await this.client.readContract({
+      address,
+      abi: rewardVaultAbi,
+      functionName: "balanceOf",
+      args: [user],
+    });
+    return { balance };
+  }
+
+  /**
+   * Protocol wide totals for the tracker: what is on deposit and what has been paid.
+   *
+   * Two figures, both read straight off the chain, both deliberately narrow.
+   *
+   * `stockUsdg` prices every token's DripCore balance with the same oracle the rest of
+   * the app uses, and reports the tokens it could not price separately rather than
+   * quietly dropping them. A token with a quiet feed still has real stock behind it;
+   * calling that zero would understate the platform, so it is counted in `unpriced`
+   * and named, not folded into the total.
+   *
+   * `paidOutUsdg` is USDG holders have actually taken out of the reward vault. It does
+   * NOT include dividend advances or stream claims: those leave no cumulative counter
+   * onchain, so totalling them means indexing events, and no dividend has been declared
+   * on this deployment yet. When one is, this needs an indexer, not an estimate.
+   */
+  async getProtocolTotals(): Promise<ProtocolTotals> {
+    const d = this.deployment;
+    const tokens = await this.getStockTokens();
+
+    const byToken: ProtocolTotals["byToken"] = await Promise.all(
+      tokens.map(async (t) => {
+        const amount = (await this.client.readContract({
+          address: d.dripCore,
+          abi: dripCoreAbi,
+          functionName: "totalDeposited",
+          args: [t.address],
+        })) as bigint;
+        // Stock tokens carry their own decimals, prices six. amount * price / 1eN lands on six.
+        const valueUsdg = t.priceUsdg === null ? null : (amount * t.priceUsdg) / 10n ** BigInt(t.decimals);
+        return { address: t.address, symbol: t.symbol, amount, valueUsdg };
+      })
+    );
+
+    let stockUsdg = 0n;
+    const unpriced: string[] = [];
+    for (const row of byToken) {
+      if (row.valueUsdg === null) {
+        if (row.amount > 0n) unpriced.push(row.symbol);
+      } else {
+        stockUsdg += row.valueUsdg;
+      }
+    }
+
+    const reward = await this.getRewardStats();
+
+    return {
+      stockUsdg,
+      unpriced,
+      byToken: byToken.sort((a, b) => Number((b.valueUsdg ?? 0n) - (a.valueUsdg ?? 0n))),
+      paidOutUsdg: reward?.totalRedeemed ?? 0n,
+      owedUsdg: reward?.totalSupply ?? 0n,
+      fundedUsdg: reward?.totalFunded ?? 0n,
     };
   }
 
