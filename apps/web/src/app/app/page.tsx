@@ -221,9 +221,15 @@ function RewardsPanel() {
 
       <dl className="grid grid-cols-3 gap-px border-t border-line bg-line">
         {[
-          { label: "Paid to holders", value: `$${fmt(reward.redeemedUsd)}` },
-          { label: "Earned, not collected", value: `$${fmt(reward.outstandingUsd)}` },
-          { label: "Put in by Osinko", value: `$${fmt(reward.fundedUsd)}` },
+          {
+            label: "You have earned",
+            value: reward.yourHistoryRead ? `$${fmt(reward.yourEarnedUsd)}` : "—",
+          },
+          {
+            label: "You have collected",
+            value: reward.yourHistoryRead ? `$${fmt(reward.yourCollectedUsd)}` : "—",
+          },
+          { label: "Paid In", value: `$${fmt(reward.fundedUsd)}` },
         ].map((s) => (
           <div key={s.label} className="bg-ground px-5 py-3">
             <dt className="panel-title">{s.label}</dt>

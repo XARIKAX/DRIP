@@ -62,6 +62,12 @@ export interface Deployment {
    * render without one rather than throw.
    */
   rewardVault?: Address;
+  /**
+   * Block the reward vault was deployed in. Where a per holder history has to start
+   * reading from: the vault keeps global counters but no per user totals, so lifetime
+   * earnings come from its logs, and a log scan needs a floor that is not block zero.
+   */
+  rewardVaultBlock?: number;
   /** Ticker to address. */
   tokens: Record<string, Address>;
   /** Ticker to USDG price of one whole token, 6 decimals. */
@@ -80,10 +86,25 @@ export interface RewardStats {
   unallocated: bigint;
 }
 
-/** One holder's reward balance. */
+/** One holder's reward position, including what they have already taken. */
 export interface RewardPosition {
-  /** YT held, redeemable one for one. */
+  /** YT held right now, redeemable one for one. */
   balance: bigint;
+  /**
+   * Every YT this wallet has ever been handed, summed from Distributed logs.
+   *
+   * The vault has no per user counter — only `totalSupply`, `totalFunded` and
+   * `totalRedeemed`, all protocol wide. Reading a global where a personal figure
+   * belongs is how "earned so far" came to show one holder the sum of everybody's.
+   *
+   * Zero when the history could not be read, which is not the same claim as "earned
+   * nothing"; `historyRead` says which of the two this is.
+   */
+  lifetimeEarned: bigint;
+  /** Every YT this wallet has redeemed for USDG, summed from Redeemed logs. */
+  lifetimeRedeemed: bigint;
+  /** False when the log scan failed, so the two lifetime figures are unknown, not zero. */
+  historyRead: boolean;
 }
 
 /**

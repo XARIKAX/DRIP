@@ -362,8 +362,12 @@ export function useRewardView(): { reward: RewardView | null; loading: boolean }
   const reward = useMemo(() => {
     const s = stats.data;
     if (!s) return null;
+    const p = position.data;
     return {
-      yoursUsd: Number(position.data?.balance ?? 0n) / USDG,
+      yoursUsd: Number(p?.balance ?? 0n) / USDG,
+      yourEarnedUsd: Number(p?.lifetimeEarned ?? 0n) / USDG,
+      yourCollectedUsd: Number(p?.lifetimeRedeemed ?? 0n) / USDG,
+      yourHistoryRead: p?.historyRead ?? false,
       outstandingUsd: Number(s.totalSupply) / USDG,
       fundedUsd: Number(s.totalFunded) / USDG,
       redeemedUsd: Number(s.totalRedeemed) / USDG,
@@ -696,12 +700,11 @@ export function usePortfolioSummary(): PortfolioSummary {
       valueUsd: value,
       unpricedHoldings,
       streamRatePerSec: rate,
-      // Streams pay per second and rewards land in lumps; both are money earned. The
-      // tile counted only the first, so a wallet that had just been paid $48 of
-      // rewards read zero.
+      // Streams pay per second and rewards land in lumps; both are money this wallet
+      // earned. `redeemedUsd` is the protocol's cumulative redemptions, not this
+      // holder's, and using it here showed one wallet the sum of everybody's.
       earnedUsd:
-        streams.reduce((sum, s) => sum + s.claimedBaseUsd, 0) +
-        (reward ? reward.yoursUsd + reward.redeemedUsd : 0),
+        streams.reduce((sum, s) => sum + s.claimedBaseUsd, 0) + (reward?.yourEarnedUsd ?? 0),
       activeRules: holdings.length,
       nextDividend: next ? { symbol: next.symbol, exDate: next.exDate } : null,
     };

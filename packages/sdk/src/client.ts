@@ -455,17 +455,68 @@ export class DripReader {
     return { totalSupply, totalFunded, totalRedeemed, unallocated };
   }
 
-  /** What one holder can redeem for USDG right now. */
+  /**
+   * One holder's reward position: what they hold now, and what they have ever been
+   * handed or taken.
+   *
+   * The balance is a read; the two lifetime figures are a log scan, because the vault
+   * keeps only protocol wide counters. Reading `totalRedeemed` where a personal number
+   * belonged is exactly how "earned so far" came to show one wallet the sum of
+   * everybody's, so the personal figures are derived from `Distributed` and `Redeemed`
+   * filtered to this address and nothing else.
+   *
+   * A failed scan reports `historyRead: false` rather than zeros. "We could not read
+   * your history" and "you have earned nothing" are different sentences.
+   */
   async getRewardPosition(user: Address): Promise<RewardPosition | null> {
     const address = this.deployment.rewardVault;
     if (!address) return null;
-    const balance = await this.client.readContract({
+
+    const balance = (await this.client.readContract({
       address,
       abi: rewardVaultAbi,
       functionName: "balanceOf",
       args: [user],
-    });
-    return { balance };
+    })) as bigint;
+
+    const from = this.deployment.rewardVaultBlock;
+    if (from === undefined) {
+      // No floor to scan from, and starting at block zero would walk the whole chain.
+      return { balance, lifetimeEarned: 0n, lifetimeRedeemed: 0n, historyRead: false };
+    }
+
+    try {
+      // The event has to be cast to satisfy getLogs' overload, which then types `args`
+      // as undefined. Casting the whole parameter object keeps the indexed filter,
+      // which is the point: the RPC does the filtering, not this process.
+      const scan = (eventName: string, filter: Record<string, Address>) =>
+        this.client.getLogs({
+          address,
+          event: rewardVaultAbi.find((e) => e.type === "event" && e.name === eventName),
+          args: filter,
+          fromBlock: BigInt(from),
+          toBlock: "latest",
+        } as never);
+
+      const [distributed, redeemed] = await Promise.all([
+        scan("Distributed", { to: user }),
+        scan("Redeemed", { holder: user }),
+      ]);
+
+      const sum = (logs: unknown[]) =>
+        logs.reduce<bigint>((a, l) => a + ((l as { args?: { amount?: bigint } }).args?.amount ?? 0n), 0n);
+
+      return {
+        balance,
+        lifetimeEarned: sum(distributed),
+        lifetimeRedeemed: sum(redeemed),
+        historyRead: true,
+      };
+    } catch {
+      // A public RPC refusing the range is the common case, and it must not take the
+      // whole panel down: the balance is still true and still worth showing.
+      return { balance, lifetimeEarned: 0n, lifetimeRedeemed: 0n, historyRead: false };
+    }
   }
 
   /**
