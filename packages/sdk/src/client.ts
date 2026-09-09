@@ -5,6 +5,7 @@ import {
   dividendRegistryAbi,
   dripCoreAbi,
   lendingPoolAbi,
+  listings,
   principalTokenAbi,
   reinvestorAbi,
   rewardVaultAbi,
@@ -487,7 +488,7 @@ export class DripReader {
     const d = this.deployment;
     const tokens = await this.getStockTokens();
 
-    const byToken: ProtocolTotals["byToken"] = await Promise.all(
+    const rows = await Promise.all(
       tokens.map(async (t) => {
         const amount = (await this.client.readContract({
           address: d.dripCore,
@@ -497,13 +498,13 @@ export class DripReader {
         })) as bigint;
         // Stock tokens carry their own decimals, prices six. amount * price / 1eN lands on six.
         const valueUsdg = t.priceUsdg === null ? null : (amount * t.priceUsdg) / 10n ** BigInt(t.decimals);
-        return { address: t.address, symbol: t.symbol, amount, valueUsdg };
+        return { address: t.address, symbol: t.symbol, amount, valueUsdg, rate: this.rewardRate(t.symbol) };
       })
     );
 
     let stockUsdg = 0n;
     const unpriced: string[] = [];
-    for (const row of byToken) {
+    for (const row of rows) {
       if (row.valueUsdg === null) {
         if (row.amount > 0n) unpriced.push(row.symbol);
       } else {
@@ -512,15 +513,62 @@ export class DripReader {
     }
 
     const reward = await this.getRewardStats();
+    const rewardedUsdg = reward ? reward.totalSupply + reward.totalRedeemed : 0n;
+
+    const byToken = rows
+      .map(({ rate, ...row }) => ({ ...row, realisedPct: this.realisedPct(row, rate, rows, rewardedUsdg) }))
+      .sort((a, b) => Number((b.valueUsdg ?? 0n) - (a.valueUsdg ?? 0n)));
 
     return {
       stockUsdg,
       unpriced,
-      byToken: byToken.sort((a, b) => Number((b.valueUsdg ?? 0n) - (a.valueUsdg ?? 0n))),
+      byToken,
       paidOutUsdg: reward?.totalRedeemed ?? 0n,
       owedUsdg: reward?.totalSupply ?? 0n,
       fundedUsdg: reward?.totalFunded ?? 0n,
+      rewardedUsdg,
     };
+  }
+
+  /** The listing's posted rate for a symbol, or zero. */
+  private rewardRate(symbol: string): number {
+    return listings[this.deployment.chainId]?.tokens.find((t) => t.symbol === symbol)?.rewardRatePct ?? 0;
+  }
+
+  /**
+   * What a dollar deposited in this stock has actually been paid, as a percentage of
+   * the deposit. Realised, cumulative, and deliberately NOT annualised.
+   *
+   * The keeper splits each pot across holders weighted by `deposit value x posted
+   * rate`, so a stock's share of everything ever handed out is its share of that
+   * weighted total. Dividing that back by the stock's own deposit value gives the
+   * return a dollar in it has earned — which is why the posted rates have to drive the
+   * split for these numbers to differ at all. Under a split weighted by value alone
+   * every stock would return the identical figure, and eleven different percentages on
+   * the screen would be decoration.
+   *
+   * Not annualised because the rewards are discretionary lump sums, not a stream. One
+   * 50 USDG drop onto 60 USDG of deposits two days after launch annualises to five
+   * figures of APY, which is arithmetic rather than information, and it is the number
+   * someone would deposit against. Cumulative-paid-so-far is a fact; the extrapolation
+   * from it is not.
+   */
+  private realisedPct(
+    row: { valueUsdg: bigint | null },
+    rate: number,
+    all: { valueUsdg: bigint | null; rate: number }[],
+    rewardedUsdg: bigint
+  ): number | null {
+    if (rewardedUsdg === 0n || row.valueUsdg === null || row.valueUsdg === 0n) return null;
+
+    // Weights in floating point: this is a display figure, and the bigint precision
+    // that matters is on the chain, in the amounts the keeper actually distributed.
+    const weightOf = (v: bigint | null, r: number) => (v === null ? 0 : Number(v) * r);
+    const totalWeight = all.reduce((a, t) => a + weightOf(t.valueUsdg, t.rate), 0);
+    if (totalWeight === 0) return null;
+
+    const share = (Number(rewardedUsdg) * weightOf(row.valueUsdg, rate)) / totalWeight;
+    return (share / Number(row.valueUsdg)) * 100;
   }
 
   /** An LP's stake. */

@@ -161,23 +161,45 @@ function Rates() {
   const rated = tokens.filter((t) => t.yieldPct !== null);
   if (rated.length === 0) return null;
 
+  // Realised and target never mix in one column. Once anything has been paid every
+  // stock has a realised figure, so this flips wholesale rather than row by row.
+  const realised = rated.some((t) => t.yieldRealised);
+
   return (
     <section className="panel" aria-label="Reward rates">
       <div className="panel-head">
-        <span className="panel-title">Reward rate by stock</span>
-        <span className="text-micro font-bold uppercase text-muted">Per year</span>
+        <span className="panel-title">{realised ? "Paid so far, by stock" : "Target reward rate"}</span>
+        <span className="text-micro font-bold uppercase text-muted">
+          {realised ? "Of amount deposited" : "Per year"}
+        </span>
       </div>
       <div className="grid grid-cols-2 gap-px bg-line sm:grid-cols-3 lg:grid-cols-4">
         {rated.map((t) => (
           <div key={t.symbol} className="flex items-center justify-between gap-3 bg-ground px-5 py-4">
-            <span className="text-[14px] font-extrabold tracking-tight">{t.symbol}</span>
+            <span className="flex items-center gap-2.5">
+              <TokenMark symbol={t.symbol} size={22} />
+              <span className="text-[14px] font-extrabold tracking-tight">{t.symbol}</span>
+            </span>
             <span className="num text-[14px] font-medium text-accent">{t.yieldPct?.toFixed(2)}%</span>
           </div>
         ))}
       </div>
       <p className="border-t border-line px-5 py-3 text-[12px] leading-snug text-faint">
-        Osinko funds these rewards itself out of its own USDG. They are not the dividend the
-        company pays, and Osinko can change or stop them.
+        {realised ? (
+          <>
+            What a dollar deposited in each stock has actually been paid, cumulative since
+            launch. Not annualised: the rewards are discretionary amounts Osinko pays when it
+            chooses, so stretching them into a yearly rate would invent a number nobody should
+            deposit against.
+          </>
+        ) : (
+          <>
+            What Osinko is aiming to pay, not what it has paid — nothing has been distributed
+            yet. These become live figures the moment the first pot goes out.
+          </>
+        )}{" "}
+        Osinko funds this itself out of its own USDG. It is not the dividend the company pays,
+        and Osinko can change or stop it.
       </p>
     </section>
   );

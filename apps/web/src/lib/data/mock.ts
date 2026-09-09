@@ -315,6 +315,9 @@ export class MockStore {
         name: t.name,
         priceUsd: t.priceUsd,
         yieldPct: t.yieldPct,
+        // The sample portfolio is a worked example of the protocol running, so its
+        // figures stand for money already paid rather than a target.
+        yieldRealised: true,
         perShare: t.perShare,
         nextExDate: next ? next.exDate : null,
         payingNow,

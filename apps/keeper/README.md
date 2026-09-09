@@ -6,7 +6,7 @@ Three jobs, on a timer, against a deployed Osinko protocol.
 | --- | --- | --- |
 | **activate** | Pays holders the moment their entitlement exists, instead of whenever someone remembers to. `activate` is permissionless, so this needs no role. | gas |
 | **settle** | On the pay date, pays the protocol what the issuer paid: retires the vault's receivable and makes non-advanced holders claimable. | gas **and the full entitlement in USDG** |
-| **rewards** | Accrues each stock's posted reward rate on what people have on deposit and mints the YT that pays it. Needs `DISTRIBUTOR_ROLE` on the reward vault. | gas, out of a pot Osinko funded up front |
+| **rewards** | Hands out whatever USDG sits unallocated in the reward vault, split across depositors by the value of what they hold. Needs `DISTRIBUTOR_ROLE` on the reward vault. | gas; the pot is money Osinko already put in |
 
 Settlement is off unless `SETTLE_ENABLED=true`, and rewards are off unless
 `REWARDS_ENABLED=true`. A service that can move the float on its own should say so out
@@ -14,42 +14,46 @@ loud before it is allowed to.
 
 ## How rewards are worked out
 
-Each listed stock carries a `rewardRatePct` in `contracts/listings/<chainid>.json`.
-Every cycle the keeper takes the window since the last distribution and, for each
-holder and each stock:
+There is no accrual and no clock. Funding is the trigger and the pot is the amount:
+whatever USDG sits unallocated in the vault goes straight out on the next cycle,
+split across everyone holding stock in the platform.
 
-```
-accrual = balanceOfAt(holder, stock, windowStart) x price x rate x elapsed / 1 year
-```
+Each holder's weight is `deposit value x the listing's rewardRatePct`. Two things
+about that:
 
-Three things about that formula are deliberate:
+**Why value, not shares.** A dollar is a dollar. Splitting by share count would pay
+someone holding a cheap ticker the same as someone holding an expensive one.
 
-**The balance at the START of the window.** A deposit made two minutes before the
-keeper runs earns from the next window, not a full period it was not present for.
+**Why the rate is in there at all.** Weighting by value alone makes every dollar on
+deposit earn exactly the same, whatever it was deposited in — so the eleven different
+percentages the app shows would all be the same number in reality, and the per stock
+figures would be decoration. Multiplying by the rate is what makes them true: after any
+distribution, what a dollar of MSFT earned over what a dollar of NVDA earned is
+precisely the ratio of their posted rates. If no token carries a rate the weighting
+falls back to plain value, which is the same split with every rate equal.
 
-**The pot is the hard bound.** If the accruals add up to more than the vault holds
-unallocated, every holder is scaled down by the same factor. The posted rate is what
-Osinko intends to pay; the pot is what Osinko has; the pot wins. That scaling is also
-exactly "split what is in the contract proportionally by deposit value", because each
-holder's accrual is their deposit value times its rate.
+**A quiet price feed skips its token for that cycle** rather than valuing it at zero,
+which would cut its holders out of the split while paying everyone else in full. The
+pot is not spent, so the next cycle divides the same money once the feed answers.
 
-**A quiet price feed skips its token for that cycle, rather than valuing it at zero.**
-Zero would pay that stock's holders nothing while paying everyone else in full. The
-accrual is not lost: the window only advances when a distribution actually lands, so
-it arrives next cycle once the feed answers.
+The pot is cleared exactly, by the largest remainder method. Plain division floors
+every holder and leaves a few base units behind, which would sit as permanently
+unallocated dust that the next cycle divides, floors to zero, and finds nothing to do
+with — for ever.
 
-The window itself is read back off the chain — the block timestamp of the last
-`Distributed` log — so a restart cannot re-pay a window that was already paid, and
-Railway recycling the disk costs nothing. Before the first distribution there is no
-log to read, which is what `REWARD_EPOCH_START` is for. Without it the job declines to
-run rather than inventing a start date.
+### Why this needs no state of its own
+
+`unallocated()` is `usdgHeld - ytSupply`. Once a distribution lands, supply equals the
+balance and there is nothing left to hand out. So a restart, a duplicated cycle, or a
+crash between simulate and broadcast cannot pay twice: the chain holds the whole of the
+state and the keeper holds none of it. Railway recycling the disk costs nothing.
 
 Granting the role, once, from the admin key:
 
 ```bash
 cast send $REWARD_VAULT "grantRole(bytes32,address)" \
-  $(cast keccak "DISTRIBUTOR_ROLE") $KEEPER_ADDRESS \
-  --rpc-url $RPC_URL --private-key $ADMIN_KEY
+  $(cast call $REWARD_VAULT "DISTRIBUTOR_ROLE()(bytes32)" --rpc-url $RPC_URL) \
+  $KEEPER_ADDRESS --rpc-url $RPC_URL --private-key $ADMIN_KEY
 ```
 
 ## What it deliberately does not do
@@ -72,8 +76,7 @@ and say so every cycle. That is the correct behaviour, not a misconfiguration.
 | `CHAIN_ID` | no | `4663` | Must have an address book in the SDK. |
 | `SETTLE_ENABLED` | no | `false` | Arms the leg that spends USDG. |
 | `REWARDS_ENABLED` | no | `false` | Arms the reward distribution. |
-| `REWARD_EPOCH_START` | no | — | Unix seconds. Where accrual begins before the first distribution. Without it, rewards decline to run. |
-| `REWARD_MIN_USDG` | no | `1` | Do not spend gas below this total. Skipping does not lose the accrual. |
+| `REWARD_MIN_USDG` | no | `0.01` | Leave a pot smaller than this alone. Skipping spends nothing and loses nothing. |
 | `REWARD_MAX_HOLDERS` | no | `250` | Refuse rather than pay some. See the design note. |
 | `DRY_RUN` | no | `false` | Reports what it would do, broadcasts nothing. |
 | `POLL_SECONDS` | no | `300` | Cycle interval. |
@@ -121,12 +124,17 @@ A holder skipped that way keeps their entitlement in full, claimable at the pay 
 **Approvals are per settlement, not per batch.** If the process dies mid-loop nothing
 is left standing approved.
 
-**Distribution is one transaction and is never chunked.** The window is derived from
-the last `Distributed` log, so a run that landed batch one and reverted on batch two
-would advance the window past holders who were never paid. All or nothing keeps the
-accounting honest. When the holder set outgrows a single transaction the answer is a
-claim tree, not a chunked loop that quietly drops people — which is why the keeper
-refuses past `REWARD_MAX_HOLDERS` instead of paying the first few hundred.
+**Distribution is one transaction and is never chunked.** A run that landed batch one
+and reverted on batch two would leave the pot part spent and the rest to be divided
+again on different weights — the same money, split two different ways. All or nothing.
+When the holder set outgrows a single transaction the answer is a claim tree, not a
+chunked loop that quietly pays some people, which is why the keeper refuses past
+`REWARD_MAX_HOLDERS` instead of paying the first few hundred.
+
+**The split is a snapshot of the moment it runs.** Someone can deposit just before a
+distribution and withdraw just after, and take a share for having been present for one
+block. At current size that is not worth engineering against; at real size it is, and
+the fix is to weight by the balance at the funding block rather than at the head.
 
 **The vault is the second opinion, not the first.** `RewardVault.distribute` reverts
 if it would owe more YT than it holds USDG, so a bug here can only fail closed. The

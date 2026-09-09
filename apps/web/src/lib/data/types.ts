@@ -33,9 +33,18 @@ export interface TokenInfo {
    * conflate them, least of all on somebody's collateral.
    */
   priceUsd: number | null;
-  /** Trailing dividend yield, percent. */
-  /** Dividend yield a year, from the declared calendar. Null when nothing is declared. */
+  /**
+   * The reward figure shown against this stock, as a percentage.
+   *
+   * Two different claims share this field, and `yieldRealised` says which one it is:
+   * once anything has been distributed it is what a dollar in this stock HAS been
+   * paid, cumulative and realised; before that it is the rate Osinko is TARGETING.
+   * The UI must label them differently. A target read as a fact is the direction that
+   * misleads somebody into depositing.
+   */
   yieldPct: number | null;
+  /** True when `yieldPct` is money already paid, false when it is the target rate. */
+  yieldRealised: boolean;
   /** Quarterly dividend per share in USD. */
   perShare: number;
   /** Next ex date, unix seconds, or null when nothing is scheduled. */

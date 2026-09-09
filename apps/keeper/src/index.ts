@@ -15,9 +15,9 @@ import { log } from "./log.js";
  *             someone remembers to. Gas only.
  *   settle    on the pay date, pay the protocol what the issuer paid. Real USDG, out
  *             of this wallet, so it is off until SETTLE_ENABLED turns it on.
- *   rewards   accrue the posted rate on every deposit and mint the YT that pays it,
- *             bounded by what the reward vault actually holds. Spends Osinko's own
- *             money, so it is off until REWARDS_ENABLED turns it on.
+ *   rewards   hand out whatever USDG sits unallocated in the reward vault, split by
+ *             the dollar value of what each holder has on deposit. Spends Osinko's
+ *             own money, so it is off until REWARDS_ENABLED turns it on.
  *
  * What it deliberately does NOT do is declare dividends. That needs ORACLE_ROLE and
  * real corporate action data, and a keeper that invented either would be inventing
@@ -83,7 +83,7 @@ async function main(): Promise<void> {
     await activateDue(config, client, wallet, index, head.timestamp);
     await settleDue(config, client, wallet, head.timestamp);
     if (config.rewardsEnabled) {
-      await distributeRewards(config, client, wallet, index, head);
+      await distributeRewards(config, client, wallet, index);
     }
     state.cycles++;
     state.lastCycle = new Date().toISOString();

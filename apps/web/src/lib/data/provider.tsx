@@ -197,7 +197,8 @@ const MODE_TO_CHAIN: Record<ModeName, ChainMode> = {
  * right and manufactures one outright for a stock that has never paid a dividend at
  * all, which is most of a mega cap technology basket.
  */
-function annualYieldPct(symbol: string): number | null {
+/** The rate Osinko is targeting for a stock. Not a promise, and not what was paid. */
+function targetRatePct(symbol: string): number | null {
   return listings[chainId]?.tokens.find((t) => t.symbol === symbol)?.rewardRatePct ?? null;
 }
 
@@ -210,6 +211,7 @@ export function useTokensView(): TokenInfo[] {
   const { store, version } = useMockData();
   const chainTokens = useChainTokens();
   const chainCalendar = useChainCalendar();
+  const totals = useChainProtocolTotals();
 
   return useMemo(() => {
     if (source === "demo") return store.tokens();
@@ -225,7 +227,15 @@ export function useTokensView(): TokenInfo[] {
         symbol: t.symbol,
         name: t.name,
         priceUsd,
-        yieldPct: annualYieldPct(t.symbol),
+        // Realised first: once a pot has actually been handed out, show what this
+        // stock earned rather than what it was aiming at. The target is the stand in
+        // until there is a fact to replace it with, never the other way round.
+        ...(() => {
+          const realised = (totals.data?.byToken ?? []).find((r) => r.symbol === t.symbol)?.realisedPct;
+          return typeof realised === "number"
+            ? { yieldPct: realised, yieldRealised: true }
+            : { yieldPct: targetRatePct(t.symbol), yieldRealised: false };
+        })(),
         perShare: perShare ?? 0,
         nextExDate: next ? next.exDate : null,
         // Paying now means the calendar has this token between its ex and pay dates.
