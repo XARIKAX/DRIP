@@ -56,7 +56,9 @@ async function main(): Promise<void> {
     const server = createServer((req, res) => {
       const healthy = state.lastError === null;
       res.writeHead(healthy ? 200 : 503, { "content-type": "application/json" });
-      res.end(JSON.stringify({ ...state, keeper: config.account.address, path: req.url }, null, 2));
+      res.end(
+        JSON.stringify({ ...state, step, keeper: config.account.address, path: req.url }, null, 2)
+      );
     });
     // Without this, a bind failure raises an unhandled 'error' event and Node prints a
     // stack trace and exits — no structured log, nothing in Railway's log stream to say
@@ -72,18 +74,26 @@ async function main(): Promise<void> {
   // with nothing to do. Say which one this is, at boot and every cycle.
   await reportBalances(config, client);
 
+  // Name each step as it runs. A cycle is five calls to four subsystems, and an error
+  // that says only "cycle failed" costs a debugging session working out which one.
+  let step = "boot";
+  const at = async <T>(name: string, fn: () => Promise<T>): Promise<T> => {
+    step = name;
+    return fn();
+  };
+
   const cycle = async (): Promise<void> => {
     // The chain's clock, never the host's. Every deadline the keeper reasons about —
     // ex dates, pay dates — is compared against block.timestamp inside the contracts,
     // and the two clocks are not the same one. Date.now() here made the keeper miss a
     // dividend whose ex date the chain had already passed, and would equally have had
     // it push transactions the chain then reverted as early.
-    const head = await client.getBlock();
-    await index.sync(head.number);
-    await activateDue(config, client, wallet, index, head.timestamp);
-    await settleDue(config, client, wallet, head.timestamp);
+    const head = await at("getBlock", () => client.getBlock());
+    await at("indexHolders", () => index.sync(head.number));
+    await at("activate", () => activateDue(config, client, wallet, index, head.timestamp));
+    await at("settle", () => settleDue(config, client, wallet, head.timestamp));
     if (config.rewardsEnabled) {
-      await distributeRewards(config, client, wallet, index);
+      await at("rewards", () => distributeRewards(config, client, wallet, index));
     }
     state.cycles++;
     state.lastCycle = new Date().toISOString();
@@ -96,8 +106,19 @@ async function main(): Promise<void> {
     } catch (err) {
       // One bad cycle is an RPC hiccup, not a reason to lose the process and the
       // holder index with it. Record it, let the health endpoint go red, try again.
-      state.lastError = (err as Error).message;
-      log.error("cycle failed", { reason: state.lastError });
+      const e = err as Error & { shortMessage?: string; details?: string };
+      // viem puts the sentence worth reading in shortMessage and buries it in message,
+      // which opens with the whole failing call. Prefer the short one and keep both.
+      state.lastError = e.shortMessage ?? e.message;
+      log.error("cycle failed", {
+        step,
+        reason: state.lastError,
+        name: e.name,
+        ...(e.details ? { details: e.details } : {}),
+        ...(e.shortMessage && e.message !== e.shortMessage
+          ? { full: e.message.split("\n").slice(0, 4).join(" | ") }
+          : {}),
+      });
     }
     if (config.runOnce) break;
     await new Promise((r) => setTimeout(r, config.intervalMs));
