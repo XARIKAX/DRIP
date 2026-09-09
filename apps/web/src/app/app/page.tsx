@@ -11,6 +11,7 @@ import {
   useHoldings,
   usePendingAdvances,
   usePortfolioSummary,
+  useRewardView,
   useStreamRows,
 } from "@/lib/data/provider";
 import { MODE_LABEL, streamClaimable, type ModeName, type StreamRow } from "@/lib/data/types";
@@ -25,6 +26,7 @@ export default function DashboardPage() {
       <div className="grid gap-8 xl:grid-cols-3">
         <div className="min-w-0 space-y-8 xl:col-span-2">
           <PendingAdvances />
+          <RewardsPanel />
           <StreamsPanel />
           <HoldingsPanel />
         </div>
@@ -151,6 +153,84 @@ function PendingAdvances() {
           </button>
         </div>
       ))}
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+/**
+ * Rewards earned on deposited stock, and the button that turns them into money.
+ *
+ * Each YT is one USDG sitting in the reward vault, so there is no rate to quote and no
+ * queue to explain: press the button, the USDG lands. The stock stays on deposit and
+ * keeps earning — that is the whole point of paying in a token rather than unwinding a
+ * position to collect.
+ *
+ * Hidden entirely when this deployment has no reward vault, and when a connected wallet
+ * has never earned anything. An empty panel promising rewards is worse than no panel.
+ */
+function RewardsPanel() {
+  const { reward } = useRewardView();
+  const actions = useDataActions();
+  const [claiming, setClaiming] = useState(false);
+
+  if (!reward || (reward.yoursUsd <= 0 && reward.outstandingUsd <= 0)) return null;
+
+  const yours = reward.yoursUsd;
+
+  async function claim() {
+    if (yours <= 0) return;
+    setClaiming(true);
+    try {
+      await actions.redeemReward(yours);
+    } finally {
+      setClaiming(false);
+    }
+  }
+
+  return (
+    <section className="panel" aria-label="Your rewards">
+      <div className="panel-head">
+        <span className="panel-title">Rewards</span>
+        <span className="num text-micro font-bold uppercase text-muted">
+          ${fmt(reward.unallocatedUsd)} left in the pot
+        </span>
+      </div>
+
+      <div className="flex flex-wrap items-end justify-between gap-6 p-5">
+        <div className="min-w-0">
+          <div className="panel-title">Yours to collect</div>
+          <div className="mt-2 text-[clamp(28px,3vw,40px)] font-semibold tracking-tighter text-accent">
+            <AnimatedNumber value={yours} decimals={2} prefix="$" flash="dark" />
+          </div>
+          <p className="mt-2 max-w-md text-[13px] leading-snug text-muted">
+            Earned by the stock you have on deposit. Collecting pays you in USDG and leaves
+            your stock exactly where it is.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="btn-accent"
+          disabled={yours <= 0 || claiming || actions.busy}
+          onClick={() => void claim()}
+        >
+          {yours <= 0 ? "Nothing to collect yet" : `Collect $${fmt(yours)}`}
+        </button>
+      </div>
+
+      <dl className="grid grid-cols-3 gap-px border-t border-line bg-line">
+        {[
+          { label: "Paid to holders", value: `$${fmt(reward.redeemedUsd)}` },
+          { label: "Earned, not collected", value: `$${fmt(reward.outstandingUsd)}` },
+          { label: "Put in by Osinko", value: `$${fmt(reward.fundedUsd)}` },
+        ].map((s) => (
+          <div key={s.label} className="bg-ground px-5 py-3">
+            <dt className="panel-title">{s.label}</dt>
+            <dd className="num mt-1 text-[15px] font-medium text-ink">{s.value}</dd>
+          </div>
+        ))}
+      </dl>
     </section>
   );
 }

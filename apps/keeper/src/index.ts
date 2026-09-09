@@ -3,17 +3,21 @@ import { createPublicClient, createWalletClient, http, erc20Abi, formatEther } f
 import { loadConfig } from "./config.js";
 import { HolderIndex } from "./holders.js";
 import { activateDue, settleDue } from "./jobs.js";
+import { distributeRewards } from "./rewards.js";
 import { log } from "./log.js";
 
 /**
  * The Osinko keeper.
  *
- * Two jobs, on a timer:
+ * Three jobs, on a timer:
  *
  *   activate  pay holders the moment their entitlement exists, rather than whenever
  *             someone remembers to. Gas only.
  *   settle    on the pay date, pay the protocol what the issuer paid. Real USDG, out
  *             of this wallet, so it is off until SETTLE_ENABLED turns it on.
+ *   rewards   accrue the posted rate on every deposit and mint the YT that pays it,
+ *             bounded by what the reward vault actually holds. Spends Osinko's own
+ *             money, so it is off until REWARDS_ENABLED turns it on.
  *
  * What it deliberately does NOT do is declare dividends. That needs ORACLE_ROLE and
  * real corporate action data, and a keeper that invented either would be inventing
@@ -39,6 +43,8 @@ async function main(): Promise<void> {
     keeper: config.account.address,
     dripCore: config.deployment.dripCore,
     settleEnabled: config.settleEnabled,
+    rewardsEnabled: config.rewardsEnabled,
+    rewardVault: config.deployment.rewardVault ?? "none",
     dryRun: config.dryRun,
     intervalSeconds: config.intervalMs / 1000,
   });
@@ -76,6 +82,9 @@ async function main(): Promise<void> {
     await index.sync(head.number);
     await activateDue(config, client, wallet, index, head.timestamp);
     await settleDue(config, client, wallet, head.timestamp);
+    if (config.rewardsEnabled) {
+      await distributeRewards(config, client, wallet, index, head);
+    }
     state.cycles++;
     state.lastCycle = new Date().toISOString();
     state.lastError = null;

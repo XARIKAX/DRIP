@@ -56,10 +56,64 @@ export interface Deployment {
   reinvestor: Address;
   swapAdapter: Address;
   splitVault: Address;
+  /**
+   * The reward token vault. Optional because the protocol was deployed before it
+   * existed, so a book written by that deploy is still valid and the app has to
+   * render without one rather than throw.
+   */
+  rewardVault?: Address;
   /** Ticker to address. */
   tokens: Record<string, Address>;
   /** Ticker to USDG price of one whole token, 6 decimals. */
   prices: Record<string, number>;
+}
+
+/** The reward vault's state: what has been funded, handed out and taken. */
+export interface RewardStats {
+  /** YT in circulation. Every one is a USDG in the vault. */
+  totalSupply: bigint;
+  /** USDG paid in, cumulative. */
+  totalFunded: bigint;
+  /** YT redeemed for USDG, cumulative — what holders have actually taken. */
+  totalRedeemed: bigint;
+  /** USDG in the vault no YT has a claim on yet: what is left to hand out. */
+  unallocated: bigint;
+}
+
+/** One holder's reward balance. */
+export interface RewardPosition {
+  /** YT held, redeemable one for one. */
+  balance: bigint;
+}
+
+/**
+ * Protocol wide totals, for the public tracker.
+ *
+ * Every figure is a live chain read, never a running tally the app keeps. See
+ * `getProtocolTotals` for what `paidOutUsdg` does and does not count.
+ */
+export interface ProtocolTotals {
+  /** USDG value of every stock on deposit that the oracle would price, 6 decimals. */
+  stockUsdg: bigint;
+  /**
+   * Symbols holding stock the oracle refused to price. Their value is missing from
+   * `stockUsdg`, so a non empty list means the total is a floor, not the whole number.
+   */
+  unpriced: string[];
+  /** Per token breakdown, biggest first. `valueUsdg` is null on a quiet feed. */
+  byToken: {
+    address: Address;
+    symbol: string;
+    /** Stock tokens on deposit across everyone, in the token's own decimals. */
+    amount: bigint;
+    valueUsdg: bigint | null;
+  }[];
+  /** USDG holders have redeemed and taken to their wallets, cumulative. */
+  paidOutUsdg: bigint;
+  /** YT outstanding: allocated to holders, not yet taken. */
+  owedUsdg: bigint;
+  /** USDG paid into the reward vault, cumulative. */
+  fundedUsdg: bigint;
 }
 
 /** A stock token the protocol knows about. */

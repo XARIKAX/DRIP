@@ -18,6 +18,7 @@ import {
   buildDeposit,
   buildSetMode,
   buildStockFaucet,
+  buildRewardRedeem,
   buildVaultDeposit,
   buildVaultWithdraw,
   buildWithdraw,
@@ -41,6 +42,9 @@ import {
   useStreams as useChainStreams,
   useVaultPosition as useChainVaultPosition,
   useVaultStats as useChainVaultStats,
+  useRewardStats as useChainRewardStats,
+  useRewardPosition as useChainRewardPosition,
+  useProtocolTotals as useChainProtocolTotals,
   useWalletBalances as useChainWallet,
   useActivatable as useChainActivatable,
   useCredit as useChainCredit,
@@ -62,11 +66,13 @@ import type {
   ModeName,
   PendingAdvance,
   PortfolioSummary,
+  RewardView,
   SplitDividendRow,
   SplitPosition,
   SplitSeries,
   StreamRow,
   TokenInfo,
+  TrackerView,
   VaultView,
   WalletBalances,
 } from "./types";
@@ -333,6 +339,58 @@ export function useActivityRows(): { rows: ActivityRow[]; loading: boolean } {
   }, [source, version, activity.data]);
 
   return { rows, loading: source === "chain" && activity.isLoading };
+}
+
+/**
+ * The reward programme. Null when this deployment has no vault, which the app has to
+ * render around rather than throw on: the protocol shipped before it existed.
+ */
+export function useRewardView(): { reward: RewardView | null; loading: boolean } {
+  const stats = useChainRewardStats();
+  const position = useChainRewardPosition();
+
+  const reward = useMemo(() => {
+    const s = stats.data;
+    if (!s) return null;
+    return {
+      yoursUsd: Number(position.data?.balance ?? 0n) / USDG,
+      outstandingUsd: Number(s.totalSupply) / USDG,
+      fundedUsd: Number(s.totalFunded) / USDG,
+      redeemedUsd: Number(s.totalRedeemed) / USDG,
+      unallocatedUsd: Number(s.unallocated) / USDG,
+    } satisfies RewardView;
+  }, [stats.data, position.data]);
+
+  return { reward, loading: stats.isLoading };
+}
+
+/**
+ * The tracker's numbers. Chain only and wallet free: it is a public scoreboard, so it
+ * reads the same for a visitor as for a holder. Null before the reads land, or on a
+ * chain with no deployment — the page says so rather than rendering zeros as fact.
+ */
+export function useTrackerView(): { tracker: TrackerView | null; loading: boolean } {
+  const totals = useChainProtocolTotals();
+
+  const tracker = useMemo(() => {
+    const t = totals.data;
+    if (!t) return null;
+    return {
+      stockUsd: Number(t.stockUsdg) / USDG,
+      unpriced: t.unpriced,
+      rows: t.byToken.map((r) => ({
+        symbol: r.symbol,
+        // 18 decimal balances go past 2^53, so divide in bigint before Number().
+        amount: Number((r.amount * 10_000n) / 10n ** 18n) / 10_000,
+        valueUsd: r.valueUsdg === null ? null : Number(r.valueUsdg) / USDG,
+      })),
+      paidOutUsd: Number(t.paidOutUsdg) / USDG,
+      owedUsd: Number(t.owedUsdg) / USDG,
+      fundedUsd: Number(t.fundedUsdg) / USDG,
+    } satisfies TrackerView;
+  }, [totals.data]);
+
+  return { tracker, loading: totals.isLoading };
 }
 
 export function useVaultView(): { vault: VaultView; loading: boolean } {
@@ -627,6 +685,11 @@ export interface DataActions {
   faucet: (symbol: string) => Promise<void>;
   vaultDeposit: (usd: number) => Promise<void>;
   vaultWithdraw: (usd: number) => Promise<void>;
+  /**
+   * Burn YT for the USDG behind it. Nothing else moves: the stock that earned the
+   * reward stays on deposit and keeps earning.
+   */
+  redeemReward: (usd: number) => Promise<void>;
   borrow: (usd: number) => Promise<void>;
   repay: (usd: number) => Promise<void>;
   /** Opt dividend income into paying down principal, not just interest. */
@@ -682,6 +745,7 @@ export function useDataActions(): DataActions {
           }),
         withdraw: (symbol, shares) => demo(() => mockStore.withdraw(symbol, shares)),
         faucet: (symbol) => demo(() => mockStore.faucet(symbol)),
+        redeemReward: async () => {},
         vaultDeposit: (usd) => demo(() => mockStore.vaultDeposit(usd)),
         vaultWithdraw: (usd) => demo(() => mockStore.vaultWithdraw(usd)),
         borrow: (usd) => demo(() => mockStore.borrow(usd)),
@@ -731,6 +795,12 @@ export function useDataActions(): DataActions {
         const d = need(deployment, "deployment");
         const token = need(addressOf(symbol), symbol);
         await run([buildWithdraw(d, token, toStockBase(shares), symbol)]);
+      },
+      redeemReward: async (usd) => {
+        const d = need(deployment, "deployment");
+        // Six decimals, like the USDG behind it. Rounding rather than flooring is safe
+        // here because the vault holds the backing for every token it minted.
+        await run([buildRewardRedeem(d, BigInt(Math.round(usd * 1e6)))]);
       },
       faucet: async (symbol) => {
         if (!hasFaucets) throw new Error("This network uses real stock tokens; there is no faucet.");

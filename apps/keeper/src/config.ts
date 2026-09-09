@@ -21,6 +21,18 @@ export interface KeeperConfig {
   intervalMs: number;
   /** Settlement moves real USDG out of the keeper wallet, so it is opt in. */
   settleEnabled: boolean;
+  /** Minting YT against Osinko's own USDG is opt in for the same reason. */
+  rewardsEnabled: boolean;
+  /**
+   * Where reward accrual starts when the vault has never distributed. Null is legal
+   * and means "do not distribute yet": guessing a start date would pay a first window
+   * of arbitrary length out of a pot funded for a different purpose.
+   */
+  rewardEpochStart: bigint | null;
+  /** Do not spend gas on a distribution smaller than this, in USDG base units. */
+  rewardMinTotal: bigint;
+  /** Refuse to distribute to more holders than one transaction can safely carry. */
+  rewardMaxHolders: number;
   /** Report what would happen and broadcast nothing. */
   dryRun: boolean;
   runOnce: boolean;
@@ -75,6 +87,14 @@ export function loadConfig(): KeeperConfig {
     logChunk: BigInt(num("LOG_CHUNK", 10_000)),
     intervalMs: num("POLL_SECONDS", 300) * 1000,
     settleEnabled: bool("SETTLE_ENABLED", false),
+    rewardsEnabled: bool("REWARDS_ENABLED", false),
+    rewardEpochStart: process.env.REWARD_EPOCH_START?.trim()
+      ? BigInt(process.env.REWARD_EPOCH_START.trim())
+      : null,
+    // One USDG. Below this the gas costs more than the reward is worth, and skipping
+    // does not lose the accrual: the window only advances when a distribution lands.
+    rewardMinTotal: BigInt(Math.round(num("REWARD_MIN_USDG", 1) * 1e6)),
+    rewardMaxHolders: num("REWARD_MAX_HOLDERS", 250),
     dryRun: bool("DRY_RUN", false),
     runOnce: bool("KEEPER_RUN_ONCE", false),
     port: num("PORT", 8080),

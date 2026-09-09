@@ -199,6 +199,27 @@ export function useWalletBalances() {
   );
 }
 
+export function useRewardStats() {
+  const reader = useReader();
+  return useQuery(readerQuery(["rewardStats", chainId], reader, (r) => r.getRewardStats()));
+}
+
+export function useRewardPosition() {
+  const reader = useReader();
+  const { address } = useAccount();
+  return useQuery(
+    readerQuery(["rewardPosition", chainId, address], reader, (r) => r.getRewardPosition(address!), {
+      enabled: Boolean(address),
+    })
+  );
+}
+
+/** Protocol wide totals for the tracker. One read, no wallet needed. */
+export function useProtocolTotals() {
+  const reader = useReader();
+  return useQuery(readerQuery(["protocolTotals", chainId], reader, (r) => r.getProtocolTotals()));
+}
+
 export function useSlippageBps() {
   const reader = useReader();
   const { address } = useAccount();

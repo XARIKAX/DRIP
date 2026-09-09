@@ -13,11 +13,12 @@ const LINKS = [
   { href: "/app/split", label: "Split" },
   { href: "/app/vault", label: "Pool" },
   { href: "/app/calendar", label: "Calendar" },
+  { href: "/app/tracker", label: "Tracker" },
   { href: "/app/agent", label: "Agent" },
 ];
 
 /* The docs sit beside the connect button rather than in the row of app destinations:
-   the seven app links already fill the row to the wire at 1024px, and a reference is
+   the eight app links already fill the row to the wire at 1024px, and a reference is
    a different kind of place from a screen you operate. Below lg it joins the rail. */
 const DOCS = { href: "/docs", label: "Guide" };
 
@@ -40,7 +41,7 @@ export function SiteNav() {
         scrolled ? "border-b border-line bg-ground/90 backdrop-blur-xl" : "border-b border-line-soft bg-ground"
       }`}
     >
-      {/* Eight destinations plus a connect button fill 1024px to the wire, so the row
+      {/* Nine destinations plus a connect button fill 1024px to the wire, so the row
           breathes less at lg and opens back up at xl. */}
       <div className="shell flex h-[68px] items-center justify-between gap-4 xl:gap-8">
         <Link href="/" aria-label="Osinko home" className="shrink-0 transition-opacity hover:opacity-70">
@@ -55,7 +56,7 @@ export function SiteNav() {
                 key={link.href}
                 href={link.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative px-2 py-2 font-mono text-micro font-medium uppercase transition-colors duration-300 xl:px-3.5 ${
+                className={`relative px-1.5 py-2 font-mono text-micro font-medium uppercase transition-colors duration-300 xl:px-3.5 ${
                   active ? "text-ink" : "text-faint hover:text-ink"
                 }`}
               >
