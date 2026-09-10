@@ -124,6 +124,11 @@ export function useDataSource(): Source {
   return useContext(DataContext).source;
 }
 
+/** True on the pitch surfaces, which want the seeded portfolio rather than a real one. */
+function useShowcase(): boolean {
+  return useContext(DataContext).showcase;
+}
+
 /** The store this subtree reads: the visitor's own, or the seeded showcase one. */
 function useStore(): MockStore {
   return useContext(DataContext).showcase ? demoStore : mockStore;
@@ -431,16 +436,29 @@ const EMPTY_VAULT: VaultView = {
   apyHistory: [],
 };
 
+/**
+ * The pool.
+ *
+ * Unlike every other view here this one ignores the wallet, because the pool is not a
+ * wallet's business: how much USDG is in it, how much is lent out and what it has
+ * earned are public facts about the protocol, readable from any RPC. Gating them on a
+ * connection meant a visitor who had not connected saw the seeded pool's $2.8m in
+ * place of the real balance — the pitch's numbers presented as the product's.
+ *
+ * Only the three personal figures need an account, and they already default to zero
+ * without one. The seeded pool survives exactly where it belongs: behind ShowcaseData,
+ * on the landing page and in the docs.
+ */
 export function useVaultView(): { vault: VaultView; loading: boolean } {
-  const source = useDataSource();
+  const showcase = useShowcase();
   const { store, version } = useMockData();
   const stats = useChainVaultStats();
   const position = useChainVaultPosition();
   const deployedAt = useDeployment()?.deployedAt ?? 0;
 
   const vault = useMemo(() => {
-    if (source === "demo") return store.vault();
-    // On chain and not read yet: zeros, never the sample pool's millions.
+    if (showcase) return store.vault();
+    // Nothing read yet, or no address book on this chain: zeros, never the sample pool.
     if (!stats.data) return EMPTY_VAULT;
     const s = stats.data;
     const p = position.data;
@@ -470,9 +488,9 @@ export function useVaultView(): { vault: VaultView; loading: boolean } {
       apyHistory: [apyPct],
     } satisfies VaultView;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, version, stats.data, position.data, deployedAt]);
+  }, [showcase, version, stats.data, position.data, deployedAt]);
 
-  return { vault, loading: source === "chain" && stats.isLoading };
+  return { vault, loading: !showcase && stats.isLoading };
 }
 
 export function useWalletView(): WalletBalances {
