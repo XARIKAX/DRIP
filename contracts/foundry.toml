@@ -41,3 +41,6 @@ local = "http://127.0.0.1:8545"
 
 [etherscan]
 arbitrum_sepolia = { key = "${ARBISCAN_API_KEY}", chain = 421614 }
+# Robinhood Chain runs Blockscout, which verifies without an API key. The dummy key
+# is there because forge requires the field, not because anything checks it.
+robinhood_mainnet = { key = "blockscout", chain = 4663, url = "https://robinhoodchain.blockscout.com/api/" }
