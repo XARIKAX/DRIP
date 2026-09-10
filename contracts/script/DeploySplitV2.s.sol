@@ -20,8 +20,13 @@ import {ISplitVault} from "../src/interfaces/ISplitVault.sol";
 ///      the address book gets a new address. Nothing is stranded: the old vault has no
 ///      PT supply, so nobody is mid-series.
 ///
-///      Run it, then paste the two addresses and the block into deployments/<id>.json
-///      and run `pnpm abis`. The script prints exactly what to paste.
+///      Run it, then paste the two addresses into deployments/<id>.json along with the
+///      L2 block from the broadcast receipt, and run `pnpm abis`.
+///
+///      The block comes from the receipt and not from this script on purpose: this is
+///      an Arbitrum Orbit chain, where Solidity's block.number is the L1 block number.
+///      It looks like a block number, it is off by tens of millions, and it would put a
+///      broken fromBlock into the address book without anything appearing to fail.
 ///
 ///        ADMIN=0x... PRIVATE_KEY=0x... MATURITY_DAYS=180 \
 ///          forge script script/DeploySplitV2.s.sol --rpc-url robinhood_mainnet --broadcast
@@ -101,8 +106,15 @@ contract DeploySplitV2 is Script {
         console2.log("");
         console2.log("Paste into deployments/%s.json, then run `pnpm abis`:", vm.toString(block.chainid));
         console2.log('  "splitVault": "%s",', vm.toString(address(vault)));
-        console2.log('  "splitVaultBlock": %s,', vm.toString(block.number));
         console2.log('  "yieldMarket": "%s",', vm.toString(address(market)));
+        console2.log("");
+        // block.number is NOT the L2 block here. This chain is an Arbitrum Orbit L2,
+        // and on Arbitrum Solidity's block.number returns the L1 block — off by tens
+        // of millions from the number eth_getLogs indexes by. Printing it would put a
+        // plausible, wrong fromBlock into the address book and quietly break the scan
+        // that reads each series' opening multiplier. So it is not printed at all.
+        console2.log('  "splitVaultBlock": <read "Block:" from the broadcast receipt>');
+        console2.log("    Not block.number: on an Orbit L2 that is the L1 block, not this chain's.");
     }
 
     /// @dev Every enabled token in the listing, the same source VerifyUniverse checks.
