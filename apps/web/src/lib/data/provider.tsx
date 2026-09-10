@@ -767,6 +767,7 @@ export function useDataActions(): DataActions {
   const { address } = useAccount();
   const { state, run } = useTxRunner();
   const walletBalances = useChainWalletBalances();
+  const positions = useChainPositions();
   const tokens = useChainTokens();
   const [demoBusy, setDemoBusy] = useState(false);
 
@@ -899,7 +900,28 @@ export function useDataActions(): DataActions {
         const symbol = seriesSymbol(seriesId);
         const token = need(addressOf(symbol), symbol);
         const base = toStockBase(amount);
-        await run([buildApprove(token, vault, base, symbol), buildSplit(d, BigInt(seriesId), base, symbol)]);
+
+        // Split needs the stock in the wallet, and most of a holder's stock is on
+        // deposit earning rewards. Making them go to the dashboard, withdraw, come
+        // back and start again is a round trip that teaches nobody anything, so the
+        // withdrawal is prepended to the same batch instead. Only ever the shortfall:
+        // a holder with enough in the wallet never touches their deposit.
+        const inWallet = walletBalances.data?.stocks[token] ?? 0n;
+        const txs = [];
+        if (base > inWallet) {
+          const onDeposit = (positions.data ?? []).find(
+            (x) => x.stockToken.toLowerCase() === token.toLowerCase()
+          )?.amount ?? 0n;
+          const shortfall = base - inWallet;
+          if (shortfall > onDeposit) {
+            throw new Error(
+              `Not enough ${symbol}: ${Number(inWallet) / STOCK} in your wallet and ${Number(onDeposit) / STOCK} on deposit`
+            );
+          }
+          txs.push(buildWithdraw(d, token, shortfall, symbol));
+        }
+        txs.push(buildApprove(token, vault, base, symbol), buildSplit(d, BigInt(seriesId), base, symbol));
+        await run(txs);
       },
       merge: async (seriesId, amount) => {
         const d = need(deployment, "deployment");
@@ -942,6 +964,8 @@ export function useDataActions(): DataActions {
     deployment,
     address,
     addressOf,
+    positions.data,
+    walletBalances.data,
     seriesSymbol,
     run,
     walletBalances.data,

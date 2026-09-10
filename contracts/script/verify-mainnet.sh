@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
-# Verify the deployed contracts on Robinhood Chain's Blockscout explorer.
+# Prepare Blockscout verification input for the mainnet contracts.
 #
-# Blockscout needs no API key, but it does need the constructor arguments exactly as
-# they were passed — including the DEPLOYER for SplitVault, not the admin. The vault
-# was constructed with the deployer holding KEEPER_ROLE and handed over afterwards, so
-# verifying against the admin address produces a bytecode mismatch and a confusing
-# failure.
+# This does NOT call the verifier, because on this chain it cannot. The official
+# explorer at explorer.mainnet.chain.robinhood.com is a redirect onto
+# robinhoodchain.blockscout.com, which sits behind a Cloudflare challenge — and the
+# redirect drops the /api path on the way. forge gets an HTML interstitial instead of
+# JSON and fails with a deserialization error that looks like a bytecode problem and
+# is not one. A browser passes the challenge; a CLI has no way to.
+#
+# So this writes the standard JSON input for each contract and prints exactly what to
+# paste. Standard JSON is the better route anyway: it carries the exact compiler
+# settings, bytecode_hash = "none" included, rather than hoping the verifier infers
+# them from foundry.toml it cannot see.
 #
 #   SPLIT=0x... MARKET=0x... DEPLOYER=0x... USDG=0x... ADMIN=0x... ./script/verify-mainnet.sh
 set -euo pipefail
@@ -16,25 +22,38 @@ set -euo pipefail
 : "${USDG:?USDG is required}"
 : "${ADMIN:?ADMIN is required}"
 
-VERIFIER_URL="${VERIFIER_URL:-https://robinhoodchain.blockscout.com/api/}"
+OUT="${OUT:-./verify}"
+mkdir -p "$OUT"
 
-echo "Verifying SplitVault at $SPLIT"
 forge verify-contract "$SPLIT" src/SplitVault.sol:SplitVault \
-  --chain-id 4663 \
-  --verifier blockscout \
-  --verifier-url "$VERIFIER_URL" \
-  --constructor-args "$(cast abi-encode 'constructor(address)' "$DEPLOYER")" \
-  --watch
-
-echo "Verifying YieldMarket at $MARKET"
+  --show-standard-json-input > "$OUT/SplitVault.json"
 forge verify-contract "$MARKET" src/YieldMarket.sol:YieldMarket \
-  --chain-id 4663 \
-  --verifier blockscout \
-  --verifier-url "$VERIFIER_URL" \
-  --constructor-args "$(cast abi-encode 'constructor(address,address,address)' "$SPLIT" "$USDG" "$ADMIN")" \
-  --watch
+  --show-standard-json-input > "$OUT/YieldMarket.json"
 
-echo
-echo "The eleven PrincipalToken and YieldToken pairs were deployed BY the vault, not by"
-echo "you, so they are not in this list. Blockscout usually matches them automatically"
-echo "once SplitVault is verified; if it does not, verify one and it will match the rest."
+SPLIT_ARGS="$(cast abi-encode 'constructor(address)' "$DEPLOYER")"
+MARKET_ARGS="$(cast abi-encode 'constructor(address,address,address)' "$SPLIT" "$USDG" "$ADMIN")"
+
+cat <<EOF
+
+Wrote $OUT/SplitVault.json and $OUT/YieldMarket.json
+
+On https://robinhoodchain.blockscout.com, open each contract, then
+Verify & Publish -> Solidity (Standard JSON Input):
+
+  SplitVault   $SPLIT
+    file         $OUT/SplitVault.json
+    compiler     v0.8.28
+    constructor  $SPLIT_ARGS
+
+  YieldMarket  $MARKET
+    file         $OUT/YieldMarket.json
+    compiler     v0.8.28
+    constructor  $MARKET_ARGS
+
+SplitVault's constructor arg is the DEPLOYER, not the admin. The vault was built
+with the deployer holding KEEPER_ROLE and handed over afterwards; verifying against
+the admin gives a bytecode mismatch that reads like a much worse problem.
+
+The eleven PrincipalToken and YieldToken pairs were deployed by the vault rather
+than by you. Blockscout usually matches those on its own once the vault verifies.
+EOF

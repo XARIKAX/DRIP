@@ -1,12 +1,13 @@
 # Osinko keeper
 
-Three jobs, on a timer, against a deployed Osinko protocol.
+Four jobs, on a timer, against a deployed Osinko protocol.
 
 | job | what it does | costs |
 | --- | --- | --- |
 | **activate** | Pays holders the moment their entitlement exists, instead of whenever someone remembers to. `activate` is permissionless, so this needs no role. | gas |
 | **settle** | On the pay date, pays the protocol what the issuer paid: retires the vault's receivable and makes non-advanced holders claimable. | gas **and the full entitlement in USDG** |
 | **rewards** | Hands out whatever USDG sits unallocated in the reward vault, split across depositors by the value of what they hold. Needs `DISTRIBUTOR_ROLE` on the reward vault. | gas; the pot is money Osinko already put in |
+| **freeze** | Stops the yield clock on split series that have matured, so a dividend landing afterwards cannot accrue to YT out of PT's principal. Permissionless, needs no role. | gas, once per series |
 
 Settlement is off unless `SETTLE_ENABLED=true`, and rewards are off unless
 `REWARDS_ENABLED=true`. A service that can move the float on its own should say so out
@@ -135,6 +136,13 @@ chunked loop that quietly pays some people, which is why the keeper refuses past
 distribution and withdraw just after, and take a share for having been present for one
 block. At current size that is not worth engineering against; at real size it is, and
 the fix is to weight by the balance at the funding block rather than at the head.
+
+**Freezing is a duty, not a fallback.** SplitVault freezes on every path that pays
+somebody out, so a holder who turns up cannot be short-changed by a matured series.
+But nobody has to turn up. Between maturity and the first visitor a real dividend can
+land, and every share of it would come out of the Principal Tokens' backing. That
+window is the only way the split can pay the wrong person, and this job is what closes
+it — which is why it runs whether or not rewards are enabled.
 
 **The vault is the second opinion, not the first.** `RewardVault.distribute` reverts
 if it would owe more YT than it holds USDG, so a bug here can only fail closed. The
