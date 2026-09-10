@@ -11,8 +11,13 @@ type Filter = "all" | "week" | "month" | "mine";
 type View = "table" | "month";
 
 /**
- * The screenshotable asset. A table where one column is the product: the days you
- * get paid early, in the accent. Filters, a month grid, and a set-a-rule shortcut on hover.
+ * The ex date calendar, for cash dividends declared into the registry.
+ *
+ * On Robinhood Chain that list is empty and will stay empty: these stock tokens do not
+ * pay cash. A dividend is reinvested and the token's multiplier rises, so there is no
+ * ex date to schedule and no payment to front. The page says that rather than
+ * rendering an empty table, and sends people to Split, which is where the real
+ * dividend actually is.
  */
 export default function CalendarPage() {
   const { rows } = useCalendarRows();
@@ -38,6 +43,37 @@ export default function CalendarPage() {
   }, [rows, filter, held, now]);
 
   const totalPerShare = filtered.reduce((s, d) => s + d.perShare, 0);
+
+  // Nothing declared is the permanent state here, not a loading one. Say why.
+  if (rows.length === 0) {
+    return (
+      <div className="rise-group space-y-10">
+        <header className="max-w-3xl border-b border-line pb-8">
+          <div className="serial">Dividends on this chain</div>
+          <h1 className="mt-4 display text-display">Calendar</h1>
+          <p className="mt-5 text-[16px] leading-relaxed text-muted">
+            There are no ex dates to show, and there will not be.
+          </p>
+        </header>
+
+        <section className="panel max-w-3xl p-8">
+          <p className="text-[15px] leading-relaxed text-ink">
+            Robinhood Chain stock tokens do not pay dividends in cash. When a company pays
+            one, the dividend buys more of the stock and each token quietly comes to
+            represent more shares. Nothing lands in your wallet on a particular day, so
+            there is no date to put in a calendar.
+          </p>
+          <p className="mt-4 text-[15px] leading-relaxed text-muted">
+            That growth is real, and it is what Osinko splits. Head to Split to see exactly
+            what your stock has earned, and to separate the dividend from the share.
+          </p>
+          <Link href="/app/split" className="btn-accent mt-6 inline-flex">
+            Go to Split
+          </Link>
+        </section>
+      </div>
+    );
+  }
   const avgEarly = filtered.length ? Math.round(filtered.reduce((s, d) => s + d.daysEarly, 0) / filtered.length) : 0;
 
   const FILTERS: { key: Filter; label: string }[] = [

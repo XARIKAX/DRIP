@@ -224,20 +224,40 @@ export interface SplitSeries {
   name: string;
   maturity: number;
   splitFeeBps: number;
-  /** Principal Token supply for this series, protocol wide. Backs 1:1 in custody. */
+  /** PT supply, in SHARES. What it redeems for is this over the multiplier. */
   ptSupply: number;
+  /** YT supply, in RAW stock tokens. */
   ytSupply: number;
   /** Null when the underlying cannot be priced. See TokenInfo.priceUsd. */
   underlyingPriceUsd: number | null;
-  /** What the market is pricing the drip at, annualised, in the absence of a real AMM. */
-  impliedYieldApr: number;
+  /**
+   * Shares one raw token is worth right now. 1.0 is a stock that has paid nothing
+   * since launch; 1.0006 has paid 0.06%. This single number is the entire yield.
+   */
+  multiplier: number;
+  /** The multiplier when this series opened. */
+  startMultiplier: number;
+  /** How much the underlying has accreted since the series opened, as a percentage. */
+  earnedPct: number;
+  /** True once the series matured and its yield clock stopped. */
+  frozen: boolean;
+  /** USDG the market pays for one whole YT. Zero means it is not buying. */
+  ytBidUsd: number;
+  /** USDG the market may still spend on this series. */
+  ytBudgetUsd: number;
 }
 
 /** A holder's position in one series. */
 export interface SplitPosition {
   seriesId: number;
+  /** PT held, in shares. */
   ptBalance: number;
+  /** YT held, in raw stock tokens. */
   ytBalance: number;
+  /** Stock the PT would redeem for at today's multiplier. */
+  principalStock: number;
+  /** Stock the YT has already earned and can collect now. */
+  claimableStock: number;
 }
 
 /** A dividend on a split token's underlying, from the series' point of view. */

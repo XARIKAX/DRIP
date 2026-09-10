@@ -56,6 +56,14 @@ export interface Deployment {
   reinvestor: Address;
   swapAdapter: Address;
   splitVault: Address;
+  /** Block the split vault was deployed in, for reading a series' opening multiplier. */
+  splitVaultBlock?: number;
+  /**
+   * The market that buys Yield Tokens for USDG. Optional: a book written before it
+   * existed is still valid, and the Split page renders without the sell button rather
+   * than throwing.
+   */
+  yieldMarket?: Address;
   /**
    * The reward token vault. Optional because the protocol was deployed before it
    * existed, so a book written by that deploy is still valid and the app has to
@@ -283,16 +291,37 @@ export interface SplitSeriesView {
    * Null is a series whose underlying has a quiet feed — the series is still real and
    * still splittable, only its dollar figures are unknown. It is not a reason to hide
    * the series, which is what throwing here used to do to all of them at once.
+   *
+   * This price already carries the multiplier: Chainlink's tokenized equity feed
+   * reports the price of one TOKEN, share price times uiMultiplier. So raw amount
+   * times this is the right dollar figure, and applying the multiplier again would
+   * double count it.
    */
   priceUsdg: bigint | null;
   splitFeeBps: number;
+  /** Shares per raw token right now, 18 decimals. The yield, as a single number. */
+  multiplier: bigint;
+  /** Multiplier when the series opened, so the app can show what it has earned since. */
+  startMultiplier: bigint;
+  /** True once the series has matured and its yield clock has been stopped. */
+  frozen: boolean;
+  /** The market's standing bid in USDG per whole YT, 6 decimals. Zero means closed. */
+  ytBidUsdg: bigint;
+  /** USDG the market may still spend on this series. */
+  ytBudgetUsdg: bigint;
 }
 
 /** A holder's balances in one series. */
 export interface SplitPositionView {
   seriesId: bigint;
+  /** PT held. Denominated in SHARES — what it redeems for is `ptBalance / multiplier`. */
   ptBalance: bigint;
+  /** YT held. Denominated in RAW stock tokens. */
   ytBalance: bigint;
+  /** Raw stock this PT would redeem for at the current multiplier. */
+  principalRaw: bigint;
+  /** Raw stock this YT has already earned and can claim now. */
+  claimableRaw: bigint;
 }
 
 /** A dividend on a series' underlying, from the series' point of view. */

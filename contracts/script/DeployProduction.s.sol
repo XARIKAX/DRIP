@@ -206,7 +206,7 @@ contract DeployProduction is Script {
             new Reinvestor(IERC20(infra.usdg), IDripCore(d.core), ISwapAdapter(d.adapter), deployer)
         );
         d.splitVault = address(
-            new SplitVault(IDripCore(d.core), IDividendRegistry(d.registry), IERC20(infra.usdg), deployer)
+            new SplitVault(deployer)
         );
 
         // The credit side prices from the Chainlink oracle above, never from the

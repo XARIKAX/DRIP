@@ -110,7 +110,7 @@ contract Deploy is Script {
         d.reinvestor =
             address(new Reinvestor(IERC20(d.usdg), IDripCore(d.core), ISwapAdapter(d.adapter), deployer));
         d.splitVault = address(
-            new SplitVault(IDripCore(d.core), IDividendRegistry(d.registry), IERC20(d.usdg), deployer)
+            new SplitVault(deployer)
         );
 
         // The credit side prices from an oracle, never from the swap venue it would
@@ -160,9 +160,10 @@ contract Deploy is Script {
         core.grantRole(core.LENDER_ROLE(), d.lendingPool);
         vault.grantRole(vault.LENDER_ROLE(), d.lendingPool);
         LendingPool(d.lendingPool).grantRole(LendingPool(d.lendingPool).CORE_ROLE(), d.core);
-        // SplitVault deposits into DripCore like any ordinary holder — it needs no
-        // role there. Its own KEEPER_ROLE (createSeries, pause) is granted to the
-        // deployer at construction time, same pattern as every other module.
+        // SplitVault touches nothing else: it holds the stock itself and settles
+        // against the token's own ERC-8056 multiplier, so it needs no role anywhere
+        // and no deposit into DripCore. Its own KEEPER_ROLE (createSeries, pause,
+        // freezeSeries) is granted to the deployer at construction, same as the rest.
     }
 
     /// @dev Five tickers, priced, registered and stocked so the reinvest swap always fills.

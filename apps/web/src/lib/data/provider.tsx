@@ -29,7 +29,8 @@ import {
   buildSplit,
   buildMerge,
   buildRedeemPrincipal,
-  buildHarvestDividend,
+  buildSellYield,
+  buildFreezeSeries,
   buildClaimYield,
   listings,
 } from "@drip-markets/sdk";
@@ -52,7 +53,6 @@ import {
   useAutoRepayPrincipal as useChainAutoRepay,
   useSplitSeriesList as useChainSplitSeries,
   useSplitPositionFor as useChainSplitPosition,
-  useSplitDividendsFor as useChainSplitDividends,
   useWalletBalances as useChainWalletBalances,
   useDeployment,
 } from "@/lib/hooks";
@@ -67,7 +67,6 @@ import type {
   PendingAdvance,
   PortfolioSummary,
   RewardView,
-  SplitDividendRow,
   SplitPosition,
   SplitSeries,
   StreamRow,
@@ -603,9 +602,13 @@ export function useAutoRepayPrincipal(): boolean {
 }
 
 /**
- * Split. The one module that wraps the share — demo mode only, the same way
- * Borrow's lending market is demo mode only: neither is deployed onchain yet.
- * Chain mode returns the empty shape so every page still renders.
+ * Split: the module that separates a stock from its dividends.
+ *
+ * `multiplier` is the whole yield in one number. A Robinhood Chain stock token pays
+ * no cash — a dividend is reinvested and ERC-8056's multiplier rises while the raw
+ * balance stays put. So the growth from `startMultiplier` to `multiplier` IS the
+ * dividend this series has seen, and it is the figure everything on the page is
+ * derived from.
  */
 export function useSplitSeries(): SplitSeries[] {
   const source = useDataSource();
@@ -625,9 +628,17 @@ export function useSplitSeries(): SplitSeries[] {
         ptSupply: Number(s.ptSupply) / STOCK,
         ytSupply: Number(s.ytSupply) / STOCK,
         underlyingPriceUsd: priceUsd,
-        // The stock's own annualised dividend, not a market price: nothing trades
-        // these tokens yet, so there is no implied anything to read.
-        impliedYieldApr: 0,
+        multiplier: Number(s.multiplier) / STOCK,
+        startMultiplier: Number(s.startMultiplier) / STOCK,
+        // What the underlying has actually paid since this series opened. Realised,
+        // not annualised — see the tracker for why extrapolating it invents a number.
+        earnedPct:
+          s.startMultiplier > 0n
+            ? (Number(s.multiplier - s.startMultiplier) / Number(s.startMultiplier)) * 100
+            : 0,
+        frozen: s.frozen,
+        ytBidUsd: Number(s.ytBidUsdg) / USDG,
+        ytBudgetUsd: Number(s.ytBudgetUsdg) / USDG,
       } satisfies SplitSeries;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -647,30 +658,9 @@ export function useSplitPosition(seriesId: number): SplitPosition | null {
       seriesId: Number(p.seriesId),
       ptBalance: Number(p.ptBalance) / STOCK,
       ytBalance: Number(p.ytBalance) / STOCK,
+      principalStock: Number(p.principalRaw) / STOCK,
+      claimableStock: Number(p.claimableRaw) / STOCK,
     } satisfies SplitPosition;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, version, seriesId, chain.data]);
-}
-
-export function useSplitDividendRows(seriesId: number): SplitDividendRow[] {
-  const source = useDataSource();
-  const { store, version } = useMockData();
-  const chain = useChainSplitDividends(seriesId);
-
-  return useMemo(() => {
-    if (source === "demo") return store.splitDividendRows(seriesId);
-    return (chain.data ?? []).map((d) => ({
-      seriesId: Number(d.seriesId),
-      dividendId: Number(d.dividendId),
-      symbol: d.symbol,
-      perShare: Number(d.amountPerToken) / USDG,
-      exDate: d.exDate,
-      eligible: d.eligible,
-      harvested: d.harvested,
-      poolUsd: Number(d.pool) / USDG,
-      claimableUsd: Number(d.claimable) / USDG,
-      claimed: d.claimed,
-    } satisfies SplitDividendRow));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source, version, seriesId, chain.data]);
 }
@@ -763,8 +753,12 @@ export interface DataActions {
   split: (seriesId: number, amount: number) => Promise<void>;
   merge: (seriesId: number, amount: number) => Promise<void>;
   redeemPrincipal: (seriesId: number, amount: number) => Promise<void>;
-  harvestDividend: (seriesId: number, dividendId: number) => Promise<void>;
-  claimYield: (seriesId: number, dividendId: number) => Promise<void>;
+  /** Collect everything this series' dividend tokens have earned, paid in stock. */
+  claimYield: (seriesId: number) => Promise<void>;
+  /** Sell dividend tokens to the market for cash now, at the posted bid. */
+  sellYield: (seriesId: number, amount: number, minUsdOut: number) => Promise<void>;
+  /** Stop a matured series' yield clock. Permissionless. */
+  freezeSeries: (seriesId: number) => Promise<void>;
 }
 
 export function useDataActions(): DataActions {
@@ -820,8 +814,9 @@ export function useDataActions(): DataActions {
         split: (seriesId, amount) => demo(() => mockStore.split(seriesId, amount)),
         merge: (seriesId, amount) => demo(() => mockStore.merge(seriesId, amount)),
         redeemPrincipal: (seriesId, amount) => demo(() => mockStore.redeemPrincipal(seriesId, amount)),
-        harvestDividend: (seriesId, dividendId) => demo(() => mockStore.harvestDividend(seriesId, dividendId)),
-        claimYield: (seriesId, dividendId) => demo(() => mockStore.claimYield(seriesId, dividendId)),
+        claimYield: (seriesId) => demo(() => mockStore.claimSplitYield(seriesId)),
+        sellYield: async () => {},
+        freezeSeries: async () => {},
       };
     }
 
@@ -916,13 +911,27 @@ export function useDataActions(): DataActions {
         const d = need(deployment, "deployment");
         await run([buildRedeemPrincipal(d, BigInt(seriesId), toStockBase(amount), seriesSymbol(seriesId))]);
       },
-      harvestDividend: async (seriesId, dividendId) => {
+      claimYield: async (seriesId) => {
         const d = need(deployment, "deployment");
-        await run([buildHarvestDividend(d, BigInt(seriesId), BigInt(dividendId))]);
+        await run([buildClaimYield(d, BigInt(seriesId), seriesSymbol(seriesId))]);
       },
-      claimYield: async (seriesId, dividendId) => {
+      sellYield: async (seriesId, amount, minUsdOut) => {
         const d = need(deployment, "deployment");
-        await run([buildClaimYield(d, BigInt(seriesId), BigInt(dividendId))]);
+        const market = need(d.yieldMarket, "yield market");
+        const series = (seriesList.data ?? []).find((x) => Number(x.seriesId) === seriesId);
+        const yt = need(series?.yieldToken, "series");
+        const base = toStockBase(amount);
+        // Six decimals on the floor, and rounding DOWN: rounding up would set a
+        // minimum the posted bid cannot meet and revert a sale that was fine.
+        const floor = BigInt(Math.floor(minUsdOut * 1e6));
+        await run([
+          buildApprove(yt, market, base, "YT"),
+          buildSellYield(d, BigInt(seriesId), base, floor, seriesSymbol(seriesId)),
+        ]);
+      },
+      freezeSeries: async (seriesId) => {
+        const d = need(deployment, "deployment");
+        await run([buildFreezeSeries(d, BigInt(seriesId))]);
       },
     };
   }, [

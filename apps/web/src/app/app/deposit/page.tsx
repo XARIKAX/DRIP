@@ -45,9 +45,9 @@ export default function DepositPage() {
         <div className="serial">Step one</div>
         <h1 className="mt-4 display text-display">Deposit a stock</h1>
         <p className="mt-5 text-[16px] leading-relaxed text-muted">
-          Your stock has to be in Osinko before a dividend&apos;s ex date for that dividend to count.
-          Deposit once and pick a rule. Every dividend after that arrives early, a little every
-          second, or as more stock.
+          Deposit once and your stock keeps earning exactly as it did before — dividends buy
+          more of it automatically. Osinko adds a USDG reward on top, and lets you split the
+          dividend off and sell it if you want the cash sooner.
         </p>
       </header>
 

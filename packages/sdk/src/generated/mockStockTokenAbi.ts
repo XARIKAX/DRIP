@@ -49,6 +49,19 @@ export const mockStockTokenAbi = [
   },
   {
     "type": "function",
+    "name": "accrueDividendBps",
+    "inputs": [
+      {
+        "name": "bps",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "allowance",
     "inputs": [
       {
@@ -206,6 +219,19 @@ export const mockStockTokenAbi = [
   },
   {
     "type": "function",
+    "name": "setUiMultiplier",
+    "inputs": [
+      {
+        "name": "next",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "symbol",
     "inputs": [],
     "outputs": [
@@ -297,6 +323,19 @@ export const mockStockTokenAbi = [
     "stateMutability": "nonpayable"
   },
   {
+    "type": "function",
+    "name": "uiMultiplier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
     "type": "event",
     "name": "Approval",
     "inputs": [
@@ -377,6 +416,25 @@ export const mockStockTokenAbi = [
       },
       {
         "name": "value",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "UIMultiplierUpdated",
+    "inputs": [
+      {
+        "name": "oldMultiplier",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "newMultiplier",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
