@@ -7,7 +7,6 @@ import {
   type ModeName,
   type PendingAdvance,
   type PortfolioSummary,
-  type SplitDividendRow,
   type SplitPosition,
   type SplitSeries,
   type StreamRow,
@@ -451,10 +450,15 @@ export class MockStore {
         ptSupply: s.ptSupply,
         ytSupply: s.ytSupply,
         underlyingPriceUsd: t.priceUsd,
-        // No secondary market in the demo to price the YT against, so the implied
-        // rate is the same annualised-yield math the rest of the app already uses
-        // for a stock's own yield — the honest number in the absence of a real one.
-        impliedYieldApr: t.priceUsd > 0 ? ((t.perShare * 4) / t.priceUsd) * 100 : 0,
+        // The sample series shows a stock that has accreted a little since it opened,
+        // because a multiplier of exactly 1.0 would render the whole page as zeros
+        // and teach a visitor nothing about what the product does.
+        multiplier: 1.0062,
+        startMultiplier: 1.0,
+        earnedPct: 0.62,
+        frozen: false,
+        ytBidUsd: 0.9,
+        ytBudgetUsd: 25_000,
       };
     });
   }
@@ -462,39 +466,17 @@ export class MockStore {
   splitPosition(seriesId: number): SplitPosition | null {
     const p = this.state.splitPositions.get(seriesId);
     if (!p) return null;
-    return { seriesId, ptBalance: p.ptBalance, ytBalance: p.ytBalance };
+    return {
+      seriesId,
+      ptBalance: p.ptBalance,
+      ytBalance: p.ytBalance,
+      // PT is share denominated, so it redeems for slightly fewer raw tokens than it
+      // reads — the difference is the dividend, and it is the YT holder's.
+      principalStock: p.ptBalance / 1.0062,
+      claimableStock: p.ytBalance * (0.0062 / 1.0062),
+    };
   }
 
-  splitDividendRows(seriesId: number): SplitDividendRow[] {
-    const series = this.state.splitSeries.get(seriesId);
-    if (!series) return [];
-    return this.state.dividends
-      .filter((d) => d.symbol === series.symbol)
-      .map((d) => {
-        const key = `${seriesId}:${d.id}`;
-        const h = this.state.splitDividends.get(key);
-        const position = this.state.splitPositions.get(seriesId);
-        const ytShare =
-          h && h.harvested && series.ytSupply > 0 && position
-            ? (h.poolUsd * position.ytBalance) / series.ytSupply
-            : 0;
-        return {
-          seriesId,
-          dividendId: d.id,
-          symbol: d.symbol,
-          perShare: d.perShare,
-          exDate: d.exDate,
-          // The reference portfolio's series holds stock from the start, so every
-          // dividend in it is eligible. Onchain this is read per dividend.
-          eligible: true,
-          harvested: h?.harvested ?? false,
-          poolUsd: h?.poolUsd ?? 0,
-          claimableUsd: h?.claimed ? 0 : ytShare,
-          claimed: h?.claimed ?? false,
-        };
-      })
-      .sort((a, b) => b.exDate - a.exDate);
-  }
 
   /** Wallet stock still spare to split, same balance the deposit page reads from. */
   splitWalletBalance(symbol: string): number {
@@ -520,6 +502,22 @@ export class MockStore {
     series.ytSupply += minted;
 
     this.log("split", `Split ${draw.toFixed(4)} ${series.symbol} into ${minted.toFixed(4)} share tokens and ${minted.toFixed(4)} dividend tokens`, null);
+    this.emit();
+  }
+
+  /** Collect what the dividend tokens have earned, paid in the stock itself. */
+  claimSplitYield(seriesId: number): void {
+    const series = this.state.splitSeries.get(seriesId);
+    const position = this.state.splitPositions.get(seriesId);
+    if (!series || !position) return;
+
+    // The sample series has accreted 0.62%; the claim is that growth on the raw
+    // tokens the dividend leg represents.
+    const earned = position.ytBalance * (0.0062 / 1.0062);
+    if (earned <= 0) return;
+
+    this.state.wallet.stocks[series.symbol] = (this.state.wallet.stocks[series.symbol] ?? 0) + earned;
+    this.log("claim", `Collected ${earned.toFixed(6)} ${series.symbol} your dividend tokens earned`, null);
     this.emit();
   }
 
@@ -556,38 +554,7 @@ export class MockStore {
     this.emit();
   }
 
-  harvestDividend(seriesId: number, dividendId: number): void {
-    const series = this.state.splitSeries.get(seriesId);
-    const div = this.state.dividends.find((d) => d.id === dividendId);
-    if (!series || !div || div.symbol !== series.symbol) return;
-    if (div.exDate > now()) return; // matches SplitVault harvesting before its own ex date
-    const key = `${seriesId}:${dividendId}`;
-    if (this.state.splitDividends.get(key)?.harvested) return;
 
-    // The vault's own CASH_EARLY entitlement, minus AdvanceVault's one percent —
-    // the same fee every other Early holder pays, because this series is just
-    // another CASH_EARLY position from DripCore's point of view.
-    const gross = series.ptSupply * div.perShare;
-    const poolUsd = gross * 0.99;
-
-    this.state.splitDividends.set(key, { seriesId, dividendId, harvested: true, poolUsd, claimed: false });
-    this.log("harvest", `Collected the ${series.symbol} dividend for dividend token holders: ${poolUsd.toFixed(2)} USDG`, poolUsd);
-    this.emit();
-  }
-
-  claimYield(seriesId: number, dividendId: number): void {
-    const rows = this.splitDividendRows(seriesId);
-    const row = rows.find((r) => r.dividendId === dividendId);
-    if (!row || !row.harvested || row.claimed || row.claimableUsd <= 0) return;
-
-    const key = `${seriesId}:${dividendId}`;
-    const h = this.state.splitDividends.get(key)!;
-    h.claimed = true;
-    this.state.wallet.usdg += row.claimableUsd;
-
-    this.log("claim_yield", `Took ${row.claimableUsd.toFixed(2)} USDG of ${row.symbol} dividends`, row.claimableUsd);
-    this.emit();
-  }
 
   summary(): PortfolioSummary {
     const nowMs = Date.now();

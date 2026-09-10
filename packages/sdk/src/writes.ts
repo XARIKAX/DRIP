@@ -3,6 +3,7 @@ import {
   dripCoreAbi,
   lendingPoolAbi,
   splitVaultAbi,
+  yieldMarketAbi,
   streamEngineAbi,
   advanceVaultAbi,
   reinvestorAbi,
@@ -236,25 +237,51 @@ export function buildRedeemPrincipal(d: Deployment, seriesId: bigint, amount: bi
 }
 
 /**
- * Pull a dividend into the series' pool so dividend token holders can collect it.
+ * Collect everything this holder's dividend tokens have earned, paid in the stock.
  *
- * Permissionless on purpose: anyone may harvest, and the money lands in the series
- * rather than with whoever called. Without that, a series would depend on one holder
- * remembering to act.
+ * One call per series, not per dividend: the yield is the growth of the token's own
+ * multiplier, so there is no discrete event to name. Whatever has accrued since the
+ * last claim comes out.
  */
-export function buildHarvestDividend(d: Deployment, seriesId: bigint, dividendId: bigint): UnsignedTx {
+export function buildClaimYield(d: Deployment, seriesId: bigint, symbol = ""): UnsignedTx {
   return tx(
     splitVault(d),
-    encodeFunctionData({ abi: splitVaultAbi, functionName: "harvestDividend", args: [seriesId, dividendId] }),
-    "Pull this dividend into the series so it can be collected"
+    encodeFunctionData({ abi: splitVaultAbi, functionName: "claimYield", args: [seriesId] }),
+    `Collect the ${symbol || "stock"} your dividend tokens have earned`
   );
 }
 
-/** Collect this holder's share of a harvested dividend. */
-export function buildClaimYield(d: Deployment, seriesId: bigint, dividendId: bigint): UnsignedTx {
+/** Stop a matured series' yield clock. Permissionless; anyone may do it for everyone. */
+export function buildFreezeSeries(d: Deployment, seriesId: bigint): UnsignedTx {
   return tx(
     splitVault(d),
-    encodeFunctionData({ abi: splitVaultAbi, functionName: "claimYield", args: [seriesId, dividendId] }),
-    "Collect your share of this dividend"
+    encodeFunctionData({ abi: splitVaultAbi, functionName: "freezeSeries", args: [seriesId] }),
+    "Close this series' yield clock at its end date"
+  );
+}
+
+/**
+ * Sell dividend tokens to the market for USDG, at the posted bid.
+ *
+ * `minUsdgOut` is not optional in spirit even though it defaults: without it a
+ * repricing in the same block fills the seller at a number they never agreed to.
+ */
+export function buildSellYield(
+  d: Deployment,
+  seriesId: bigint,
+  ytAmount: bigint,
+  minUsdgOut: bigint,
+  symbol = ""
+): UnsignedTx {
+  const market = d.yieldMarket;
+  if (!market) throw new Error("This deployment has no yield market");
+  return tx(
+    market,
+    encodeFunctionData({
+      abi: yieldMarketAbi,
+      functionName: "sell",
+      args: [seriesId, ytAmount, minUsdgOut],
+    }),
+    `Sell ${formatStock(ytAmount)} ${symbol || "stock"} dividend tokens for cash now`
   );
 }

@@ -6,7 +6,6 @@ import { AnimatedNumber, Countdown, fmt, shortDate } from "@/components/live";
 import { TokenMark } from "@/components/TokenMark";
 import {
   useDataActions,
-  useSplitDividendRows,
   useSplitPosition,
   useSplitSeries,
   useSplitWalletBalance,
@@ -14,32 +13,30 @@ import {
 import type { SplitSeries } from "@/lib/data/types";
 
 /**
- * The trade side. The one module that wraps the share: split a stock token into a
- * Principal Token — the share, minus the drip, redeemable 1:1 at maturity — and a
- * Yield Token — the drip alone, a liquid position on its own until then.
+ * Split: separating a stock from its dividends.
  *
- * Early, Stream, Reinvest and Borrow never touch what a holder holds; this is the
- * one page that does, and only because a holder specifically asked it to. The
- * default product is still "hold the share" — Split exists beside that, not instead
- * of it, for the dividend to be traded rather than streamed or lent against.
+ * The page has one job beyond the buttons, which is to make the mechanism legible.
+ * A Robinhood Chain stock token pays no cash dividend — the dividend is reinvested
+ * and the token's multiplier rises while the raw balance stays exactly where it was.
+ * Almost nobody knows that, and without it the two tokens look arbitrary. So the
+ * multiplier is on the page, in the open, with what it has earned since the series
+ * opened, and every figure below is visibly derived from it.
  */
 export default function SplitPage() {
   const series = useSplitSeries();
-  // One series per stock, and eleven are open. Rendering series[0] showed NVDA and
-  // made the other ten unreachable — fine when a single series existed at a time,
-  // wrong the moment the opener started doing the whole listing in one run.
   const [selected, setSelected] = useState<number | null>(null);
   const active = series.find((s) => s.seriesId === selected) ?? series[0] ?? null;
 
   return (
     <div className="rise-group space-y-10" data-shot="split">
-      <header className="max-w-2xl border-b border-line pb-8">
-        <div className="serial">Sell the dividend on its own</div>
+      <header className="max-w-3xl border-b border-line pb-8">
+        <div className="serial">Own the share or own the dividend</div>
         <h1 className="mt-4 display text-display">Split</h1>
         <p className="mt-5 text-[16px] leading-relaxed text-muted">
-          Turn one share into two tokens. The first is the share itself. You get it back
-          in full on the end date. The second is every dividend that share pays until then.
-          Sell either one, or put them back together at any time for free.
+          Your stock quietly earns its dividends into itself — no cash arrives, the shares
+          behind each token just grow. Splitting cuts that in two. One token is the shares
+          you started with, back in full on the end date. The other is everything they earn
+          between now and then, yours to hold, sell, or cash out early.
         </p>
       </header>
 
@@ -56,27 +53,24 @@ export default function SplitPage() {
                     role="tab"
                     aria-selected={on}
                     onClick={() => setSelected(s.seriesId)}
-                    className={`num rounded-full px-4 py-2 text-[13px] font-semibold transition ${
-                      on
-                        ? "bg-accent text-ground"
-                        : "border border-line text-muted hover:border-accent hover:text-ink"
+                    className={`flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] font-semibold transition ${
+                      on ? "bg-accent text-ground" : "border border-line text-muted hover:text-ink"
                     }`}
                   >
+                    <TokenMark symbol={s.symbol} size={18} />
                     {s.symbol}
                   </button>
                 );
               })}
             </div>
           ) : null}
+
           <SplitSeriesPage key={active.seriesId} series={active} />
         </>
       ) : (
-        <div className="border border-line-soft bg-ground-2 px-6 py-14 text-center">
-          <div className="display text-title">Nothing to split yet</div>
-          <p className="mx-auto mt-3 max-w-md text-[14px] leading-relaxed text-muted">
-            Splitting opens one stock at a time, with an end date. None is open right now.
-          </p>
-        </div>
+        <section className="panel p-8 text-[14px] text-muted">
+          No series are open yet. One opens per stock, with an end date.
+        </section>
       )}
 
       <HowItWorks />
@@ -85,260 +79,296 @@ export default function SplitPage() {
 }
 
 function SplitSeriesPage({ series }: { series: SplitSeries }) {
-  const position = useSplitPosition(series.seriesId);
-  const dividends = useSplitDividendRows(series.seriesId);
-  const matured = Date.now() >= series.maturity * 1000;
-
-  // Null price means these are unknown, not zero: the panels show a dash instead.
-  const ptValue = series.underlyingPriceUsd === null ? null : (position?.ptBalance ?? 0) * series.underlyingPriceUsd;
-  const ytAnnual =
-    series.underlyingPriceUsd === null
-      ? null
-      : (position?.ytBalance ?? 0) * series.underlyingPriceUsd * (series.impliedYieldApr / 100);
-
   return (
     <>
-      <section className="panel" aria-label="Series position">
-        <div className="grid grid-cols-2 gap-px bg-line lg:grid-cols-4">
-          <div className="bg-ground p-6">
-            <div className="panel-title">Share tokens you hold</div>
-            <div className="mt-3 flex items-baseline gap-2">
-              <TokenMark symbol={series.symbol} dark size={22} />
-              <span className="text-[clamp(22px,2.2vw,32px)] font-semibold tracking-tighter text-ink">
-                <AnimatedNumber value={position?.ptBalance ?? 0} decimals={4} flash="dark" />
-              </span>
-            </div>
-            <div className="mt-1 text-[12px] text-muted">Worth {ptValue === null ? "an unknown amount" : `$${fmt(ptValue, 0)}`} in stock on the end date</div>
-          </div>
-          <div className="bg-ground p-6">
-            <div className="panel-title">Dividend tokens you hold</div>
-            <div className="mt-3 text-[clamp(22px,2.2vw,32px)] font-semibold tracking-tighter text-accent">
-              <AnimatedNumber value={position?.ytBalance ?? 0} decimals={4} flash="dark" />
-            </div>
-            <div className="mt-1 text-[12px] text-muted">About {ytAnnual === null ? "an unknown amount" : `$${fmt(ytAnnual, 0)}`} a year in dividends</div>
-          </div>
-          <div className="bg-ground p-6">
-            <div className="panel-title">End date</div>
-            <div className={`mt-3 text-[clamp(20px,2vw,28px)] font-semibold tracking-tighter ${matured ? "text-accent" : "text-ink"}`}>
-              {matured ? "Reached" : <Countdown to={series.maturity} />}
-            </div>
-            <div className="mt-1 text-[12px] text-muted">{shortDate(series.maturity)}</div>
-          </div>
-          <div className="bg-ground p-6">
-            <div className="panel-title">Dividend yield</div>
-            <div className="mt-3 text-[clamp(22px,2.2vw,32px)] font-semibold tracking-tighter text-ink">
-              {series.impliedYieldApr.toFixed(2)}<span className="text-[15px] text-muted">% a year</span>
-            </div>
-            <div className="mt-1 text-[12px] text-muted">{(series.splitFeeBps / 100).toFixed(2)}% fee to split, free to rejoin</div>
-          </div>
-        </div>
-      </section>
-
-      <div className="grid gap-8 lg:grid-cols-3">
-        <YieldPanel series={series} rows={dividends} />
-        <ActionPanel series={series} matured={matured} />
+      <Meter series={series} />
+      <div className="grid gap-8 lg:grid-cols-2">
+        <SplitPanel series={series} />
+        <YourPosition series={series} />
       </div>
     </>
   );
 }
 
-function YieldPanel({ series, rows }: { series: SplitSeries; rows: ReturnType<typeof useSplitDividendRows> }) {
-  const actions = useDataActions();
-  const [busyId, setBusyId] = useState<number | null>(null);
+/* ------------------------------------------------------------------ */
 
-  async function harvest(dividendId: number) {
-    setBusyId(dividendId);
-    try {
-      await actions.harvestDividend(series.seriesId, dividendId);
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  async function claim(dividendId: number) {
-    setBusyId(dividendId);
-    try {
-      await actions.claimYield(series.seriesId, dividendId);
-    } finally {
-      setBusyId(null);
-    }
-  }
+/**
+ * The multiplier, front and centre.
+ *
+ * This is the number the whole product rests on and it is invisible in every wallet,
+ * so the page states it plainly: one token is worth this many shares, it was worth
+ * this many when the series opened, and the gap is the dividend.
+ */
+function Meter({ series }: { series: SplitSeries }) {
+  const earned = series.earnedPct;
 
   return (
-    <section className="panel lg:col-span-2" aria-label="Yield pool">
-      <div className="panel-head">
-        <span className="panel-title">Dividends</span>
-        <span className="text-micro font-bold uppercase text-faint">Every payout on this stock</span>
+    <section className="panel" aria-label="What this stock has earned">
+      <div className="grid gap-px bg-line md:grid-cols-3">
+        <div className="bg-ground p-6">
+          <div className="panel-title">One {series.symbol} token is now</div>
+          <div className="num mt-3 text-[clamp(24px,2.6vw,34px)] font-semibold tracking-tighter text-ink">
+            {series.multiplier.toFixed(6)}
+          </div>
+          <div className="mt-1 text-[12px] text-muted">
+            shares — it was {series.startMultiplier.toFixed(6)} when this series opened
+          </div>
+        </div>
+        <div className="bg-ground p-6">
+          <div className="panel-title">Earned since the series opened</div>
+          <div className="mt-3 text-[clamp(24px,2.6vw,34px)] font-semibold tracking-tighter text-accent">
+            <AnimatedNumber value={earned} decimals={4} suffix="%" flash="dark" />
+          </div>
+          <div className="mt-1 text-[12px] text-muted">
+            {earned > 0
+              ? "Dividends, reinvested into the token itself"
+              : "No dividend has landed on this stock yet"}
+          </div>
+        </div>
+        <div className="bg-ground p-6">
+          <div className="panel-title">{series.frozen ? "Ended" : "Ends"}</div>
+          <div className="mt-3 text-[clamp(24px,2.6vw,34px)] font-semibold tracking-tighter text-ink">
+            {series.frozen ? "Closed" : <Countdown to={series.maturity} />}
+          </div>
+          <div className="mt-1 text-[12px] text-muted">
+            {shortDate(series.maturity)} · {series.frozen ? "yield has stopped" : "yield stops here"}
+          </div>
+        </div>
       </div>
-
-      {rows.length === 0 ? (
-        <div className="px-6 py-10 text-center text-[13px] text-muted">
-          No dividends announced for {series.symbol} yet.
-        </div>
-      ) : (
-        <div>
-          {rows.map((row) => {
-            const past = Date.now() >= row.exDate * 1000;
-            // A dividend that went ex before this series held any stock pays it
-            // nothing, and collecting would revert. Say so instead of offering it.
-            const canHarvest = past && row.eligible && !row.harvested;
-            const canClaim = row.harvested && !row.claimed && row.claimableUsd > 0;
-            const busy = actions.busy && busyId === row.dividendId;
-
-            return (
-              <div
-                key={row.dividendId}
-                className="flex flex-wrap items-center justify-between gap-4 border-b border-line px-6 py-4 last:border-b-0"
-              >
-                <div>
-                  <div className="text-[14px] font-bold tracking-tight text-ink">
-                    ${fmt(row.perShare)} / share
-                  </div>
-                  <div className="mt-1 text-micro font-bold uppercase text-faint">
-                    Ex date {shortDate(row.exDate)} ·{" "}
-                    {!past
-                      ? "Not yet"
-                      : !row.eligible
-                        ? "Before this split existed"
-                        : row.harvested
-                          ? "Collected"
-                          : "Ready to collect"}
-                  </div>
-                </div>
-
-                {row.harvested ? (
-                  <div className="text-right">
-                    <div className="num text-[15px] font-semibold text-accent">
-                      {row.claimed ? "Paid to you" : `$${fmt(row.claimableUsd)} is yours`}
-                    </div>
-                    <div className="text-[11px] text-faint">${fmt(row.poolUsd)} total for everyone</div>
-                  </div>
-                ) : null}
-
-                {canHarvest ? (
-                  <button type="button" className="btn-accent btn-sm" disabled={busy} onClick={() => void harvest(row.dividendId)}>
-                    Collect it
-                  </button>
-                ) : canClaim ? (
-                  <button type="button" className="btn-accent btn-sm" disabled={busy} onClick={() => void claim(row.dividendId)}>
-                    Take my share
-                  </button>
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <p className="border-t border-line px-6 py-4 text-[12px] leading-relaxed text-faint">
-        Anyone can press collect once a dividend&apos;s ex date has passed. The money is then
-        shared out to whoever held dividend tokens on that exact day. If you sold your
-        tokens the day after, you still get paid for that one.
+      <p className="border-t border-line px-6 py-3 text-[12px] leading-snug text-faint">
+        Robinhood Chain stock tokens do not pay cash dividends. A dividend buys more stock
+        and this multiplier goes up, while the number of tokens in your wallet never changes.
+        That growth is the only yield here, and splitting decides who gets it.
       </p>
     </section>
   );
 }
 
-function ActionPanel({ series, matured }: { series: SplitSeries; matured: boolean }) {
-  const position = useSplitPosition(series.seriesId);
-  const wallet = useSplitWalletBalance(series.symbol);
+/* ------------------------------------------------------------------ */
+
+function SplitPanel({ series }: { series: SplitSeries }) {
   const actions = useDataActions();
-  const [tab, setTab] = useState<"split" | "merge" | "redeem">("split");
+  const walletStock = useSplitWalletBalance(series.symbol);
   const [amount, setAmount] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
-  const tabs = matured ? (["merge", "redeem"] as const) : (["split", "merge"] as const);
-  const activeTab = tabs.includes(tab as never) ? tab : tabs[0];
-
-  const shares = Number.parseFloat(amount) || 0;
-  const max =
-    activeTab === "split" ? wallet : activeTab === "merge" ? Math.min(position?.ptBalance ?? 0, position?.ytBalance ?? 0) : position?.ptBalance ?? 0;
-  const valid = shares > 0 && shares <= max;
+  const raw = Number.parseFloat(amount) || 0;
+  const valid = raw > 0 && raw <= walletStock && !series.frozen;
+  const fee = (raw * series.splitFeeBps) / 10_000;
+  const net = raw - fee;
+  const ptOut = net * series.multiplier;
 
   async function submit() {
     if (!valid) return;
-    setError(null);
-    try {
-      if (activeTab === "split") await actions.split(series.seriesId, shares);
-      else if (activeTab === "merge") await actions.merge(series.seriesId, shares);
-      else await actions.redeemPrincipal(series.seriesId, shares);
-      setAmount("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    }
+    await actions.split(series.seriesId, raw);
+    setAmount("");
   }
 
   return (
-    <section className="panel self-start" aria-label="Split, merge or redeem">
-      {/* Both branches of `tabs` are exactly two entries — hardcoded rather than built
-          from tabs.length, since Tailwind can only generate classes it can see written
-          out literally somewhere in the source. */}
-      <div className="grid grid-cols-2" role="tablist" aria-label="Split, merge or redeem">
-        {tabs.map((t) => (
-          <button
-            key={t}
-            type="button"
-            role="tab"
-            aria-selected={activeTab === t}
-            onClick={() => setTab(t)}
-            className={`border-b px-4 py-3 text-micro font-bold uppercase transition-colors ${
-              activeTab === t ? "border-accent text-accent" : "border-line text-muted hover:text-ink"
-            }`}
-          >
-            {t}
-          </button>
-        ))}
+    <section className="panel self-start" aria-label="Split">
+      <div className="panel-head">
+        <span className="panel-title">Split {series.symbol}</span>
+        <span className="num text-micro font-bold uppercase text-muted">
+          {fmt(walletStock, 4)} in your wallet
+        </span>
       </div>
 
       <div className="space-y-4 p-5">
-        <div className="flex items-baseline justify-between text-micro font-bold uppercase text-muted">
-          <span>
-            {activeTab === "split" ? `${series.symbol} in your wallet` : activeTab === "merge" ? "Pairs you can rejoin" : "Share tokens you can cash in"}
-          </span>
-          <span className="num">{fmt(max, 4)}</span>
-        </div>
         <div className="flex gap-2">
           <input
             className="field text-[16px]"
             inputMode="decimal"
             placeholder="0.0000"
-            aria-label={`Shares to ${activeTab}`}
+            aria-label={`${series.symbol} to split`}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
           <button
             type="button"
             className="border border-line px-3 text-micro font-bold uppercase text-muted hover:text-ink"
-            onClick={() => setAmount(max > 0 ? max.toFixed(4) : "")}
+            onClick={() => setAmount(walletStock > 0 ? walletStock.toFixed(4) : "")}
           >
             Max
           </button>
         </div>
 
         <dl className="text-[13px]">
-          <div className="flex justify-between border-b border-line py-2">
-            <dt className="text-muted">Fee to split</dt>
-            <dd className="num text-ink">{(series.splitFeeBps / 100).toFixed(2)}%</dd>
-          </div>
-          <div className="flex justify-between py-2">
-            <dt className="text-muted">Fee to rejoin or cash in</dt>
-            <dd className="num text-ink">None</dd>
-          </div>
+          <Row
+            label="Share tokens you get"
+            value={fmt(ptOut, 4)}
+            note="Redeems for the shares you put in, on the end date"
+          />
+          <Row
+            label="Dividend tokens you get"
+            value={fmt(net, 4)}
+            note="Earns everything those shares make until then"
+          />
+          <Row label="Split fee" value={`${fmt(fee, 6)} ${series.symbol}`} note={`${series.splitFeeBps / 100}%`} last />
         </dl>
 
-        <button type="button" className="btn-accent w-full" disabled={!valid || actions.busy} onClick={() => void submit()}>
-          {activeTab === "split" ? "Split it" : activeTab === "merge" ? "Rejoin into stock" : "Cash in for stock"}
+        <button
+          type="button"
+          className="btn-accent w-full"
+          disabled={!valid || actions.busy}
+          onClick={() => void submit()}
+        >
+          {series.frozen ? "This series has ended" : "Split"}
         </button>
-        {error ? <p className="text-[12px] text-down">{error}</p> : null}
         <p className="text-[12px] leading-snug text-faint">
-          {activeTab === "split"
-            ? "You get one share token and one dividend token for each share, minus the small fee. The stock keeps earning dividends the whole time."
-            : activeTab === "merge"
-              ? "Hand back one share token and one dividend token, get the whole share back. Works any time, and never costs a fee."
-              : "Hand back share tokens alone and get the stock back. Only possible once the end date has passed."}
+          Changed your mind? Put the two back together at any time and get your stock back.
+          No fee, no waiting.
         </p>
       </div>
     </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+function YourPosition({ series }: { series: SplitSeries }) {
+  const position = useSplitPosition(series.seriesId);
+  const actions = useDataActions();
+  const [selling, setSelling] = useState(false);
+
+  const pt = position?.ptBalance ?? 0;
+  const yt = position?.ytBalance ?? 0;
+  const principalStock = position?.principalStock ?? 0;
+  const claimable = position?.claimableStock ?? 0;
+
+  if (pt === 0 && yt === 0) {
+    return (
+      <section className="panel self-start p-8 text-[14px] leading-relaxed text-muted" aria-label="Your position">
+        You have not split any {series.symbol} yet. When you do, both halves show up here
+        with what each one is worth.
+      </section>
+    );
+  }
+
+  const matured = series.frozen || series.maturity * 1000 <= Date.now();
+  const bid = series.ytBidUsd;
+  const saleUsd = yt * bid;
+  const canSell = bid > 0 && yt > 0 && saleUsd <= series.ytBudgetUsd;
+
+  async function claim() {
+    if (claimable <= 0) return;
+    await actions.claimYield(series.seriesId);
+  }
+
+  async function sell() {
+    if (!canSell) return;
+    setSelling(true);
+    try {
+      // One percent of slippage on the seller's floor: the bid can be repriced
+      // between building this and mining it, and a floor at the exact quote would
+      // revert on a move of a single base unit.
+      await actions.sellYield(series.seriesId, yt, saleUsd * 0.99);
+    } finally {
+      setSelling(false);
+    }
+  }
+
+  return (
+    <section className="panel self-start" aria-label="Your position">
+      <div className="panel-head">
+        <span className="panel-title">Your {series.symbol}</span>
+        <span className="num text-micro font-bold uppercase text-muted">
+          {matured ? "Ended" : "Running"}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-px bg-line">
+        <div className="bg-ground p-5">
+          <div className="panel-title">Share tokens</div>
+          <div className="num mt-2 text-[22px] font-semibold tracking-tight text-ink">{fmt(pt, 4)}</div>
+          <div className="mt-1 text-[12px] text-muted">
+            Redeems for {fmt(principalStock, 4)} {series.symbol}
+          </div>
+        </div>
+        <div className="bg-ground p-5">
+          <div className="panel-title">Dividend tokens</div>
+          <div className="num mt-2 text-[22px] font-semibold tracking-tight text-accent">{fmt(yt, 4)}</div>
+          <div className="mt-1 text-[12px] text-muted">
+            Earned {fmt(claimable, 6)} {series.symbol} so far
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3 p-5">
+        <button
+          type="button"
+          className="btn-accent w-full"
+          disabled={claimable <= 0 || actions.busy}
+          onClick={() => void claim()}
+        >
+          {claimable > 0 ? `Collect ${fmt(claimable, 6)} ${series.symbol}` : "Nothing earned yet"}
+        </button>
+
+        {bid > 0 ? (
+          <>
+            <button
+              type="button"
+              className="btn-ghost w-full"
+              disabled={!canSell || selling || actions.busy}
+              onClick={() => void sell()}
+            >
+              {canSell
+                ? `Sell your dividend tokens for $${fmt(saleUsd)}`
+                : "The buyer is full for now"}
+            </button>
+            <p className="text-[12px] leading-snug text-faint">
+              Cash today instead of waiting. Osinko pays ${fmt(bid, 4)} per dividend token and
+              keeps whatever they go on to earn. You keep your share tokens either way.
+            </p>
+          </>
+        ) : (
+          <p className="text-[12px] leading-snug text-faint">
+            Nobody is bidding for dividend tokens on this series right now. Hold them and
+            collect what they earn, or put them back together with your share tokens.
+          </p>
+        )}
+
+        {matured ? (
+          <button
+            type="button"
+            className="btn-ghost w-full"
+            disabled={pt <= 0 || actions.busy}
+            onClick={() => void actions.redeemPrincipal(series.seriesId, pt)}
+          >
+            {pt > 0 ? `Take back ${fmt(principalStock, 4)} ${series.symbol}` : "Nothing to redeem"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn-ghost w-full"
+            disabled={pt <= 0 || yt <= 0 || actions.busy}
+            onClick={() => void actions.merge(series.seriesId, pt)}
+          >
+            Put them back together
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function Row({
+  label,
+  value,
+  note,
+  last = false,
+}: {
+  label: string;
+  value: string;
+  note?: string;
+  last?: boolean;
+}) {
+  return (
+    <div className={`flex items-start justify-between gap-4 py-2.5 ${last ? "" : "border-b border-line"}`}>
+      <dt className="min-w-0">
+        <span className="text-muted">{label}</span>
+        {note ? <span className="mt-0.5 block text-[12px] text-faint">{note}</span> : null}
+      </dt>
+      <dd className="num shrink-0 text-ink">{value}</dd>
+    </div>
   );
 }
 
@@ -346,18 +376,23 @@ function HowItWorks() {
   return (
     <Steps
       label="How splitting works"
+      title="How splitting works"
       steps={[
         {
-          h: "One share becomes two tokens",
-          p: "Split a share and you get a share token and a dividend token. The share token is the stock itself, minus its dividends. The dividend token is the dividends, minus the stock.",
+          h: "Your stock already earns, quietly",
+          p: "Robinhood Chain stock tokens do not pay cash dividends. A dividend buys more of the stock, and each token comes to represent more shares. The count in your wallet never changes, so the growth is easy to miss — but it is there, and it is real.",
         },
         {
-          h: "The dividend gets its own price",
-          p: "The dividend token is worth exactly the dividends the stock will pay before the end date, and nothing else. Sell it, and you have sold the dividends on their own.",
+          h: "Splitting decides who gets that growth",
+          p: "Split and you hold two things. Share tokens are locked to the shares you started with, so they are untouched by whatever the dividend does next. Dividend tokens take that growth, and only the growth that happens while you hold them.",
         },
         {
-          h: "Rejoin them any time, for free",
-          p: "Hold one of each and you can always put them back together into the whole share. No fee, no waiting. The same stock, whole again, whenever you want it.",
+          h: "Sell either half, or neither",
+          p: "Want cash for the dividend today? Sell the dividend tokens and keep your shares. Want the stock without the dividend? Sell the share tokens. Want it all back? Put the two together and your stock comes out whole, any time, free.",
+        },
+        {
+          h: "Nothing here needs Osinko's money",
+          p: "The dividend comes from the stock itself, not from a pot somebody has to fund. On the end date, share tokens redeem for exactly the shares they went in with, and everything the stock earned in between belongs to whoever held the dividend tokens.",
         },
       ]}
     />

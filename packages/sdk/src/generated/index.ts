@@ -9,6 +9,7 @@ export { mockStockTokenAbi } from "./mockStockTokenAbi";
 export { mockSwapAdapterAbi } from "./mockSwapAdapterAbi";
 export { lendingPoolAbi } from "./lendingPoolAbi";
 export { splitVaultAbi } from "./splitVaultAbi";
+export { yieldMarketAbi } from "./yieldMarketAbi";
 export { rewardVaultAbi } from "./rewardVaultAbi";
 export { principalTokenAbi } from "./principalTokenAbi";
 export { yieldTokenAbi } from "./yieldTokenAbi";

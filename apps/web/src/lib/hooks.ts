@@ -166,19 +166,6 @@ export function useSplitPositionFor(seriesId: number) {
   );
 }
 
-export function useSplitDividendsFor(seriesId: number) {
-  const reader = useReader();
-  const { address } = useAccount();
-  return useQuery(
-    readerQuery(
-      ["splitDividends", chainId, seriesId, address],
-      reader,
-      (r) => r.getSplitDividends(BigInt(seriesId), address!),
-      { enabled: Boolean(address) && seriesId > 0, refetchInterval: 20_000 }
-    )
-  );
-}
-
 export function useVaultPosition() {
   const reader = useReader();
   const { address } = useAccount();

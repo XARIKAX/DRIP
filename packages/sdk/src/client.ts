@@ -11,6 +11,7 @@ import {
   rewardVaultAbi,
   splitVaultAbi,
   yieldTokenAbi,
+  yieldMarketAbi,
   streamEngineAbi,
 } from "./generated";
 import {
@@ -54,6 +55,17 @@ export function getDeployment(chainId: number): Deployment {
  * to declare it as a public mapping. ISwapAdapter declares it now, so both adapters
  * answer it and neither implementation's ABI is the right thing to depend on.
  */
+/** ERC-8056's one function. Local because no generated artifact carries the stock token. */
+const scaledUiAbi = [
+  {
+    type: "function",
+    name: "uiMultiplier",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+] as const;
+
 const swapAdapterPriceAbi = [
   {
     type: "function",
@@ -774,7 +786,7 @@ export class DripReader {
         const [stockToken, maturity, principalToken, yieldToken, exists] = s;
         if (!exists) return null;
 
-        const [symbol, name, ptSupply, ytSupply, priceUsdg] = await Promise.all([
+        const [symbol, name, ptSupply, ytSupply, priceUsdg, multiplier, frozenIndex] = await Promise.all([
           this.client.readContract({ address: stockToken, abi: erc20Abi, functionName: "symbol" }),
           this.client.readContract({ address: stockToken, abi: erc20Abi, functionName: "name" }),
           this.client.readContract({ address: principalToken, abi: principalTokenAbi, functionName: "totalSupply" }),
@@ -784,7 +796,11 @@ export class DripReader {
           // all eleven series rather than one. Same failure the token list had; this
           // call site was missed.
           this.priceOrNull(stockToken),
+          this.client.readContract({ address: stockToken, abi: scaledUiAbi, functionName: "uiMultiplier" }),
+          this.client.readContract({ address: yieldToken, abi: yieldTokenAbi, functionName: "frozenIndex" }),
         ]);
+
+        const [bidUsdg, budgetUsdg] = await this.ytMarketFor(seriesId);
 
         return {
           seriesId,
@@ -798,6 +814,15 @@ export class DripReader {
           ytSupply: ytSupply as bigint,
           priceUsdg: priceUsdg as bigint | null,
           splitFeeBps: Number(splitFeeBps),
+          multiplier: (frozenIndex as bigint) !== 0n ? (frozenIndex as bigint) : (multiplier as bigint),
+          // The multiplier when the series opened is not stored onchain — the vault
+          // only needs the current one — so it comes from the SeriesCreated block's
+          // state. Falls back to the live figure, which reads as "nothing earned yet"
+          // rather than inventing a start point.
+          startMultiplier: await this.seriesStartMultiplier(stockToken, seriesId, multiplier as bigint),
+          frozen: (frozenIndex as bigint) !== 0n,
+          ytBidUsdg: bidUsdg,
+          ytBudgetUsdg: budgetUsdg,
         } satisfies SplitSeriesView;
       })
     );
@@ -823,64 +848,84 @@ export class DripReader {
       this.client.readContract({ address: s[3], abi: yieldTokenAbi, functionName: "balanceOf", args: [user] }),
     ]);
 
-    return { seriesId, ptBalance: ptBalance as bigint, ytBalance: ytBalance as bigint };
+    const [principalRaw, claimableRaw] = await Promise.all([
+      (ptBalance as bigint) === 0n
+        ? Promise.resolve(0n)
+        : (this.client.readContract({
+            address: vault,
+            abi: splitVaultAbi,
+            functionName: "principalValue",
+            args: [seriesId, ptBalance as bigint],
+          }) as Promise<bigint>),
+      this.client.readContract({
+        address: vault,
+        abi: splitVaultAbi,
+        functionName: "claimableYield",
+        args: [seriesId, user],
+      }) as Promise<bigint>,
+    ]);
+
+    return {
+      seriesId,
+      ptBalance: ptBalance as bigint,
+      ytBalance: ytBalance as bigint,
+      principalRaw,
+      claimableRaw,
+    };
   }
 
   /**
-   * The dividends a series has seen, with this holder's claim on each.
+   * The market's standing bid on a series, or zeros when no market is deployed.
    *
-   * Every dividend on the series' own stock, whatever its ex date. It is tempting to
-   * filter to the ones already ex, but the only clock available here is the caller's
-   * wall clock and the ex date is a chain timestamp — on any chain whose time has
-   * drifted from the browser's, that comparison hides dividends that are genuinely
-   * harvestable. The row carries its ex date; the UI gates the button on it.
+   * A missing market is the normal state of a book written before it existed, so this
+   * answers rather than throwing — the Split page still works, it just cannot offer
+   * the sell button.
    */
-  async getSplitDividends(seriesId: bigint, user: Address): Promise<SplitDividendView[]> {
+  private async ytMarketFor(seriesId: bigint): Promise<[bigint, bigint]> {
+    const market = this.deployment.yieldMarket;
+    if (!market) return [0n, 0n];
+    try {
+      const [bid, budget] = await Promise.all([
+        this.client.readContract({ address: market, abi: yieldMarketAbi, functionName: "bid", args: [seriesId] }),
+        this.client.readContract({ address: market, abi: yieldMarketAbi, functionName: "budget", args: [seriesId] }),
+      ]);
+      return [bid as bigint, budget as bigint];
+    } catch {
+      return [0n, 0n];
+    }
+  }
+
+  /**
+   * The multiplier as it stood when a series opened.
+   *
+   * Read from the SeriesCreated log's block rather than stored, because the vault has
+   * no use for it and paying gas to keep a display figure would be the wrong trade.
+   * Any failure falls back to the live multiplier, which renders as "nothing earned
+   * yet" — understating the yield, never overstating it.
+   */
+  private async seriesStartMultiplier(stockToken: Address, seriesId: bigint, live: bigint): Promise<bigint> {
     const vault = this.deployment.splitVault;
-    if (!vault) return [];
-
-    const s = (await this.client.readContract({
-      address: vault,
-      abi: splitVaultAbi,
-      functionName: "series",
-      args: [seriesId],
-    })) as readonly [Address, bigint, Address, Address, boolean];
-    if (!s[4]) return [];
-
-    const calendar = await this.getCalendar();
-    const mine = calendar.filter((d) => d.stockToken.toLowerCase() === s[0].toLowerCase());
-
-    return Promise.all(
-      mine.map(async (d) => {
-        const [harvested, pool, claimable, claimed, balanceAtEx] = await Promise.all([
-          this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "harvested", args: [seriesId, d.id] }),
-          this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "dividendPool", args: [seriesId, d.id] }),
-          this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "pendingYield", args: [seriesId, d.id, user] }),
-          this.client.readContract({ address: vault, abi: splitVaultAbi, functionName: "yieldClaimed", args: [seriesId, d.id, user] }),
-          // What the series held when the dividend went ex. Zero means this dividend
-          // predates the series having a balance, and there is nothing to harvest.
-          this.client.readContract({
-            address: this.deployment.dripCore,
-            abi: dripCoreAbi,
-            functionName: "balanceOfAt",
-            args: [vault, s[0], BigInt(d.exDate)],
-          }),
-        ]);
-
-        return {
-          seriesId,
-          dividendId: d.id,
-          symbol: d.symbol,
-          amountPerToken: d.amountPerToken,
-          exDate: d.exDate,
-          eligible: (balanceAtEx as bigint) > 0n,
-          harvested: harvested as boolean,
-          pool: pool as bigint,
-          claimable: claimable as bigint,
-          claimed: claimed as boolean,
-        } satisfies SplitDividendView;
-      })
-    );
+    const from = this.deployment.splitVaultBlock;
+    if (!vault || from === undefined) return live;
+    try {
+      const logs = await this.client.getLogs({
+        address: vault,
+        event: splitVaultAbi.find((e) => e.type === "event" && e.name === "SeriesCreated"),
+        args: { seriesId },
+        fromBlock: BigInt(from),
+        toBlock: "latest",
+      } as never);
+      const first = logs[0] as unknown as { blockNumber: bigint } | undefined;
+      if (!first) return live;
+      return (await this.client.readContract({
+        address: stockToken,
+        abi: scaledUiAbi,
+        functionName: "uiMultiplier",
+        blockNumber: first.blockNumber,
+      })) as bigint;
+    } catch {
+      return live;
+    }
   }
 
   // -------------------------------------------------------------------
