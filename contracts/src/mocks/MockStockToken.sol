@@ -20,6 +20,15 @@ contract MockStockToken is ERC20, Ownable {
     /// @notice Last faucet timestamp per wallet.
     mapping(address => uint256) public lastFaucet;
 
+    /// @notice ERC-8056 corporate action multiplier, 18 decimals. Shares per raw token.
+    /// @dev The real thing on Robinhood Chain: a dividend is reinvested by raising this
+    ///      while raw balances stay fixed. Settable here so a test can make a dividend
+    ///      happen, which is the only way to prove the split actually separates one.
+    uint256 public uiMultiplier = 1e18;
+
+    /// @notice ERC-8056's event, emitted so an indexer sees the same history it would onchain.
+    event UIMultiplierUpdated(uint256 oldMultiplier, uint256 newMultiplier);
+
     /// @notice Someone topped up test balances.
     event FaucetDrip(address indexed to, uint256 amount);
 
@@ -42,5 +51,20 @@ contract MockStockToken is ERC20, Ownable {
     /// @notice Seed helper for deploy scripts and tests.
     function mint(address to, uint256 amount) external onlyOwner {
         _mint(to, amount);
+    }
+
+    /// @notice Pay a dividend the way this chain actually pays one.
+    /// @dev Raw balances and totalSupply do not move; only the multiplier does.
+    function setUiMultiplier(uint256 next) external onlyOwner {
+        require(next >= uiMultiplier, "multiplier cannot fall");
+        emit UIMultiplierUpdated(uiMultiplier, next);
+        uiMultiplier = next;
+    }
+
+    /// @notice Accrue a dividend as a percentage, in basis points of the current multiplier.
+    function accrueDividendBps(uint256 bps) external onlyOwner {
+        uint256 next = uiMultiplier + (uiMultiplier * bps) / 10_000;
+        emit UIMultiplierUpdated(uiMultiplier, next);
+        uiMultiplier = next;
     }
 }

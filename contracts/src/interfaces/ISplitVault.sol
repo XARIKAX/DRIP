@@ -2,25 +2,33 @@
 pragma solidity ^0.8.24;
 
 /// @title ISplitVault
-/// @notice Splits a stock token into a Principal Token (the share, redeemable for
-///         the stock at maturity) and a Yield Token (the drip between now and
-///         maturity, tradable on its own). The Pendle-shaped half of the product:
-///         Early, Stream, Reinvest and Borrow never wrap the share; Split is the
-///         one module that does, for holders who specifically want the dividend
-///         itself to be a liquid, tradable position rather than a stream or a loan.
-/// @dev Phase 1 constraint, stated once, loudly: one active series per stock
-///      token. A new series cannot open until the prior one's Principal Token
-///      supply is fully redeemed to zero. That keeps this contract's entire
-///      DripCore balance for a stock token equal to exactly one series' backing
-///      at any moment, which is what makes the accounting below provably correct
-///      without a second layer of cross-series proration. Production wanting
-///      concurrent maturities on the same stock needs a per-series sub-account
-///      (e.g. a minimal proxy that itself deposits into DripCore) — see HANDOFF.md.
+/// @notice Splits a stock token into a Principal Token and a Yield Token.
+/// @dev THE MECHANISM, stated once. A Robinhood Chain stock token pays no cash
+///      dividend: the dividend is reinvested and ERC-8056's `uiMultiplier()` rises,
+///      while the raw balance never moves. So the yield is the growth of that number,
+///      and splitting it is arithmetic on the multiplier rather than a claim on a
+///      payment somebody has to fund.
+///
+///        PT is denominated in SHARES.  Redeems `pt * 1e18 / M` raw at maturity,
+///                                     which is exactly the shares it entered with.
+///        YT is denominated in RAW.    Earns `yt * (M_now - M_entry) / 1e18` shares.
+///
+///      Those two add up to the whole deposit at any multiplier, for any mix of entry
+///      points, which is the property the old design lacked: it handed PT the raw
+///      tokens back, so the accretion left with the principal and YT was worth nothing.
+///
+///      PT and YT are minted in different units on purpose. A holder who splits one
+///      raw token at a multiplier of 1.0006 gets 1.0006 PT and 1.0000 YT, because the
+///      first is a claim on shares and the second is a claim on the growth of one
+///      token. Quoting both in the same number would require lying about one of them.
+///
+///      Phase 1 constraint: one active series per stock token. A new series cannot
+///      open until the prior one's PT supply is fully redeemed.
 interface ISplitVault {
     /// @param stockToken     The stock token this series splits.
     /// @param maturity       Timestamp principal becomes redeemable and yield stops accruing.
-    /// @param principalToken PT for this series. Redeemable 1:1 for stockToken at maturity.
-    /// @param yieldToken     YT for this series. Right to every dividend harvested before maturity.
+    /// @param principalToken PT for this series, denominated in shares.
+    /// @param yieldToken     YT for this series, denominated in raw stock tokens.
     /// @param exists         Set on creation so id 0 reads as "no series".
     struct Series {
         address stockToken;
@@ -37,34 +45,43 @@ interface ISplitVault {
         address principalToken,
         address yieldToken
     );
-    event Split(uint256 indexed seriesId, address indexed user, uint256 amountIn, uint256 minted, uint256 fee);
-    event Merged(uint256 indexed seriesId, address indexed user, uint256 amount);
-    event PrincipalRedeemed(uint256 indexed seriesId, address indexed user, uint256 amount);
-    event DividendHarvested(uint256 indexed seriesId, uint256 indexed dividendId, uint256 netUsdg, uint256 ytSupplyAtExDate);
-    event YieldClaimed(uint256 indexed seriesId, uint256 indexed dividendId, address indexed user, uint256 amount);
+    event Split(
+        uint256 indexed seriesId,
+        address indexed user,
+        uint256 rawIn,
+        uint256 rawNet,
+        uint256 ptMinted,
+        uint256 multiplier,
+        uint256 fee
+    );
+    event Merged(uint256 indexed seriesId, address indexed user, uint256 rawOut, uint256 ptBurned);
+    event PrincipalRedeemed(uint256 indexed seriesId, address indexed user, uint256 ptBurned, uint256 rawOut);
+    event YieldClaimed(uint256 indexed seriesId, address indexed user, uint256 shares, uint256 rawOut);
     event SplitFeeSet(uint256 bps);
 
     /// @notice Open a new series. Callable by KEEPER_ROLE.
     function createSeries(address stockToken, uint64 maturity) external returns (uint256 seriesId);
 
-    /// @notice Deposit stock, mint PT and YT 1:1 net of the split fee.
-    function split(uint256 seriesId, uint256 amount) external returns (uint256 minted);
+    /// @notice Deposit raw stock, mint PT in shares and YT in raw, net of the fee.
+    function split(uint256 seriesId, uint256 rawAmount) external returns (uint256 ptMinted, uint256 ytMinted);
 
-    /// @notice Burn equal PT and YT, reclaim the whole stock token. Free, always, before maturity.
-    function merge(uint256 seriesId, uint256 amount) external;
+    /// @notice Burn PT and the YT beside it, reclaim the raw stock. Banked yield is kept.
+    function merge(uint256 seriesId, uint256 ptAmount) external;
 
-    /// @notice After maturity, burn PT alone for the underlying stock token.
-    function redeemPrincipal(uint256 seriesId, uint256 amount) external;
+    /// @notice After maturity, burn PT alone for the shares it represents.
+    function redeemPrincipal(uint256 seriesId, uint256 ptAmount) external returns (uint256 rawOut);
 
-    /// @notice Pull a declared dividend into the series' yield pool. Permissionless.
-    function harvestDividend(uint256 seriesId, uint256 dividendId) external returns (uint256 net);
+    /// @notice Take everything this YT has accrued, paid in the stock token itself.
+    function claimYield(uint256 seriesId) external returns (uint256 rawOut);
 
-    /// @notice Claim a YT holder's pro-rata share of a harvested dividend.
-    function claimYield(uint256 seriesId, uint256 dividendId) external returns (uint256 amount);
+    /// @notice What `user` could claim from this series right now, in raw stock tokens.
+    function claimableYield(uint256 seriesId, address user) external view returns (uint256);
 
-    /// @notice What a holder could still claim from an already harvested dividend.
-    function pendingYield(uint256 seriesId, uint256 dividendId, address user) external view returns (uint256);
+    /// @notice Raw stock one PT would redeem for at the current multiplier.
+    function principalValue(uint256 seriesId, uint256 ptAmount) external view returns (uint256);
 
-    /// @notice Set the split fee. Callable by DEFAULT_ADMIN_ROLE. Capped at MAX_SPLIT_FEE_BPS.
-    function setSplitFeeBps(uint256 bps) external;
+    function series(uint256 seriesId)
+        external
+        view
+        returns (address stockToken, uint64 maturity, address principalToken, address yieldToken, bool exists);
 }
