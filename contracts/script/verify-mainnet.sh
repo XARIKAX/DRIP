@@ -22,6 +22,12 @@ set -euo pipefail
 : "${USDG:?USDG is required}"
 : "${ADMIN:?ADMIN is required}"
 
+# forge resolves the whole [etherscan] table in foundry.toml before it does anything,
+# including the arbitrum_sepolia entry's ${ARBISCAN_API_KEY} — even though nothing here
+# calls Arbiscan and --show-standard-json-input reaches no network at all. The variable
+# only has to exist.
+export ARBISCAN_API_KEY="${ARBISCAN_API_KEY:-unused}"
+
 OUT="${OUT:-./verify}"
 mkdir -p "$OUT"
 
