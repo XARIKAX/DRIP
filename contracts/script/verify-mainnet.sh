@@ -12,7 +12,7 @@ set -euo pipefail
 
 : "${SPLIT:?SPLIT is required}"
 : "${MARKET:?MARKET is required}"
-: "${DEPLOYER:?DEPLOYER is required — SplitVault's constructor arg, not the admin}"
+: "${DEPLOYER:?DEPLOYER is required: the constructor arg of SplitVault, not the admin}"
 : "${USDG:?USDG is required}"
 : "${ADMIN:?ADMIN is required}"
 
