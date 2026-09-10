@@ -6,6 +6,7 @@ import { AnimatedNumber, Countdown, fmt, shortDate } from "@/components/live";
 import { TokenMark } from "@/components/TokenMark";
 import {
   useDataActions,
+  useHoldings,
   useSplitPosition,
   useSplitSeries,
   useSplitWalletBalance,
@@ -149,10 +150,19 @@ function Meter({ series }: { series: SplitSeries }) {
 function SplitPanel({ series }: { series: SplitSeries }) {
   const actions = useDataActions();
   const walletStock = useSplitWalletBalance(series.symbol);
+  const holdings = useHoldings();
   const [amount, setAmount] = useState("");
 
+  // Most of a holder's stock is on deposit earning rewards, not sitting in the wallet.
+  // Splitting needs it in the wallet, so both are spendable here and the action pulls
+  // the difference out of the deposit in the same batch. Offering only the wallet
+  // balance sent people to the dashboard to withdraw and come back.
+  const deposited = holdings.rows.find((h) => h.symbol === series.symbol)?.amount ?? 0;
+  const available = walletStock + deposited;
+
   const raw = Number.parseFloat(amount) || 0;
-  const valid = raw > 0 && raw <= walletStock && !series.frozen;
+  const valid = raw > 0 && raw <= available && !series.frozen;
+  const fromDeposit = Math.max(0, raw - walletStock);
   const fee = (raw * series.splitFeeBps) / 10_000;
   const net = raw - fee;
   const ptOut = net * series.multiplier;
@@ -168,7 +178,7 @@ function SplitPanel({ series }: { series: SplitSeries }) {
       <div className="panel-head">
         <span className="panel-title">Split {series.symbol}</span>
         <span className="num text-micro font-bold uppercase text-muted">
-          {fmt(walletStock, 4)} in your wallet
+          {fmt(available, 4)} available
         </span>
       </div>
 
@@ -185,10 +195,15 @@ function SplitPanel({ series }: { series: SplitSeries }) {
           <button
             type="button"
             className="border border-line px-3 text-micro font-bold uppercase text-muted hover:text-ink"
-            onClick={() => setAmount(walletStock > 0 ? walletStock.toFixed(4) : "")}
+            onClick={() => setAmount(available > 0 ? Math.floor(available * 1e4) / 1e4 + "" : "")}
           >
             Max
           </button>
+        </div>
+
+        <div className="flex justify-between text-[12px] text-faint">
+          <span>{fmt(walletStock, 4)} in your wallet</span>
+          <span>{fmt(deposited, 4)} on deposit in Osinko</span>
         </div>
 
         <dl className="text-[13px]">
@@ -204,6 +219,13 @@ function SplitPanel({ series }: { series: SplitSeries }) {
           />
           <Row label="Split fee" value={`${fmt(fee, 6)} ${series.symbol}`} note={`${series.splitFeeBps / 100}%`} last />
         </dl>
+
+        {fromDeposit > 0 ? (
+          <p className="border border-line bg-ground-3 px-3 py-2 text-[12px] leading-snug text-muted">
+            {fmt(fromDeposit, 4)} {series.symbol} will come out of your Osinko deposit first,
+            in the same batch. It stops earning USDG rewards once it leaves.
+          </p>
+        ) : null}
 
         <button
           type="button"

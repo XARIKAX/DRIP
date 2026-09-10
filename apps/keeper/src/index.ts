@@ -4,12 +4,13 @@ import { loadConfig } from "./config.js";
 import { HolderIndex } from "./holders.js";
 import { activateDue, settleDue } from "./jobs.js";
 import { distributeRewards } from "./rewards.js";
+import { freezeMaturedSeries } from "./series.js";
 import { log } from "./log.js";
 
 /**
  * The Osinko keeper.
  *
- * Three jobs, on a timer:
+ * Four jobs, on a timer:
  *
  *   activate  pay holders the moment their entitlement exists, rather than whenever
  *             someone remembers to. Gas only.
@@ -18,6 +19,9 @@ import { log } from "./log.js";
  *   rewards   hand out whatever USDG sits unallocated in the reward vault, split by
  *             the dollar value of what each holder has on deposit. Spends Osinko's
  *             own money, so it is off until REWARDS_ENABLED turns it on.
+ *   freeze    stop the yield clock on matured split series, so a dividend landing
+ *             after maturity cannot accrue to YT out of PT's principal. Gas only,
+ *             permissionless, and once per series for the life of the series.
  *
  * What it deliberately does NOT do is declare dividends. That needs ORACLE_ROLE and
  * real corporate action data, and a keeper that invented either would be inventing
@@ -95,6 +99,7 @@ async function main(): Promise<void> {
     if (config.rewardsEnabled) {
       await at("rewards", () => distributeRewards(config, client, wallet, index));
     }
+    await at("freeze", () => freezeMaturedSeries(config, client, wallet, head.timestamp));
     state.cycles++;
     state.lastCycle = new Date().toISOString();
     state.lastError = null;
