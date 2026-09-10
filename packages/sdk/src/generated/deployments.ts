@@ -28,7 +28,8 @@ export const deployments: Record<number, Deployment> = {
     "reinvestor": "0x55Ca69d03dfD1717a4778B736E704A274f880674",
     "rewardVault": "0x866DB54adD6d37E918e732524E650Ea57CC36Dde",
     "rewardVaultBlock": 58499599,
-    "splitVault": "0x2759198d9512fcD214B6437B709Eb835eE1807Ee",
+    "splitVault": "0xd2AC4CE65AdBEF94c258d6d6908D9fcb44cfeca9",
+    "splitVaultBlock": 59527498,
     "streamEngine": "0x69b63aE8e0fB20C8744897c05700b5D610186C2E",
     "swapAdapter": "0x549B5bAD4B010630fE033c4e2538718504081E88",
     "tokens": {
@@ -44,7 +45,8 @@ export const deployments: Record<number, Deployment> = {
       "PLTR": "0x894E1EC2D74FFE5AEF8Dc8A9e84686acCB964F2A",
       "TSLA": "0x322F0929c4625eD5bAd873c95208D54E1c003b2d"
     },
-    "usdg": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168"
+    "usdg": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    "yieldMarket": "0xfF1da106560453e61495095cE693917b6E1f7fF3"
   },
   "31337": {
     "advanceVault": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
