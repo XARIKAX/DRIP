@@ -10,6 +10,7 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IAdvanceVault} from "./interfaces/IAdvanceVault.sol";
+import {IIdleYield} from "./interfaces/IIdleYield.sol";
 
 /// @title AdvanceVault
 /// @notice The yield side. LPs deposit USDG, the vault fronts dividends before the
@@ -110,6 +111,8 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
     error UtilizationTooHigh(uint256 bps);
     error UtilizationCapBreached(uint256 wouldBe, uint256 cap);
     error InsufficientCashFloor(uint256 cash, uint256 obligationsAfter);
+    error IdleWithdrawalFailed(uint256 wanted, uint256 available);
+    error BufferTooHigh(uint256 bps);
     error ObligationExceeded(uint256 requested, uint256 available);
     error ReceivableExceeded(uint256 requested, uint256 available);
     error LoanExceeded(uint256 requested, uint256 available);
@@ -139,14 +142,43 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
     ///      minus what we owe holders. Saturates at zero so a catastrophic write down
     ///      can never make the vault unreadable.
     function totalAssets() public view override returns (uint256) {
-        uint256 gross = IERC20(asset()).balanceOf(address(this)) + receivables + loansOutstanding;
+        uint256 gross = cash() + receivables + loansOutstanding;
         uint256 owed = obligations;
         return gross > owed ? gross - owed : 0;
     }
 
-    /// @notice USDG sitting in the vault right now.
+    /// @notice Where resting USDG earns while it waits. Zero address means nowhere.
+    IIdleYield public idleYield;
+
+    /// @notice Share of free cash kept physically here, so ordinary payouts never
+    ///         have to touch the venue. Basis points.
+    /// @dev A buffer is not caution, it is economics: fetching from the venue costs
+    ///      gas on every single advance, and most advances are small. Parking only the
+    ///      long tail keeps the common path cheap.
+    uint256 public idleBufferBps = 2_000;
+
+    event IdleYieldSet(address venue);
+    event IdleBufferSet(uint256 bps);
+    event ParkedToIdle(uint256 amount);
+    event PulledFromIdle(uint256 amount);
+
+    /// @notice Every USDG this vault controls, here or parked earning.
+    /// @dev Deliberately includes the idle position, because this is the number every
+    ///      guard in this contract reasons about — the cash floor, free cash, what an
+    ///      LP may withdraw. Parking money must not make the pool look poorer than it
+    ///      is, or a holder gets refused an advance the vault can plainly cover.
     function cash() public view returns (uint256) {
+        return liquidCash() + idleAssets();
+    }
+
+    /// @notice USDG physically in this contract, ready to send this instant.
+    function liquidCash() public view returns (uint256) {
         return IERC20(asset()).balanceOf(address(this));
+    }
+
+    /// @notice USDG parked in the idle venue, including what it has earned.
+    function idleAssets() public view returns (uint256) {
+        return address(idleYield) == address(0) ? 0 : idleYield.totalAssets();
     }
 
     /// @notice Cash not already earmarked for an outstanding advance obligation.
@@ -207,6 +239,7 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
         nonReentrant
         returns (uint256)
     {
+        _ensureLiquid(assets);
         return super.withdraw(assets, receiver, owner);
     }
 
@@ -218,6 +251,7 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
         nonReentrant
         returns (uint256)
     {
+        _ensureLiquid(previewRedeem(shares));
         return super.redeem(shares, receiver, owner);
     }
 
@@ -279,6 +313,7 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
         b.obligation -= amount;
         obligations -= amount;
 
+        _ensureLiquid(amount);
         IERC20(asset()).safeTransfer(to, amount);
         emit AdvanceReleased(dividendId, to, amount);
     }
@@ -360,6 +395,7 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
         if (utilAfter > maxUtilizationBps) revert UtilizationCapBreached(utilAfter, maxUtilizationBps);
 
         loansOutstanding = loansAfter;
+        _ensureLiquid(amount);
         IERC20(asset()).safeTransfer(to, amount);
         emit Lent(to, amount, loansAfter);
     }
@@ -436,5 +472,72 @@ contract AdvanceVault is IAdvanceVault, ERC4626, AccessControl, Pausable, Reentr
     /// @notice Resume.
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
+    }
+
+    // ---------------------------------------------------------------------
+    // Idle yield
+    // ---------------------------------------------------------------------
+
+    /// @notice Point resting USDG at a venue, or at nothing.
+    /// @dev Setting a new venue does not move anything. Pull the old one back first —
+    ///      doing it implicitly would mean an admin call that silently unwinds a
+    ///      position, at whatever the venue's exit costs that block.
+    function setIdleYield(IIdleYield venue) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        idleYield = venue;
+        emit IdleYieldSet(address(venue));
+    }
+
+    function setIdleBufferBps(uint256 bps) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (bps > BPS) revert BufferTooHigh(bps);
+        idleBufferBps = bps;
+        emit IdleBufferSet(bps);
+    }
+
+    /// @notice Park free cash above the buffer. Permissionless; the keeper runs it.
+    /// @dev Only ever free cash, which is what is left after every outstanding
+    ///      obligation. Money promised to a holder mid stream does not go earning.
+    function parkIdle() external nonReentrant returns (uint256 parked) {
+        if (address(idleYield) == address(0)) return 0;
+
+        uint256 free = freeCash();
+        uint256 keep = (free * idleBufferBps) / BPS;
+        uint256 here = liquidCash();
+        uint256 wantHere = obligations + keep;
+        if (here <= wantHere) return 0;
+
+        parked = here - wantHere;
+        IERC20(asset()).forceApprove(address(idleYield), parked);
+        idleYield.deposit(parked);
+        IERC20(asset()).forceApprove(address(idleYield), 0);
+        emit ParkedToIdle(parked);
+    }
+
+    /// @notice Bring everything home. Admin only, for winding a venue down.
+    function unparkAll() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant returns (uint256 pulled) {
+        if (address(idleYield) == address(0)) return 0;
+        pulled = idleYield.maxWithdraw();
+        if (pulled == 0) return 0;
+        idleYield.withdraw(pulled);
+        emit PulledFromIdle(pulled);
+    }
+
+    /// @dev Make `amount` physically available before paying it out.
+    ///
+    ///      THE RULE THIS ENFORCES: parking must never make a payout fail. Every path
+    ///      that sends USDG out of this vault goes through here first, so a holder
+    ///      owed money gets it whether the cash was sitting in the contract or off
+    ///      earning. A pool that could not pay because its money was busy would have
+    ///      taken a yield nobody offered it, at the holder's expense.
+    function _ensureLiquid(uint256 amount) private {
+        uint256 here = liquidCash();
+        if (here >= amount) return;
+        if (address(idleYield) == address(0)) revert IdleWithdrawalFailed(amount, here);
+
+        uint256 need = amount - here;
+        uint256 available = idleYield.maxWithdraw();
+        if (available < need) revert IdleWithdrawalFailed(need, available);
+
+        idleYield.withdraw(need);
+        emit PulledFromIdle(need);
     }
 }

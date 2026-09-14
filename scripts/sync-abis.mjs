@@ -30,6 +30,7 @@ const CONTRACTS = [
   "SplitVault",
   "YieldMarket",
   "RewardVault",
+  "DividendRouter",
   "PrincipalToken",
   "YieldToken",
   // Production adapters. Carried so a mainnet book is readable with the same

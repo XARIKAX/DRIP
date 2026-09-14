@@ -65,6 +65,12 @@ export interface Deployment {
    */
   yieldMarket?: Address;
   /**
+   * The router that turns a holder's dividends into whatever they chose. Optional:
+   * a book written before it existed is still valid, and the app hides the setting
+   * rather than throwing.
+   */
+  dividendRouter?: Address;
+  /**
    * The reward token vault. Optional because the protocol was deployed before it
    * existed, so a book written by that deploy is still valid and the app has to
    * render without one rather than throw.
