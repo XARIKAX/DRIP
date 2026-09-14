@@ -11,6 +11,7 @@ export { lendingPoolAbi } from "./lendingPoolAbi";
 export { splitVaultAbi } from "./splitVaultAbi";
 export { yieldMarketAbi } from "./yieldMarketAbi";
 export { rewardVaultAbi } from "./rewardVaultAbi";
+export { dividendRouterAbi } from "./dividendRouterAbi";
 export { principalTokenAbi } from "./principalTokenAbi";
 export { yieldTokenAbi } from "./yieldTokenAbi";
 export { chainlinkPriceOracleAbi } from "./chainlinkPriceOracleAbi";
