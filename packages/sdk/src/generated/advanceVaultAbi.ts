@@ -393,6 +393,45 @@ export const advanceVaultAbi = [
   },
   {
     "type": "function",
+    "name": "idleAssets",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "idleBufferBps",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "idleYield",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IIdleYield"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "lend",
     "inputs": [
       {
@@ -408,6 +447,19 @@ export const advanceVaultAbi = [
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "liquidCash",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -602,6 +654,19 @@ export const advanceVaultAbi = [
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "parkIdle",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "parked",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -948,6 +1013,32 @@ export const advanceVaultAbi = [
   },
   {
     "type": "function",
+    "name": "setIdleBufferBps",
+    "inputs": [
+      {
+        "name": "bps",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setIdleYield",
+    "inputs": [
+      {
+        "name": "venue",
+        "type": "address",
+        "internalType": "contract IIdleYield"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setMaxUtilizationBps",
     "inputs": [
       {
@@ -1105,6 +1196,19 @@ export const advanceVaultAbi = [
         "name": "",
         "type": "bool",
         "internalType": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "unparkAll",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "pulled",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "stateMutability": "nonpayable"
@@ -1379,6 +1483,32 @@ export const advanceVaultAbi = [
   },
   {
     "type": "event",
+    "name": "IdleBufferSet",
+    "inputs": [
+      {
+        "name": "bps",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "IdleYieldSet",
+    "inputs": [
+      {
+        "name": "venue",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Lent",
     "inputs": [
       {
@@ -1455,6 +1585,19 @@ export const advanceVaultAbi = [
   },
   {
     "type": "event",
+    "name": "ParkedToIdle",
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Paused",
     "inputs": [
       {
@@ -1462,6 +1605,19 @@ export const advanceVaultAbi = [
         "type": "address",
         "indexed": false,
         "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PulledFromIdle",
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
       }
     ],
     "anonymous": false
@@ -1664,6 +1820,17 @@ export const advanceVaultAbi = [
   },
   {
     "type": "error",
+    "name": "BufferTooHigh",
+    "inputs": [
+      {
+        "name": "bps",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "ERC20InsufficientAllowance",
     "inputs": [
       {
@@ -1848,6 +2015,22 @@ export const advanceVaultAbi = [
     "inputs": [
       {
         "name": "bps",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "IdleWithdrawalFailed",
+    "inputs": [
+      {
+        "name": "wanted",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "available",
         "type": "uint256",
         "internalType": "uint256"
       }
