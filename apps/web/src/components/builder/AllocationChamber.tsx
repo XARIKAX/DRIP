@@ -188,7 +188,10 @@ function Hub({
     <div className="absolute inset-[33%] flex flex-col items-center justify-center gap-1.5 rounded-full px-3 text-center">
       {empty ? (
         <>
-          <span className="text-[13px] font-semibold leading-tight text-muted">
+          {/* Allowed to run wider than the hub it sits in. The hub is sized for a
+              ticker, and wrapping the invitation across two lines to respect a circle
+              nobody can see is the wrong trade. */}
+          <span className="whitespace-nowrap text-[13px] font-semibold leading-tight text-muted">
             Drop your first stock
           </span>
           {onTryExample ? (

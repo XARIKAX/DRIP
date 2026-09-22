@@ -43,6 +43,11 @@ import {
  * It works with no wallet. The stock list comes from the app's own data seam, which
  * answers the sample account for a visitor and the live listing for a connected one, so
  * nothing here is invented either way.
+ *
+ * Served at /build rather than under /app, and absent from the nav on purpose — this is
+ * shown to people by sending them the link. `layout.tsx` beside this file carries that
+ * decision and the `robots` directive that goes with it; read its header before moving
+ * this page or adding a link to it.
  */
 
 const EXAMPLE = {
