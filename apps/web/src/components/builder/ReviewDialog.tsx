@@ -168,6 +168,17 @@ export function ReviewDialog({
   const short = depositable.filter((l) => (wallet.stocks[l.assetId] ?? 0) < (l.shares ?? 0));
 
   const run = useCallback(async () => {
+    /*
+     * The capability, not the connection, decides whether this runs.
+     *
+     * A wallet connected to a network Osinko is not deployed on still reads the sample
+     * account, and `actions.deposit` there writes to an in-memory store and returns
+     * happily. Gating on `isConnected` alone would put "3 deposits are in" on screen for
+     * something no chain has ever heard of. The sample account is a fine way to browse
+     * the product; it is not a thing to sign off on.
+     */
+    if (capability.deposit.kind !== "in-kind") return;
+
     // Three guards, because each closes a different window. The ref is the one that
     // stops two clicks 8ms apart: state updates are asynchronous, so both would see
     // "reviewing" if the check were on phase alone.
@@ -196,7 +207,7 @@ export function ReviewDialog({
       submitting.current = false;
       setBusyLabel("");
     }
-  }, [actions, depositable]);
+  }, [actions, depositable, capability.deposit.kind]);
 
   const saveCard = useCallback(async () => {
     setExporting(true);
@@ -374,7 +385,7 @@ export function ReviewDialog({
               <div className="pt-1">
                 <div className="rule" aria-hidden />
               </div>
-              {isConnected ? (
+              {capability.deposit.kind === "in-kind" ? (
                 <button
                   type="button"
                   className="btn-ghost w-full"
@@ -392,8 +403,9 @@ export function ReviewDialog({
                 </button>
               ) : (
                 <p className="text-center text-[12px] leading-relaxed text-faint">
-                  Connect a wallet to put these stocks on deposit. You do not need one to
-                  design or save a Stack.
+                  {isConnected
+                    ? `Osinko is not switched on for ${activeChain.name} yet, so there is nowhere to put these. Saving and sharing the design still works.`
+                    : "Connect a wallet to put these stocks on deposit. You do not need one to design or save a Stack."}
                 </p>
               )}
             </>
