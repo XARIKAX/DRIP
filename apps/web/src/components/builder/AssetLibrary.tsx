@@ -61,7 +61,12 @@ export const AssetLibrary = forwardRef<HTMLInputElement, AssetLibraryProps>(
     return (
       <section className="panel flex flex-col" aria-label="Choose your stocks">
         <div className="panel-head">
-          <span className="panel-title">01 / Choose your stocks</span>
+          {/* The number is a column position, not a sequence. Below lg the chamber comes
+              first, where "02" sitting above "01" is simply wrong; the names still read
+              as steps without it. */}
+          <span className="panel-title">
+            <span className="hidden lg:inline">01 / </span>Choose your stocks
+          </span>
           <span className="serial">
             {allocations.length} of {MAX_ASSETS}
           </span>

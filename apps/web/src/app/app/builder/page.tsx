@@ -264,7 +264,9 @@ export default function BuilderPage() {
         <div className="order-1 lg:order-none lg:col-span-8 xl:col-span-6">
           <section className="panel" aria-label="Compose your Stack" data-shot="builder">
             <div className="panel-head">
-              <span className="panel-title">02 / Compose your Stack</span>
+              <span className="panel-title">
+                <span className="hidden lg:inline">02 / </span>Compose your Stack
+              </span>
               <span className="flex items-center gap-2 text-micro font-bold uppercase text-faint">
                 <span
                   aria-hidden

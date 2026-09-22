@@ -89,7 +89,9 @@ export function StackIdentityForm({
   return (
     <section className="panel flex flex-col" aria-label="Make it yours">
       <div className="panel-head">
-        <span className="panel-title">03 / Make it yours</span>
+        <span className="panel-title">
+          <span className="hidden lg:inline">03 / </span>Make it yours
+        </span>
       </div>
 
       <div className="space-y-4 px-5 py-5">
