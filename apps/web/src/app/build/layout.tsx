@@ -15,19 +15,22 @@ import { GroundLine } from "@/components/pixel/Scenery";
  * siblings — a route under /app inherits the app shell, and the only way to be off the
  * nav while still wearing the product's chrome is to compose that chrome here.
  *
- * `robots` is the half that matters. Unlinked is not the same as unfindable: a crawler
- * that meets the URL anywhere — a shared link, a referrer header, an inbound link
- * somebody adds — will index it unless told not to. So this says no, the same way
- * /dev/pixel and /dev/og already do.
+ * `robots` is the half that matters, and it lives here because the page is a client
+ * component and a client component cannot export metadata. Unlinked is not unfindable:
+ * anything that meets the URL — a shared link, an inbound link somebody adds later —
+ * will index it unless told not to. /dev/pixel and /dev/og already say no the same way.
  *
- * Note what is deliberately NOT done: there is no `Disallow: /build` in a robots.txt.
- * A robots file is public, so naming the path there would publish the exact address
- * this route is trying to keep quiet — it would be a signpost, not a lock. The meta
- * directive does the work without announcing the door.
+ * Two things deliberately NOT done. There is no `Disallow` line in a robots.txt: that
+ * file is public, so it would publish the address while also stopping a crawler from
+ * ever reaching the meta directive — the one reliable way to guarantee the directive is
+ * never read. And there is no `alternates` override: the root layout hardcodes
+ * `canonical: "/"`, which every route inherits, so this page already emits a canonical
+ * pointing at the homepage and never prints its own URL. Setting a self-canonical here
+ * would undo exactly that.
  *
- * And note what this is honestly not: obscurity, not access control. Anyone with the
- * link can open it. If it ever needs to be genuinely private, that is a deployment
- * password or a gate in front of the page, not a nav decision.
+ * What this is honestly not is private. Anyone with the link can open it, and "build" is
+ * a word every directory scanner already tries. Genuine privacy is a password on the
+ * deployment or a gate in front of the route — not a nav decision, and not this file.
  *
  * The chrome itself is the app's, minus nothing — the builder is meant to look like
  * the product when it is demonstrated, not like a page off to one side.
@@ -35,8 +38,6 @@ import { GroundLine } from "@/components/pixel/Scenery";
 export const metadata: Metadata = {
   title: "Build a Stack — Osinko",
   robots: { index: false, follow: false },
-  // No canonical. The root layout sets one per route from `alternates`; leaving it unset
-  // here keeps the page out of anything that enumerates canonical URLs.
 };
 
 export default function BuildLayout({ children }: { children: ReactNode }) {

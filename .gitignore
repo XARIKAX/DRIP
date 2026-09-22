@@ -12,14 +12,8 @@ dist/
 build/
 *.tsbuildinfo
 
-# ...except the route that is actually called build. `build/` has no leading slash, so
-# it matches at every depth, and it quietly swallowed apps/web/src/app/build/layout.tsx —
-# `git add -A` skipped it without a word and only the page.tsx beside it got committed,
-# because `git mv` stages a rename explicitly and ignores the ignore file. The route
-# would have shipped with no shell and no robots directive, and worked perfectly on the
-# machine where the untracked file still existed. Re-include the directory itself; git
-# cannot re-include a file whose parent directory is excluded, so this has to name the
-# directory and not the files in it.
+# `build/` is unanchored, so it also matches app router segments named build. Re-include
+# the directory itself — git cannot re-include a file whose parent directory is excluded.
 !apps/web/src/app/build/
 
 # foundry
