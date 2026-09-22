@@ -51,6 +51,34 @@ export const PALETTE = {
   vermilion: "#E0533A",
 } as const;
 
+/**
+ * The Stack builder's five ring accents.
+ *
+ * The one place in the product where colour identifies a *thing* rather than a state, so
+ * it sits outside the iris/blossom rule instead of bending it: a ring painted in five
+ * tints of one violet would be unreadable, and an allocation nobody can read is not an
+ * allocation. Five, because a Stack holds five assets at most, so no two segments ever
+ * share a hue and the palette never has to wrap.
+ *
+ * Ordered so the first three are the green, coral and blue of the reference design. Each
+ * is chosen to clear 4.5:1 against the chamber's near-black ground and to stay distinct
+ * from the others for the common forms of colour blindness — which is also why colour is
+ * never the only thing naming an asset: every badge and every legend row carries its
+ * ticker beside its dot.
+ */
+export const STACK_ACCENTS = [
+  "#78EC51", // spring
+  "#FF6574", // coral
+  "#4B9FFF", // azure
+  "#FFC24B", // amber
+  "#C79BFF", // wisteria
+] as const;
+
+/** The accent for a colour slot, wrapping defensively rather than returning undefined. */
+export function stackAccent(slot: number): string {
+  return STACK_ACCENTS[((slot % STACK_ACCENTS.length) + STACK_ACCENTS.length) % STACK_ACCENTS.length]!;
+}
+
 /** The two type stacks SVG `font-family` attributes need spelled out. */
 export const SVG_MONO = "IBM Plex Mono, SFMono-Regular, Menlo, Consolas, monospace";
 export const SVG_SANS = "Instrument Sans, Helvetica Neue, Helvetica, Arial, sans-serif";

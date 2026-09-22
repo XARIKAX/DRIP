@@ -8,6 +8,7 @@ import { useScrollY } from "@/components/motion";
 
 const LINKS = [
   { href: "/app", label: "Dashboard" },
+  { href: "/app/builder", label: "Build" },
   { href: "/app/deposit", label: "Deposit" },
   { href: "/app/borrow", label: "Borrow" },
   { href: "/app/split", label: "Split" },
@@ -41,8 +42,8 @@ export function SiteNav() {
         scrolled ? "border-b border-line bg-ground/90 backdrop-blur-xl" : "border-b border-line-soft bg-ground"
       }`}
     >
-      {/* Nine destinations plus a connect button fill 1024px to the wire, so the row
-          breathes less at lg and opens back up at xl. */}
+      {/* Ten destinations plus a connect button fill 1024px past the wire, so the row
+          closes right up at lg and opens back out at xl. */}
       <div className="shell flex h-[68px] items-center justify-between gap-4 xl:gap-8">
         <Link href="/" aria-label="Osinko home" className="shrink-0 transition-opacity hover:opacity-70">
           <Wordmark />
@@ -56,7 +57,7 @@ export function SiteNav() {
                 key={link.href}
                 href={link.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative px-1.5 py-2 font-mono text-micro font-medium uppercase transition-colors duration-300 xl:px-3.5 ${
+                className={`relative px-1 py-2 font-mono text-micro font-medium uppercase transition-colors duration-300 xl:px-3 ${
                   active ? "text-ink" : "text-faint hover:text-ink"
                 }`}
               >

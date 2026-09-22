@@ -8,6 +8,7 @@
     "dev": "pnpm --filter @drip-markets/web dev",
     "build": "pnpm --filter @drip-markets/sdk build && pnpm --filter @drip-markets/mcp build && pnpm --filter @drip-markets/web build",
     "typecheck": "pnpm -r typecheck",
+    "test": "node --test --experimental-strip-types \"apps/web/src/lib/stack/*.test.ts\"",
     "chain": "anvil --chain-id 31337 --block-time 2",
     "contracts:build": "forge build --root contracts",
     "contracts:test": "forge test --root contracts -vv",

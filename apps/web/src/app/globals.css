@@ -1280,6 +1280,174 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /* The Stack builder's chamber.                                        */
+  /*                                                                     */
+  /* Only what Tailwind cannot say lives here: the donut mask, the grid   */
+  /* weave, the slider's vendor-prefixed thumb, and the keyframes. Every  */
+  /* per-instance number — the conic string, each badge's position — is   */
+  /* written by JavaScript straight onto the node, because those are data */
+  /* about one Stack and not design tokens about every Stack.             */
+  /* ------------------------------------------------------------------ */
+
+  /* The square the whole instrument is measured from. Everything inside is a
+     percentage of this, so the ring, its badges and its type scale as one object
+     and no breakpoint has to restate the relationship between them. */
+  .stack-stage {
+    position: relative;
+    width: 100%;
+    max-width: var(--stage, 520px);
+    margin-inline: auto;
+    aspect-ratio: 1;
+  }
+
+  /* Graph paper, dying out before it reaches the rim. Without the mask the weave
+     runs into the panel's corners and the chamber reads as a spreadsheet. */
+  .stack-grid {
+    background-image:
+      linear-gradient(to right, rgb(233 224 255 / 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(233 224 255 / 0.05) 1px, transparent 1px);
+    background-size: calc(var(--cell) * 8) calc(var(--cell) * 8);
+    -webkit-mask-image: radial-gradient(circle closest-side, #000 30%, transparent 78%);
+    mask-image: radial-gradient(circle closest-side, #000 30%, transparent 78%);
+  }
+
+  /* The slot, before anything is in it. Dashed because dashed means "put something
+     here" in every interface anyone has ever used. */
+  .stack-drop {
+    border: 1px dashed var(--edge);
+    transition: border-color 200ms var(--ease-osk, cubic-bezier(0.16, 1, 0.3, 1)),
+      transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms ease;
+  }
+
+  .stack-drop[data-active="true"] {
+    border-style: solid;
+    border-color: rgb(var(--accent));
+    transform: scale(1.015);
+    box-shadow: 0 0 0 6px rgb(var(--accent) / 0.1);
+  }
+
+  /* A badge arriving. Overshoot of a few percent, then settle — the ring gains a
+     holding rather than having one appear in it. */
+  .stack-badge {
+    animation: stack-pop 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* The decorative outline only. It carries no label and names no asset, so it may
+     turn; a segment that rotated away from its own badge would be a lie. */
+  .stack-orbit {
+    animation: stack-orbit 26s linear infinite;
+  }
+
+  .stack-halo {
+    animation: stack-halo 18s ease-in-out infinite;
+  }
+
+  /* What the pointer carries while dragging. Fixed, above everything, and inert —
+     it must never be the element a hit test finds under the cursor. */
+  .stack-ghost {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 70;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  /*
+   * The weight slider.
+   *
+   * Built on a native `input[type=range]` rather than a div, which is not a detail:
+   * the native element brings arrow keys, Home/End, PageUp/PageDown and the right
+   * screen-reader role for free. A hand-rolled slider has to re-earn every one of
+   * those and usually earns none. Only the thumb and track are restyled, and those
+   * need vendor pseudo-elements Tailwind cannot reach.
+   */
+  .stack-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 20px;
+    background: transparent;
+    cursor: grab;
+  }
+
+  .stack-slider:active {
+    cursor: grabbing;
+  }
+
+  .stack-slider::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: rgb(var(--text) / 0.12);
+  }
+
+  .stack-slider::-moz-range-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: rgb(var(--text) / 0.12);
+  }
+
+  .stack-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    margin-top: -6px;
+    border-radius: 9999px;
+    background: var(--thumb, rgb(var(--accent)));
+    border: 2px solid rgb(var(--ground));
+    box-shadow: 0 1px 6px rgb(10 5 16 / 0.5);
+    transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .stack-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    background: var(--thumb, rgb(var(--accent)));
+    border: 2px solid rgb(var(--ground));
+    box-shadow: 0 1px 6px rgb(10 5 16 / 0.5);
+  }
+
+  .stack-slider:hover::-webkit-slider-thumb,
+  .stack-slider:focus-visible::-webkit-slider-thumb {
+    transform: scale(1.15);
+  }
+
+  @keyframes stack-pop {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.85);
+    }
+    70% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1.04);
+    }
+    100% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+
+  @keyframes stack-orbit {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes stack-halo {
+    0%,
+    100% {
+      opacity: 0.4;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.62;
+      transform: scale(1.04);
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
   /* Reduced motion.                                                     */
   /*                                                                     */
   /* Exhaustive, and it has to stay that way: every animation added to    */
@@ -1296,6 +1464,9 @@
     .skeleton,
     .skeleton-dark,
     .marquee,
+    .stack-badge,
+    .stack-orbit,
+    .stack-halo,
     .drift,
     .breathe,
     .flicker,
@@ -1341,6 +1512,18 @@
 
     .lift:hover {
       transform: none !important;
+    }
+
+    /* The drop ring still has to say "yes, here" — it just says it with colour
+       instead of a lunge. The border change stays; the scale goes. */
+    .stack-drop,
+    .stack-drop[data-active="true"] {
+      transform: none !important;
+      transition: none !important;
+    }
+
+    .stack-slider::-webkit-slider-thumb {
+      transition: none !important;
     }
   }
 }
