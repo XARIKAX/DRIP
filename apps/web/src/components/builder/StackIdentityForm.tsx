@@ -4,6 +4,7 @@ import { fmt } from "@/components/live";
 import { toPct, type Allocation } from "@/lib/stack/allocation";
 import type { StackCapability } from "@/lib/stack/capability";
 import type { TokenInfo } from "@/lib/data/types";
+import type { BuilderAsset } from "@/lib/stack/asset";
 import { StackPreviewCard } from "./StackPreviewCard";
 
 /**
@@ -25,6 +26,7 @@ export interface StackIdentityFormProps {
   illustrativeUsd: number;
   allocations: readonly Allocation[];
   tokens: TokenInfo[];
+  assets: ReadonlyMap<string, BuilderAsset>;
   capability: StackCapability;
   saving: boolean;
   onName: (value: string) => void;
@@ -72,6 +74,7 @@ export function StackIdentityForm({
   illustrativeUsd,
   allocations,
   tokens,
+  assets,
   capability,
   saving,
   onName,
@@ -80,8 +83,9 @@ export function StackIdentityForm({
   onReview,
   onSaveDraft,
 }: StackIdentityFormProps) {
-  const priceOf = new Map(tokens.map((t) => [t.symbol, t.priceUsd]));
-  const unpriced = allocations.filter((a) => priceOf.get(a.assetId) == null);
+  void tokens;
+  const unpriced = allocations.filter((a) => assets.get(a.assetId)?.priceUsd == null);
+  const labelOf = (id: string) => assets.get(id)?.symbol ?? id;
   const ready = isReady(name, ticker, allocations);
   const nameMsg = nameError(name);
   const tickerMsg = tickerError(ticker);
@@ -143,7 +147,12 @@ export function StackIdentityForm({
           </p>
         </div>
 
-        <StackPreviewCard name={name} ticker={ticker} allocations={allocations} />
+        <StackPreviewCard
+          name={name}
+          ticker={ticker}
+          allocations={allocations}
+          assets={assets}
+        />
       </div>
 
       {/* The summary. Everything in it is derived and labelled as such. */}
@@ -163,21 +172,21 @@ export function StackIdentityForm({
             />
           </span>
         </Row>
-        <Row label="Stocks">{allocations.length}</Row>
+        <Row label="Assets">{allocations.length}</Row>
         <Row label="Biggest holding">
           {allocations.length === 0
             ? "—"
             : (() => {
                 const top = [...allocations].sort((a, b) => b.weightBps - a.weightBps)[0]!;
-                return `${top.assetId} ${toPct(top.weightBps)}%`;
+                return `${labelOf(top.assetId)} ${toPct(top.weightBps)}%`;
               })()}
         </Row>
-        <Row label="Backed by">Stocks you already hold</Row>
+        <Row label="Backed by">Stocks and tokens you hold</Row>
       </dl>
 
       {unpriced.length > 0 ? (
         <p className="mx-5 mb-3 rounded-md border border-line bg-ground-3 px-3 py-2.5 text-[12px] leading-relaxed text-muted">
-          No price right now for {unpriced.map((a) => a.assetId).join(", ")}. You can still
+          No price right now for {unpriced.map((a) => labelOf(a.assetId)).join(", ")}. You can still
           design with {unpriced.length === 1 ? "it" : "them"} — there is just nothing to
           value {unpriced.length === 1 ? "it" : "them"} at yet.
         </p>
@@ -192,7 +201,7 @@ export function StackIdentityForm({
         </button>
         <p className="text-[12px] leading-relaxed text-faint">
           {capability.mint.kind === "preview-only"
-            ? "This makes a picture and a plan. Stacks are not a token you can hold yet."
+            ? "Preview only. This makes a picture and a plan. Stacks are not a token you can hold yet."
             : null}
         </p>
       </div>

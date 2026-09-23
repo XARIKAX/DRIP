@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 
 import { Mark } from "@/components/Wordmark";
-import { TokenMark } from "@/components/TokenMark";
+import type { BuilderAsset } from "@/lib/stack/asset";
+import { AssetMark } from "./AssetMark";
 import { formatPct, type Allocation } from "@/lib/stack/allocation";
 import { showBadgeWeights } from "@/lib/stack/geometry";
 import { stackAccent } from "@/lib/palette";
@@ -35,6 +36,8 @@ import { AllocationRing } from "./AllocationRing";
 
 export interface AllocationChamberProps {
   allocations: readonly Allocation[];
+  /** Identity for every holding, keyed by allocation id. */
+  assets: ReadonlyMap<string, BuilderAsset>;
   ticker: string;
   /** True while a draggable stock is over the drop ring. */
   dropActive?: boolean;
@@ -48,6 +51,7 @@ export interface AllocationChamberProps {
 
 export function AllocationChamber({
   allocations,
+  assets,
   ticker,
   dropActive = false,
   bumpedAssetId = null,
@@ -137,6 +141,7 @@ export function AllocationChamber({
           renderBadge={(allocation) => (
             <Badge
               allocation={allocation}
+              asset={assets.get(allocation.assetId)}
               size={badgeSize}
               withPill={withPills}
               bumped={allocation.assetId === bumpedAssetId}
@@ -161,7 +166,7 @@ export function AllocationChamber({
             +
           </span>
           <span className="serial transition-colors duration-200 group-hover:text-muted">
-            {allocations.length === 0 ? "Add a stock" : "Add another"}
+            {allocations.length === 0 ? "Add an asset" : "Add another"}
           </span>
         </button>
       ) : null}
@@ -192,7 +197,7 @@ function Hub({
               ticker, and wrapping the invitation across two lines to respect a circle
               nobody can see is the wrong trade. */}
           <span className="whitespace-nowrap text-[13px] font-semibold leading-tight text-muted">
-            Drop your first stock
+            Drop your first asset
           </span>
           {onTryExample ? (
             <button
@@ -221,16 +226,24 @@ function Hub({
 /** A logo on the ring, with its share under it. */
 function Badge({
   allocation,
+  asset,
   size,
   withPill,
   bumped,
 }: {
   allocation: Allocation;
+  asset: BuilderAsset | undefined;
   size: number;
   withPill: boolean;
   bumped: boolean;
 }) {
-  const accent = stackAccent(allocation.slot);
+  const accent = stackAccent(allocation.slot, allocation.kind);
+  // A holding whose identity has not arrived yet — a restored draft mid-refresh — still
+  // draws, as its own initials on its own colour, rather than leaving a gap in the ring.
+  const face: Pick<BuilderAsset, "kind" | "symbol" | "logoUrl"> = asset ?? {
+    kind: allocation.kind,
+    symbol: allocation.kind === "token" ? allocation.assetId.slice(2, 4) : allocation.assetId,
+  };
 
   return (
     <span className="flex flex-col items-center gap-1">
@@ -242,7 +255,7 @@ function Badge({
           transform: bumped ? "scale(1.14)" : undefined,
         }}
       >
-        <TokenMark symbol={allocation.assetId} size={size} />
+        <AssetMark asset={face} size={size} slot={allocation.slot} />
       </span>
       {withPill ? (
         <span

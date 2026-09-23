@@ -18,6 +18,8 @@
  * careless; the state cannot be corrupted from outside this file.
  */
 
+import { assetKey, type AssetKind } from "./asset.ts";
+
 /** A whole allocation, in basis points. 10 000 bp = 100%. */
 export const TOTAL_BPS = 10_000;
 
@@ -31,19 +33,25 @@ export const TOTAL_BPS = 10_000;
  */
 export const MIN_BPS = 1;
 
-/** V1 holds five. Past that the ring's badges collide and the idea stops being legible. */
-export const MAX_ASSETS = 5;
+/** Six. Past that the ring's badges collide and the idea stops being legible. */
+export const MAX_ASSETS = 6;
 
-/** How many distinct accents the ring paints with. One per slot, so five. */
-export const SLOT_COUNT = 5;
+/** How many distinct accents a ramp holds. One per slot, so six. */
+export const SLOT_COUNT = 6;
 
 export interface Allocation {
-  /** Ticker, matching `TokenInfo.symbol` from the data seam. */
+  /**
+   * Canonical asset key: an uppercase ticker for a stock, a lowercase address for an
+   * imported token. Never a display symbol — two different tokens on Robinhood Chain
+   * both call themselves ROBINHOOD, and several do.
+   */
   assetId: string;
+  /** Which ramp paints it, and which shelf it came from. */
+  kind: AssetKind;
   /** Integer, MIN_BPS..TOTAL_BPS. The array always sums to exactly TOTAL_BPS. */
   weightBps: number;
   /**
-   * Which of the five ring accents paints this asset, 0..4.
+   * Which accent in its ramp paints this asset, 0..5.
    *
    * Carried on the allocation rather than derived from the array index, because an
    * index-derived colour repaints every asset below the one you just removed. Nothing
@@ -132,11 +140,18 @@ function withWeights(allocations: Allocation[], weights: number[]): Allocation[]
  * A duplicate or a sixth asset is a no-op. The caller is told nothing; it already knows
  * what it asked for, and the UI refuses these at the control rather than here.
  */
-export function addAsset(allocations: Allocation[], assetId: string): Allocation[] {
+export function addAsset(
+  allocations: Allocation[],
+  assetId: string,
+  kind: AssetKind = "stock"
+): Allocation[] {
   if (allocations.length >= MAX_ASSETS) return allocations;
   if (allocations.some((a) => a.assetId === assetId)) return allocations;
 
-  const next: Allocation = { assetId, weightBps: 0, slot: freeSlot(allocations) };
+  // Slots are counted per ramp: a stock and a token may both sit in slot 0 without
+  // clashing, because they are painted from different sets of colours.
+  const sameKind = allocations.filter((a) => a.kind === kind);
+  const next: Allocation = { assetId, kind, weightBps: 0, slot: freeSlot(sameKind) };
   if (allocations.length === 0) return [{ ...next, weightBps: TOTAL_BPS }];
 
   const n = allocations.length + 1;
@@ -225,15 +240,19 @@ export function clampWeight(weightBps: number, count: number): number {
  */
 export function normalise(input: readonly Partial<Allocation>[]): Allocation[] {
   const seen = new Set<string>();
-  const kept: { assetId: string; weightBps: number }[] = [];
+  const kept: { assetId: string; kind: AssetKind; weightBps: number }[] = [];
 
   for (const raw of input) {
-    const assetId = typeof raw?.assetId === "string" ? raw.assetId.trim().toUpperCase() : "";
+    // `assetKey` and not `toUpperCase`: an address must stay lowercase or the same
+    // token pasted checksummed and pasted lowercase becomes two holdings that still
+    // claim to add up to 100%.
+    const assetId = typeof raw?.assetId === "string" ? assetKey(raw.assetId) : "";
     if (!assetId || seen.has(assetId)) continue;
     seen.add(assetId);
 
+    const kind: AssetKind = raw?.kind === "token" || assetId.startsWith("0x") ? "token" : "stock";
     const w = Number(raw?.weightBps);
-    kept.push({ assetId, weightBps: Number.isFinite(w) && w > 0 ? w : MIN_BPS });
+    kept.push({ assetId, kind, weightBps: Number.isFinite(w) && w > 0 ? w : MIN_BPS });
     if (kept.length === MAX_ASSETS) break;
   }
 
@@ -243,7 +262,15 @@ export function normalise(input: readonly Partial<Allocation>[]): Allocation[] {
     kept.map((a) => a.weightBps),
     TOTAL_BPS
   );
-  return kept.map((a, i) => ({ assetId: a.assetId, weightBps: weights[i]!, slot: i }));
+
+  // Re-seat slots per ramp, so a repaired draft never has two stocks sharing a colour.
+  const nextSlot: Record<AssetKind, number> = { stock: 0, token: 0 };
+  return kept.map((a, i) => ({
+    assetId: a.assetId,
+    kind: a.kind,
+    weightBps: weights[i]!,
+    slot: nextSlot[a.kind]++,
+  }));
 }
 
 /* ------------------------------------------------------------------ */

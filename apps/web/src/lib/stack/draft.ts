@@ -23,18 +23,38 @@
 
 import { normalise, type Allocation } from "./allocation";
 
-export const DRAFT_VERSION = 1;
+export const DRAFT_VERSION = 2;
 const KEY = "osinko.stack.drafts.v1";
 const MAX_DRAFTS = 8;
 /** Comfortably past eight drafts, and far short of any browser's quota. */
 const MAX_BYTES = 32_000;
+
+/**
+ * An imported token's identity, and nothing else.
+ *
+ * No price, deliberately, and this is the same rule the rest of the file follows: a
+ * figure written down today and read back next week is a stale number wearing a fact's
+ * clothes. Identity is stable — a token does not rename itself — so name, symbol and
+ * logo are safe to keep, and the price is looked up again when the draft is opened. A
+ * restored Stack shows a dash for a beat and then the real number, which is honest;
+ * showing last Tuesday's price as though it were current would not be.
+ */
+export interface ImportedToken {
+  /** Lowercased, and the allocation's assetId. */
+  address: string;
+  symbol: string;
+  name: string;
+  logoUrl?: string;
+}
 
 export interface StackDraft {
   id: string;
   name: string;
   ticker: string;
   allocations: Allocation[];
-  /** The figure the summary is drawn against. A illustration, never a balance. */
+  /** Metadata for every imported token the allocations refer to. */
+  imported: ImportedToken[];
+  /** The figure the summary is drawn against. An illustration, never a balance. */
   illustrativeUsd: number;
   createdAt: number;
   updatedAt: number;
@@ -98,6 +118,32 @@ function isDraft(value: unknown): value is StackDraft {
   );
 }
 
+/** Repair the imported list. Anything without an address and a symbol is not a token. */
+function cleanImported(raw: unknown): ImportedToken[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: ImportedToken[] = [];
+  for (const item of raw) {
+    if (typeof item !== "object" || item === null) continue;
+    const t = item as Partial<ImportedToken>;
+    const address = typeof t.address === "string" ? t.address.trim().toLowerCase() : "";
+    if (!/^0x[0-9a-f]{40}$/.test(address) || seen.has(address)) continue;
+    const symbol = typeof t.symbol === "string" ? t.symbol.slice(0, 24) : "";
+    if (!symbol) continue;
+    seen.add(address);
+    out.push({
+      address,
+      symbol,
+      name: typeof t.name === "string" ? t.name.slice(0, 64) : symbol,
+      // Only ever an https URL. A stored javascript: or data: URL would otherwise be
+      // handed straight to an <img src>, and storage is the one input here that a page
+      // on another origin could have written.
+      logoUrl: typeof t.logoUrl === "string" && /^https:\/\//.test(t.logoUrl) ? t.logoUrl : undefined,
+    });
+  }
+  return out;
+}
+
 /**
  * Everything saved, repaired on the way out.
  *
@@ -108,7 +154,9 @@ function isDraft(value: unknown): value is StackDraft {
  * cannot return anything the builder's own rules forbid.
  *
  * A *higher* version number is left alone rather than overwritten. A newer build open in
- * another tab must not lose its work to an older one that happened to load second.
+ * another tab must not lose its work to an older one that happened to load second. A
+ * *lower* one migrates: a v1 draft predates imported tokens, so it simply has none, and
+ * `normalise` infers each holding's kind from the shape of its id.
  */
 export function readDrafts(): DraftFile {
   const ls = storage();
@@ -132,6 +180,7 @@ export function readDrafts(): DraftFile {
         name: String(d.name).slice(0, 40),
         ticker: String(d.ticker).slice(0, 10),
         allocations: normalise(d.allocations),
+        imported: cleanImported((d as { imported?: unknown }).imported),
         illustrativeUsd:
           Number.isFinite(d.illustrativeUsd) && d.illustrativeUsd > 0 ? d.illustrativeUsd : 1000,
         createdAt: Number(d.createdAt) || Date.now(),

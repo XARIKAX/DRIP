@@ -52,31 +52,39 @@ export const PALETTE = {
 } as const;
 
 /**
- * The Stack builder's five ring accents.
+ * The Stack builder's ring accents.
  *
  * The one place in the product where colour identifies a *thing* rather than a state, so
  * it sits outside the iris/blossom rule instead of bending it: a ring painted in five
  * tints of one violet would be unreadable, and an allocation nobody can read is not an
- * allocation. Five, because a Stack holds five assets at most, so no two segments ever
- * share a hue and the palette never has to wrap.
+ * allocation.
  *
- * Ordered so the first three are the green, coral and blue of the reference design. Each
- * is chosen to clear 4.5:1 against the chamber's near-black ground and to stay distinct
- * from the others for the common forms of colour blindness — which is also why colour is
- * never the only thing naming an asset: every badge and every legend row carries its
- * ticker beside its dot.
+ * Two ramps, and the split carries meaning. Stocks take the six-colour ramp — six
+ * because a Stack holds six assets, so no two segments ever share a hue. A token
+ * somebody imported takes violet, which is the house accent and is deliberately absent
+ * from the stock ramp: on a ring of green, coral and azure arcs, the violet one is the
+ * asset that was not on the shelf. That is worth a colour.
+ *
+ * Every hue clears 4.5:1 against the chamber's near-black ground and stays separable
+ * under the common forms of colour blindness — which is also why colour never names an
+ * asset on its own: every badge and legend row carries its ticker beside its dot.
  */
-export const STACK_ACCENTS = [
+export const STOCK_ACCENTS = [
   "#78EC51", // spring
   "#FF6574", // coral
   "#4B9FFF", // azure
   "#FFC24B", // amber
-  "#C79BFF", // wisteria
+  "#3BE0C8", // teal
+  "#FF8FD0", // rose
 ] as const;
 
-/** The accent for a colour slot, wrapping defensively rather than returning undefined. */
-export function stackAccent(slot: number): string {
-  return STACK_ACCENTS[((slot % STACK_ACCENTS.length) + STACK_ACCENTS.length) % STACK_ACCENTS.length]!;
+/** Imported tokens. Violet, because it is the one thing here that is yours. */
+export const TOKEN_ACCENTS = ["#A855F7", "#C48CFF", "#8B5CF6"] as const;
+
+/** The accent for a slot, wrapping defensively rather than returning undefined. */
+export function stackAccent(slot: number, kind: "stock" | "token" = "stock"): string {
+  const ramp = kind === "token" ? TOKEN_ACCENTS : STOCK_ACCENTS;
+  return ramp[((slot % ramp.length) + ramp.length) % ramp.length]!;
 }
 
 /** The two type stacks SVG `font-family` attributes need spelled out. */

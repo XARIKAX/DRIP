@@ -5,7 +5,8 @@ import { createPortal } from "react-dom";
 import { useAccount, useChainId } from "wagmi";
 
 import { fmt } from "@/components/live";
-import { TokenMark } from "@/components/TokenMark";
+import type { BuilderAsset } from "@/lib/stack/asset";
+import { AssetMark } from "./AssetMark";
 import { activeChain } from "@/lib/chain.config";
 import { useDataActions, useWalletView } from "@/lib/data/provider";
 import { formatPct, TOTAL_BPS, type Allocation } from "@/lib/stack/allocation";
@@ -47,6 +48,8 @@ type Phase =
 
 interface Line {
   assetId: string;
+  kind: "stock" | "token";
+  symbol: string;
   weightBps: number;
   slot: number;
   priceUsd: number | null;
@@ -59,11 +62,13 @@ interface Line {
 export function ReviewDialog({
   draft,
   tokens,
+  assets,
   capability,
   onClose,
 }: {
   draft: StackDraft;
   tokens: TokenInfo[];
+  assets: ReadonlyMap<string, BuilderAsset>;
   capability: StackCapability;
   onClose: () => void;
 }) {
@@ -82,7 +87,7 @@ export function ReviewDialog({
   const [mounted, setMounted] = useState(false);
 
   // The snapshot. Built once, on open, and never recomputed while the dialog is up.
-  const [intent] = useState(() => buildIntent(draft, tokens));
+  const [intent] = useState(() => buildIntent(draft, assets));
   const [frozenAt] = useState(() => Date.now());
   const openedOn = useRef({ address, chainId: currentChainId });
 
@@ -163,7 +168,17 @@ export function ReviewDialog({
 
   /* ---------------- the deposits ---------------- */
 
-  const depositable = intent.lines.filter((l) => l.shares !== null && l.shares > 0);
+  /*
+   * Only stocks can be deposited, and this is not a UI preference.
+   * `DripCore.deposit` takes a token the DividendRegistry has listed; an address
+   * somebody pasted an hour ago is not on that list and the call would revert. So an
+   * imported token stays in the picture and out of the batch, and the dialog says which
+   * ones and why rather than quietly dropping them from a total.
+   */
+  const importedLines = intent.lines.filter((l) => l.kind === "token");
+  const depositable = intent.lines.filter(
+    (l) => l.kind === "stock" && l.shares !== null && l.shares > 0
+  );
   const unpriced = intent.lines.filter((l) => l.priceUsd === null);
   const short = depositable.filter((l) => (wallet.stocks[l.assetId] ?? 0) < (l.shares ?? 0));
 
@@ -217,14 +232,15 @@ export function ReviewDialog({
         name: draft.name,
         ticker: draft.ticker,
         allocations: draft.allocations,
-        names: Object.fromEntries(tokens.map((t) => [t.symbol, t.name])),
+        names: Object.fromEntries([...assets].map(([id, a]) => [id, a.name])),
+        symbols: Object.fromEntries([...assets].map(([id, a]) => [id, a.symbol])),
       });
     } catch (err) {
       setExportError(err instanceof Error ? err.message : "The picture could not be made.");
     } finally {
       setExporting(false);
     }
-  }, [draft, tokens]);
+  }, [draft, assets]);
 
   if (!mounted) return null;
 
@@ -302,6 +318,7 @@ export function ReviewDialog({
             name={draft.name}
             ticker={draft.ticker}
             allocations={draft.allocations}
+            assets={assets}
           />
 
           {/* What it is made of, and what it would take to hold it. */}
@@ -316,13 +333,21 @@ export function ReviewDialog({
                   <span
                     aria-hidden
                     className="h-2 w-2 shrink-0 rounded-full"
-                    style={{ background: stackAccent(line.slot) }}
+                    style={{ background: stackAccent(line.slot, line.kind) }}
                   />
-                  <TokenMark symbol={line.assetId} size={24} />
-                  <span className="flex-1 font-semibold text-ink">{line.assetId}</span>
+                  <AssetMark
+                    asset={assets.get(line.assetId) ?? { kind: line.kind, symbol: line.symbol }}
+                    size={24}
+                    slot={line.slot}
+                  />
+                  <span className="flex-1 truncate font-semibold text-ink">{line.symbol}</span>
                   <span className="num text-muted">{formatPct(line.weightBps)}%</span>
                   <span className="num w-[104px] text-right text-ink">
-                    {line.shares === null ? "—" : `${fmt(line.shares, 4)} sh`}
+                    {line.kind === "token"
+                      ? "token"
+                      : line.shares === null
+                        ? "—"
+                        : `${fmt(line.shares, 4)} sh`}
                   </span>
                 </li>
               ))}
@@ -342,6 +367,15 @@ export function ReviewDialog({
             <Notice tone="warn">
               There is no price right now for {unpriced.map((l) => l.assetId).join(", ")}, so
               the shares cannot be worked out. The rest is unaffected.
+            </Notice>
+          ) : null}
+
+          {importedLines.length > 0 ? (
+            <Notice tone="warn">
+              {importedLines.map((l) => l.symbol).join(", ")}{" "}
+              {importedLines.length === 1 ? "is a token you imported" : "are tokens you imported"}, so{" "}
+              {importedLines.length === 1 ? "it stays" : "they stay"} in the picture but cannot be
+              put on deposit — Osinko only takes the stocks it lists.
             </Notice>
           ) : null}
 
@@ -419,15 +453,19 @@ export function ReviewDialog({
 
 /* ------------------------------------------------------------------ */
 
-function buildIntent(draft: StackDraft, tokens: TokenInfo[]): { lines: Line[] } {
-  const priceOf = new Map(tokens.map((t) => [t.symbol, t.priceUsd]));
-
+function buildIntent(
+  draft: StackDraft,
+  assets: ReadonlyMap<string, BuilderAsset>
+): { lines: Line[] } {
   const lines: Line[] = draft.allocations.map((a: Allocation) => {
-    const price = priceOf.get(a.assetId) ?? null;
+    const asset = assets.get(a.assetId);
+    const price = asset?.priceUsd ?? null;
     const usd = (draft.illustrativeUsd * a.weightBps) / TOTAL_BPS;
     const shares = price !== null && price > 0 ? usd / price : null;
     return {
       assetId: a.assetId,
+      kind: a.kind,
+      symbol: asset?.symbol ?? a.assetId,
       weightBps: a.weightBps,
       slot: a.slot,
       priceUsd: price,

@@ -63,7 +63,7 @@ export function AllocationRing({
   const reduced = usePrefersReducedMotion();
 
   const target = allocations.map((a) => a.weightBps);
-  const colors = allocations.map((a) => stackAccent(a.slot));
+  const colors = allocations.map((a) => stackAccent(a.slot, a.kind));
   const key = allocations.map((a) => a.assetId).join(",");
 
   useEffect(() => {

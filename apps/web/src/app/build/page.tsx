@@ -10,8 +10,11 @@ import { DragGhost } from "@/components/builder/DragGhost";
 import { DraftStrip } from "@/components/builder/DraftStrip";
 import { ReviewDialog } from "@/components/builder/ReviewDialog";
 import { StackIdentityForm, isReady } from "@/components/builder/StackIdentityForm";
+import { TokenImportPanel } from "@/components/builder/TokenImportPanel";
 import { useDragToRing } from "@/components/builder/useDragToRing";
 import { useTokensView } from "@/lib/data/provider";
+import { stockAsset, tokenAsset, type BuilderAsset } from "@/lib/stack/asset";
+import { lookupToken } from "@/lib/stack/lookup";
 import {
   addAsset,
   MAX_ASSETS,
@@ -28,6 +31,7 @@ import {
   readActiveDraft,
   saveDraft,
   saveDraftSoon,
+  type ImportedToken,
   type StackDraft,
 } from "@/lib/stack/draft";
 
@@ -42,7 +46,9 @@ import {
  *
  * It works with no wallet. The stock list comes from the app's own data seam, which
  * answers the sample account for a visitor and the live listing for a connected one, so
- * nothing here is invented either way.
+ * nothing here is invented either way. Imported tokens come from a contract address
+ * somebody pasted, and their prices are looked up live rather than remembered — see
+ * `lib/stack/draft.ts` for why identity is stored and value never is.
  *
  * Served at /build rather than under /app, and absent from the nav on purpose — this is
  * shown to people by sending them the link. `layout.tsx` beside this file carries that
@@ -73,6 +79,7 @@ function blankDraft(): StackDraft {
     name: "",
     ticker: "",
     allocations: [],
+    imported: [],
     illustrativeUsd: 1000,
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -100,10 +107,56 @@ export default function BuilderPage() {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const firstRender = useRef(true);
 
+  /*
+   * Prices for imported tokens, keyed by address.
+   *
+   * Deliberately not in the draft. A draft keeps identity, which is stable, and never a
+   * figure, which is not — so a restored Stack re-reads what its tokens are worth rather
+   * than printing what they were worth whenever it was last open. Until the answer
+   * lands, the price is null and the UI shows a dash, exactly as it does for a stock
+   * whose feed has gone quiet.
+   */
+  const [tokenPrices, setTokenPrices] = useState<Record<string, number | null>>({});
+
+  /** Every asset the builder can offer, both shelves, keyed by allocation id. */
+  const assets = useMemo(() => {
+    const map = new Map<string, BuilderAsset>();
+    for (const t of tokens) {
+      const a = stockAsset(t);
+      map.set(a.id, a);
+    }
+    for (const t of draft.imported) {
+      const a = tokenAsset({ ...t, priceUsd: tokenPrices[t.address] ?? null });
+      map.set(a.id, a);
+    }
+    return map;
+  }, [tokens, draft.imported, tokenPrices]);
+
+  const assetList = useMemo(() => [...assets.values()], [assets]);
+
   const names = useMemo(
-    () => Object.fromEntries(tokens.map((t) => [t.symbol, t.name])),
-    [tokens]
+    () => Object.fromEntries(assetList.map((a) => [a.id, a.name])),
+    [assetList]
   );
+
+  // Refresh anything imported that has no price yet. One pass per new token, not a poll:
+  // this is a builder, not a ticker, and a price that moves under a slider is noise.
+  useEffect(() => {
+    const missing = draft.imported.filter((t) => tokenPrices[t.address] === undefined);
+    if (missing.length === 0) return;
+    let live = true;
+    void Promise.all(
+      missing.map(async (t) => {
+        const r = await lookupToken(t.address);
+        return [t.address, r.ok ? r.asset.priceUsd : null] as const;
+      })
+    ).then((pairs) => {
+      if (live) setTokenPrices((prev) => ({ ...prev, ...Object.fromEntries(pairs) }));
+    });
+    return () => {
+      live = false;
+    };
+  }, [draft.imported, tokenPrices]);
 
   useEffect(() => setPersists(canPersist()), []);
 
@@ -143,32 +196,67 @@ export default function BuilderPage() {
   );
 
   const add = useCallback(
-    (assetId: string) => {
+    (asset: BuilderAsset) => {
       setDraft((d) => {
-        if (d.allocations.some((a) => a.assetId === assetId)) {
+        if (d.allocations.some((a) => a.assetId === asset.id)) {
           // Already in. Pulse the badge it is on rather than doing nothing silently.
-          setBumped(assetId);
-          setAnnouncement(`${assetId} is already in your Stack.`);
+          setBumped(asset.id);
+          setAnnouncement(`${asset.symbol} is already in your Stack.`);
           return d;
         }
         if (d.allocations.length >= MAX_ASSETS) {
-          setAnnouncement(`A Stack holds ${MAX_ASSETS} stocks. Take one out to add another.`);
+          setAnnouncement(`A Stack holds ${MAX_ASSETS} assets. Take one out to add another.`);
           return d;
         }
-        const allocations = addAsset(d.allocations, assetId);
-        announce(allocations, `${names[assetId] ?? assetId} added.`);
+
+        const allocations = addAsset(d.allocations, asset.id, asset.kind);
+        // An imported token brings its own identity into the draft, because nothing else
+        // knows it: there is no registry to look it up in after a reload.
+        const imported: ImportedToken[] =
+          asset.kind === "token" && asset.address && !d.imported.some((t) => t.address === asset.id)
+            ? [
+                ...d.imported,
+                { address: asset.id, symbol: asset.symbol, name: asset.name, logoUrl: asset.logoUrl },
+              ]
+            : d.imported;
+
+        if (asset.kind === "token" && asset.priceUsd !== undefined) {
+          setTokenPrices((prev) => ({ ...prev, [asset.id]: asset.priceUsd }));
+        }
+
+        announce(allocations, `${asset.symbol} added.`);
         setSaved(false);
-        return { ...d, allocations, updatedAt: Date.now() };
+        return { ...d, allocations, imported, updatedAt: Date.now() };
       });
     },
-    [announce, names]
+    [announce]
   );
+
+  /** Import without adding: it lands on the Imported shelf, ready to drag. */
+  const shelve = useCallback((asset: BuilderAsset) => {
+    if (!asset.address) return;
+    setTokenPrices((prev) => ({ ...prev, [asset.id]: asset.priceUsd }));
+    setDraft((d) =>
+      d.imported.some((t) => t.address === asset.id)
+        ? d
+        : {
+            ...d,
+            imported: [
+              ...d.imported,
+              { address: asset.id, symbol: asset.symbol, name: asset.name, logoUrl: asset.logoUrl },
+            ],
+            updatedAt: Date.now(),
+          }
+    );
+  }, []);
 
   const remove = useCallback(
     (assetId: string) => {
       setDraft((d) => {
         const allocations = removeAsset(d.allocations, assetId);
         if (allocations === d.allocations) return d;
+        // The token stays on the Imported shelf — taking it out of the ring is not the
+        // same as un-importing it, and re-pasting the address would be a chore.
         announce(allocations, `${names[assetId] ?? assetId} taken out.`);
         setSaved(false);
         return { ...d, allocations, updatedAt: Date.now() };
@@ -198,6 +286,7 @@ export default function BuilderPage() {
 
   const loadExample = useCallback(() => {
     const allocations = normalise(EXAMPLE.allocations);
+    void allocations;
     setSaved(false);
     setDraft((d) => ({
       ...d,
@@ -214,7 +303,15 @@ export default function BuilderPage() {
     setAnnouncement("Cleared. Your Stack is empty.");
   }, []);
 
-  const drag = useDragToRing({ onDrop: add });
+  const addById = useCallback(
+    (assetId: string) => {
+      const asset = assets.get(assetId);
+      if (asset) add(asset);
+    },
+    [assets, add]
+  );
+
+  const drag = useDragToRing({ onDrop: addById });
 
   // Clear the duplicate-drop pulse once it has played.
   useEffect(() => {
@@ -231,7 +328,7 @@ export default function BuilderPage() {
         <div className="serial">Build a Stack</div>
         <h1 className="mt-3 display text-display">Your thesis. Your ticker.</h1>
         <p className="mt-3 text-[15px] leading-relaxed text-muted">
-          Drag stocks into the chamber. Build something of your own.
+          Combine stocks and tokens. Build something of your own.
         </p>
       </header>
 
@@ -247,6 +344,24 @@ export default function BuilderPage() {
         hasWork={draft.allocations.length > 0}
       />
 
+      <TokenImportPanel
+        heldIds={draft.allocations.map((a) => a.assetId)}
+        full={draft.allocations.length >= MAX_ASSETS}
+        onAdd={(asset) => {
+          shelve(asset);
+          add(asset);
+        }}
+        onPointerDown={(event, assetId) => {
+          const asset = assets.get(assetId);
+          // Shelve before the drag starts, so the drop has something to resolve.
+          if (!asset) {
+            const found = draft.allocations.find((a) => a.assetId === assetId);
+            void found;
+          }
+          drag.onPointerDown(event, assetId);
+        }}
+      />
+
       {/*
        * Source order is the desktop reading order — pick, compose, name — and on one
        * column that is wrong: it buries the ring under eight stock rows, so the first
@@ -257,7 +372,7 @@ export default function BuilderPage() {
         <div className="order-2 lg:order-none lg:col-span-4 xl:col-span-3">
           <AssetLibrary
             ref={searchRef}
-            tokens={tokens}
+            assets={assetList}
             allocations={draft.allocations}
             onAdd={add}
             onRemove={remove}
@@ -284,6 +399,7 @@ export default function BuilderPage() {
             <div ref={drag.setDropTarget}>
               <AllocationChamber
                 allocations={draft.allocations}
+                assets={assets}
                 ticker={draft.ticker}
                 dropActive={drag.state.over}
                 bumpedAssetId={bumped}
@@ -295,6 +411,7 @@ export default function BuilderPage() {
             <AllocationControls
               allocations={draft.allocations}
               names={names}
+              symbols={Object.fromEntries(assetList.map((a) => [a.id, a.symbol]))}
               onSetWeight={reweight}
               onRemove={remove}
             />
@@ -308,6 +425,7 @@ export default function BuilderPage() {
             illustrativeUsd={draft.illustrativeUsd}
             allocations={draft.allocations}
             tokens={tokens}
+            assets={assets}
             capability={capability}
             saving={saved}
             onName={(name) => patch({ name })}
@@ -326,6 +444,7 @@ export default function BuilderPage() {
         <ReviewDialog
           draft={draft}
           tokens={tokens}
+          assets={assets}
           capability={capability}
           onClose={() => setReviewing(false)}
         />

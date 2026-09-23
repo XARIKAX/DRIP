@@ -32,7 +32,12 @@ import {
 
 /** Build a Stack from percentages, for readable test setup. */
 function stack(...pcts: number[]): Allocation[] {
-  return pcts.map((pct, i) => ({ assetId: `A${i}`, weightBps: pct * 100, slot: i }));
+  return pcts.map((pct, i) => ({
+    assetId: `A${i}`,
+    kind: "stock" as const,
+    weightBps: pct * 100,
+    slot: i,
+  }));
 }
 
 const weights = (a: readonly Allocation[]) => a.map((x) => x.weightBps);
@@ -123,7 +128,7 @@ test("a duplicate is refused without disturbing the weights", () => {
   assert.equal(after, before, "should return the very same array");
 });
 
-test("the sixth asset is refused", () => {
+test("the seventh asset is refused", () => {
   let s: Allocation[] = [];
   for (let i = 0; i < MAX_ASSETS; i++) s = addAsset(s, `T${i}`);
   assert.equal(s.length, MAX_ASSETS);
@@ -338,5 +343,72 @@ test("isValid rejects what the UI must never render", () => {
   assert.ok(isValid([]));
   assert.ok(!isValid(stack(50, 30)), "must sum to 100%");
   assert.ok(!isValid([...stack(50), ...stack(50)]), "duplicate ids");
-  assert.ok(!isValid([{ assetId: "A", weightBps: 10_000.5, slot: 0 }]), "non-integer");
+  assert.ok(
+    !isValid([{ assetId: "A", kind: "stock", weightBps: 10_000.5, slot: 0 }]),
+    "non-integer"
+  );
+});
+
+/* ------------------------------------------------------------------ */
+/* Imported tokens                                                     */
+/* ------------------------------------------------------------------ */
+
+test("an address keeps its case-folded identity, a ticker keeps its own", () => {
+  const out = normalise([
+    { assetId: "0xAbCdEf0123456789AbCdEf0123456789AbCdEf01", kind: "token", weightBps: 5000 },
+    { assetId: "nvda", weightBps: 5000 },
+  ]);
+  assert.deepEqual(
+    out.map((a) => a.assetId),
+    ["0xabcdef0123456789abcdef0123456789abcdef01", "NVDA"]
+  );
+  assert.deepEqual(
+    out.map((a) => a.kind),
+    ["token", "stock"]
+  );
+});
+
+test("the same token pasted twice in different case is one holding", () => {
+  const addr = "0xAbCdEf0123456789AbCdEf0123456789AbCdEf01";
+  const out = normalise([
+    { assetId: addr, kind: "token", weightBps: 5000 },
+    { assetId: addr.toLowerCase(), kind: "token", weightBps: 5000 },
+  ]);
+  assert.equal(out.length, 1, "a duplicate address must collapse");
+  assert.ok(isValid(out));
+});
+
+test("an address with no kind is still recognised as a token", () => {
+  const out = normalise([{ assetId: "0x39dbed3a2bd333467115de45665cc57f813c4571", weightBps: 10_000 }]);
+  assert.equal(out[0]!.kind, "token");
+});
+
+test("stocks and tokens count slots separately, so neither runs out early", () => {
+  let s: Allocation[] = [];
+  for (const id of ["NVDA", "TSLA", "MSFT"]) s = addAsset(s, id, "stock");
+  for (const id of ["0xaaa", "0xbbb"]) s = addAsset(s, id, "token");
+
+  const stocks = s.filter((a) => a.kind === "stock").map((a) => a.slot);
+  const tokens = s.filter((a) => a.kind === "token").map((a) => a.slot);
+  assert.deepEqual(stocks, [0, 1, 2], "stocks take the stock ramp in order");
+  assert.deepEqual(tokens, [0, 1], "tokens start their own ramp at zero");
+  assert.ok(isValid(s));
+});
+
+test("a Stack holds six", () => {
+  let s: Allocation[] = [];
+  for (let i = 0; i < MAX_ASSETS; i++) s = addAsset(s, `T${i}`);
+  assert.equal(s.length, 6);
+  assert.equal(total(s), TOTAL_BPS);
+  assert.equal(addAsset(s, "SEVENTH"), s);
+});
+
+test("a six-asset Stack still sums exactly", () => {
+  let s: Allocation[] = [];
+  for (const id of ["NVDA", "TSLA", "MSFT", "AAPL"]) s = addAsset(s, id, "stock");
+  for (const id of ["0xaaa", "0xbbb"]) s = addAsset(s, id, "token");
+  assert.equal(total(s), TOTAL_BPS);
+  s = setWeight(s, "0xaaa", 4000);
+  assert.equal(total(s), TOTAL_BPS);
+  assert.equal(s.find((a) => a.assetId === "0xaaa")!.weightBps, 4000);
 });

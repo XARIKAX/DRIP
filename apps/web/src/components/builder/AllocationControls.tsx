@@ -36,6 +36,8 @@ import { stackAccent } from "@/lib/palette";
 export interface AllocationControlsProps {
   allocations: readonly Allocation[];
   names: Record<string, string>;
+  /** Allocation id to the ticker to print. An address is not a label. */
+  symbols?: Record<string, string>;
   /** Called with the baseline the edit should be computed against. */
   onSetWeight: (assetId: string, weightBps: number, baseline: readonly Allocation[]) => void;
   onRemove: (assetId: string) => void;
@@ -44,6 +46,7 @@ export interface AllocationControlsProps {
 export function AllocationControls({
   allocations,
   names,
+  symbols,
   onSetWeight,
   onRemove,
 }: AllocationControlsProps) {
@@ -74,6 +77,7 @@ export function AllocationControls({
             key={allocation.assetId}
             allocation={allocation}
             name={names[allocation.assetId] ?? allocation.assetId}
+            label={symbols?.[allocation.assetId] ?? allocation.assetId}
             count={allocations.length}
             locked={single}
             onBegin={begin}
@@ -86,14 +90,14 @@ export function AllocationControls({
 
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-t border-line px-5 py-3.5">
         <span className="text-[13px] text-muted">
-          {allocations.length} {allocations.length === 1 ? "stock" : "stocks"}
+          {allocations.length} {allocations.length === 1 ? "asset" : "assets"}
         </span>
         <span className="num text-[13px] font-semibold text-accent">100% allocated</span>
       </div>
 
       <p className="px-5 pb-4 text-[12px] leading-relaxed text-faint">
         {single
-          ? "One stock takes the whole Stack. Add another to split it."
+          ? "One asset takes the whole Stack. Add another to split it."
           : "Move one and the others adjust to keep the total at 100%."}
       </p>
     </div>
@@ -103,6 +107,7 @@ export function AllocationControls({
 function WeightRow({
   allocation,
   name,
+  label,
   count,
   locked,
   onBegin,
@@ -112,6 +117,7 @@ function WeightRow({
 }: {
   allocation: Allocation;
   name: string;
+  label: string;
   count: number;
   locked: boolean;
   onBegin: () => void;
@@ -124,7 +130,7 @@ function WeightRow({
   // a half-typed number is not yet a number and is allowed to sit there as text.
   const [text, setText] = useState<string | null>(null);
   const [invalid, setInvalid] = useState(false);
-  const accent = stackAccent(allocation.slot);
+  const accent = stackAccent(allocation.slot, allocation.kind);
   const shown = text ?? formatPct(allocation.weightBps);
 
   // The field is too narrow for a message beside it, so the red border *is* the
@@ -159,8 +165,8 @@ function WeightRow({
         className="h-2.5 w-2.5 shrink-0 rounded-full"
         style={{ background: accent }}
       />
-      <span className="w-[54px] shrink-0 text-[13px] font-extrabold tracking-tight text-ink">
-        {allocation.assetId}
+      <span className="w-[62px] shrink-0 truncate text-[13px] font-extrabold tracking-tight text-ink">
+        {label}
       </span>
 
       {/*

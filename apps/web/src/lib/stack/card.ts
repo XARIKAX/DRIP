@@ -15,6 +15,7 @@
  */
 
 import { formatPct, type Allocation } from "./allocation";
+import { monogram as initials } from "./asset";
 import { segments, toRad } from "./geometry";
 import { PALETTE, stackAccent, SVG_DISPLAY, SVG_MONO, SVG_SANS } from "@/lib/palette";
 
@@ -29,8 +30,10 @@ export interface CardInput {
   name: string;
   ticker: string;
   allocations: readonly Allocation[];
-  /** Ticker to company name, for the legend. */
+  /** Allocation id to the label the legend should print. */
   names: Record<string, string>;
+  /** Allocation id to its display ticker. Falls back to the id for stocks. */
+  symbols?: Record<string, string>;
 }
 
 /**
@@ -67,6 +70,13 @@ async function waitForFonts(): Promise<void> {
  * These files are same-origin, so the canvas is never tainted and `toBlob` works.
  * Setting `crossOrigin` would turn a same-origin fetch into a CORS one for no benefit,
  * so it is deliberately not set.
+ *
+ * Imported tokens never reach here. Their logos live on a CDN that sends no
+ * `access-control-allow-origin`, and drawing a cross-origin image without CORS taints
+ * the canvas — after which `toBlob` throws a SecurityError and there is no card at all.
+ * Asking for CORS instead would fail the request outright, since the host does not offer
+ * it. So a token draws as its initials on its own ring colour: the same fallback a stock
+ * with a missing file gets, and a whole card rather than none.
  */
 async function loadLogo(symbol: string): Promise<HTMLImageElement | null> {
   try {
@@ -86,15 +96,16 @@ function drawMonogram(
   symbol: string,
   x: number,
   y: number,
-  size: number
+  size: number,
+  accent: string = PALETTE.night.text
 ) {
-  const letters = symbol.slice(0, symbol.length > 3 ? 2 : 1);
+  const letters = initials(symbol);
   ctx.save();
   ctx.fillStyle = PALETTE.night[4];
   roundRect(ctx, x, y, size, size, size * 0.24);
   ctx.fill();
-  ctx.fillStyle = PALETTE.night.text;
-  ctx.font = `600 ${Math.round(size * 0.4)}px ${SVG_SANS}`;
+  ctx.fillStyle = accent;
+  ctx.font = `700 ${Math.round(size * 0.4)}px ${SVG_SANS}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(letters, x + size / 2, y + size / 2 + 1);
@@ -132,9 +143,12 @@ export async function renderStackCard(input: CardInput): Promise<Blob> {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("This browser will not draw the picture.");
 
-  const logos = await Promise.all(input.allocations.map((a) => loadLogo(a.assetId)));
+  const logos = await Promise.all(
+    input.allocations.map((a) => (a.kind === "stock" ? loadLogo(a.assetId) : Promise.resolve(null)))
+  );
+  const symbolOf = (a: Allocation) => input.symbols?.[a.assetId] ?? a.assetId;
   const segs = segments(input.allocations.map((a) => a.weightBps));
-  const colors = input.allocations.map((a) => stackAccent(a.slot));
+  const colors = input.allocations.map((a) => stackAccent(a.slot, a.kind));
 
   /* ---- ground ---- */
   ctx.fillStyle = PALETTE.night[1];
@@ -210,7 +224,7 @@ export async function renderStackCard(input: CardInput): Promise<Blob> {
     ctx.clip();
     const logo = logos[i];
     if (logo) ctx.drawImage(logo, bx, by, BADGE, BADGE);
-    else drawMonogram(ctx, a.assetId, bx, by, BADGE);
+    else drawMonogram(ctx, symbolOf(a), bx, by, BADGE, colors[i] ?? PALETTE.night.text);
     ctx.restore();
   });
 
@@ -232,7 +246,7 @@ export async function renderStackCard(input: CardInput): Promise<Blob> {
 
     ctx.fillStyle = PALETTE.night.text;
     ctx.font = `600 30px ${SVG_SANS}`;
-    ctx.fillText(a.assetId, 930, y);
+    ctx.fillText(symbolOf(a), 930, y);
 
     ctx.fillStyle = PALETTE.night.muted;
     ctx.font = `500 22px ${SVG_SANS}`;

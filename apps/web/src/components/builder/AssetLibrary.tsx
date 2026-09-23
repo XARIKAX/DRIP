@@ -2,81 +2,109 @@
 
 import { forwardRef, useMemo, useState } from "react";
 
-import { TokenMark } from "@/components/TokenMark";
 import { fmt } from "@/components/live";
 import { MAX_ASSETS, type Allocation } from "@/lib/stack/allocation";
+import { shortAddress, type BuilderAsset } from "@/lib/stack/asset";
 import { stackAccent } from "@/lib/palette";
-import type { TokenInfo } from "@/lib/data/types";
+import { AssetMark } from "./AssetMark";
 
 /**
- * The shelf you build from.
+ * The shelf you build from — now two shelves.
  *
- * Every stock here comes from `useTokensView()` — the app's own data seam, the same list
- * the Deposit page reads. Nothing in this panel is invented: no made-up ticker, no
- * placeholder price, no address that does not exist. A stock the oracle will not price
- * shows a dash rather than a number, because "we cannot price this right now" and "this
- * is worthless" are different sentences and only one of them is true.
+ * Stocks come from the app's own data seam, the same list the Deposit page reads, so
+ * nothing on that tab is invented: no made-up ticker, no placeholder price, no address
+ * that does not exist. Imported tokens come from whatever somebody pasted upstairs, and
+ * they live on their own tab because they are a different kind of claim — one is a
+ * universe this protocol has verified, the other is a contract address a person vouched
+ * for. Mixing them into one undifferentiated list would flatten that distinction, and it
+ * is the distinction that matters most on this screen.
  *
- * There are no sector filters, and their absence is deliberate. The reference design has
- * All / Tech / Consumer chips, but neither `TokenInfo` nor the listing universe carries
- * a sector — so those chips could only be a hand-written table of opinions dressed up as
- * registry data, and one that would go stale the first time a stock was added. Search
- * covers the same need honestly.
+ * Search crosses both tabs, because somebody typing "pons" should not first have to
+ * work out which shelf it is on.
  */
 
 export interface AssetLibraryProps {
-  tokens: TokenInfo[];
+  assets: BuilderAsset[];
   allocations: readonly Allocation[];
-  onAdd: (assetId: string) => void;
+  onAdd: (asset: BuilderAsset) => void;
   onRemove: (assetId: string) => void;
-  /** Starts a drag. Absent on touch layouts, where there is nothing to drag to. */
   onPointerDown?: (event: React.PointerEvent, assetId: string) => void;
-  /** The asset currently being carried, so its row can dim. */
   draggingAssetId?: string | null;
 }
 
+type Tab = "stock" | "token";
+
 export const AssetLibrary = forwardRef<HTMLInputElement, AssetLibraryProps>(
   function AssetLibrary(
-    { tokens, allocations, onAdd, onRemove, onPointerDown, draggingAssetId = null },
+    { assets, allocations, onAdd, onRemove, onPointerDown, draggingAssetId = null },
     searchRef
   ) {
     const [query, setQuery] = useState("");
+    const [tab, setTab] = useState<Tab>("stock");
 
     const chosen = useMemo(
       () => new Map(allocations.map((a) => [a.assetId, a])),
       [allocations]
     );
     const full = allocations.length >= MAX_ASSETS;
+    const importedCount = assets.filter((a) => a.kind === "token").length;
 
-    // Ticker or company name, either case. Somebody who knows it as "Nvidia" should not
-    // have to know it as NVDA.
+    // A search spans both shelves; an empty box shows whichever tab you are on.
     const results = useMemo(() => {
       const q = query.trim().toLowerCase();
-      if (!q) return tokens;
-      return tokens.filter(
-        (t) => t.symbol.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)
+      if (!q) return assets.filter((a) => a.kind === tab);
+      return assets.filter(
+        (a) =>
+          a.symbol.toLowerCase().includes(q) ||
+          a.name.toLowerCase().includes(q) ||
+          (a.address ?? "").toLowerCase().includes(q)
       );
-    }, [tokens, query]);
+    }, [assets, query, tab]);
+
+    const searching = query.trim().length > 0;
 
     return (
-      <section className="panel flex flex-col" aria-label="Choose your stocks">
+      <section className="panel flex flex-col" aria-label="Choose your assets">
         <div className="panel-head">
           {/* The number is a column position, not a sequence. Below lg the chamber comes
               first, where "02" sitting above "01" is simply wrong; the names still read
               as steps without it. */}
           <span className="panel-title">
-            <span className="hidden lg:inline">01 / </span>Choose your stocks
+            <span className="hidden lg:inline">01 / </span>Choose your assets
           </span>
           <span className="serial">
             {allocations.length} of {MAX_ASSETS}
           </span>
         </div>
 
-        <div className="px-4 pt-4">
-          <label htmlFor="stack-search" className="sr-only">
-            Search stocks by ticker or company name
-          </label>
+        <div className="space-y-3 px-4 pt-4">
+          <div className="seg grid grid-cols-2" role="tablist" aria-label="Which shelf">
+            {(["stock", "token"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                role="tab"
+                aria-selected={tab === t && !searching}
+                onClick={() => {
+                  setTab(t);
+                  setQuery("");
+                }}
+                className="flex items-center justify-center gap-1.5"
+              >
+                {t === "stock" ? "Stocks" : "Imported"}
+                {t === "token" && importedCount > 0 ? (
+                  <span className="num rounded-full bg-accent/20 px-1.5 text-[10px] text-accent">
+                    {importedCount}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+
           <div className="relative">
+            <label htmlFor="stack-search" className="sr-only">
+              Search stocks and tokens by ticker, name or address
+            </label>
             <svg
               viewBox="0 0 16 16"
               width="15"
@@ -93,39 +121,34 @@ export const AssetLibrary = forwardRef<HTMLInputElement, AssetLibraryProps>(
               ref={searchRef}
               type="search"
               className="field py-2.5 pl-10 text-[13px]"
-              placeholder="Search stocks"
+              placeholder="Search stocks and tokens"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
         </div>
 
-        <div className="dark-scroll mt-3 flex-1 overflow-y-auto px-3 pb-3" style={{ maxHeight: 520 }}>
+        <div className="dark-scroll mt-3 flex-1 overflow-y-auto px-3 pb-3" style={{ maxHeight: 470 }}>
           {results.length === 0 ? (
-            <p className="px-2 py-10 text-center text-[13px] leading-relaxed text-muted">
-              Nothing matches “{query.trim()}”.
-              <br />
-              <button
-                type="button"
-                className="mt-2 text-micro font-bold uppercase text-accent underline decoration-accent/40 decoration-2 underline-offset-4"
-                onClick={() => setQuery("")}
-              >
-                Show every stock
-              </button>
-            </p>
+            <EmptyShelf
+              query={query.trim()}
+              tab={tab}
+              searching={searching}
+              onClear={() => setQuery("")}
+            />
           ) : (
             <ul className="space-y-1">
-              {results.map((token) => {
-                const allocation = chosen.get(token.symbol);
+              {results.map((asset) => {
+                const allocation = chosen.get(asset.id);
                 return (
                   <AssetRow
-                    key={token.symbol}
-                    token={token}
+                    key={asset.id}
+                    asset={asset}
                     allocation={allocation}
                     disabled={!allocation && full}
-                    dragging={draggingAssetId === token.symbol}
-                    onAdd={() => onAdd(token.symbol)}
-                    onRemove={() => onRemove(token.symbol)}
+                    dragging={draggingAssetId === asset.id}
+                    onAdd={() => onAdd(asset)}
+                    onRemove={() => onRemove(asset.id)}
                     onPointerDown={onPointerDown}
                   />
                 );
@@ -136,16 +159,51 @@ export const AssetLibrary = forwardRef<HTMLInputElement, AssetLibraryProps>(
 
         <p className="border-t border-line px-4 py-3 text-[12px] leading-relaxed text-faint">
           {full
-            ? `Five is the most a Stack holds. Take one out to swap it.`
-            : `Drag a stock into the ring, or press Add.`}
+            ? `Six is the most a Stack holds. Take one out to swap it.`
+            : `Drag an asset into the ring, or press Add.`}
         </p>
       </section>
     );
   }
 );
 
+function EmptyShelf({
+  query,
+  tab,
+  searching,
+  onClear,
+}: {
+  query: string;
+  tab: Tab;
+  searching: boolean;
+  onClear: () => void;
+}) {
+  if (searching) {
+    return (
+      <p className="px-2 py-10 text-center text-[13px] leading-relaxed text-muted">
+        Nothing matches “{query}”.
+        <br />
+        <button
+          type="button"
+          className="mt-2 text-micro font-bold uppercase text-accent underline decoration-accent/40 decoration-2 underline-offset-4"
+          onClick={onClear}
+        >
+          Show everything
+        </button>
+      </p>
+    );
+  }
+  return (
+    <p className="px-4 py-10 text-center text-[13px] leading-relaxed text-muted">
+      {tab === "token"
+        ? "Nothing imported yet. Paste a contract address up top and it lands here."
+        : "No stocks to show."}
+    </p>
+  );
+}
+
 function AssetRow({
-  token,
+  asset,
   allocation,
   disabled,
   dragging,
@@ -153,7 +211,7 @@ function AssetRow({
   onRemove,
   onPointerDown,
 }: {
-  token: TokenInfo;
+  asset: BuilderAsset;
   allocation: Allocation | undefined;
   disabled: boolean;
   dragging: boolean;
@@ -162,6 +220,7 @@ function AssetRow({
   onPointerDown?: (event: React.PointerEvent, assetId: string) => void;
 }) {
   const chosen = Boolean(allocation);
+  const sub = asset.note ? `${asset.name} · ${asset.note}` : asset.name;
 
   return (
     <li
@@ -177,7 +236,7 @@ function AssetRow({
       } ${dragging ? "opacity-40" : ""}`}
       onPointerDown={(e) => {
         if (disabled || !onPointerDown) return;
-        onPointerDown(e, token.symbol);
+        onPointerDown(e, asset.id);
       }}
     >
       <span
@@ -195,27 +254,35 @@ function AssetRow({
       </span>
 
       <span className="relative shrink-0">
-        <TokenMark symbol={token.symbol} size={34} />
+        <AssetMark asset={asset} size={34} slot={allocation?.slot ?? 0} />
         {allocation ? (
           <span
             aria-hidden
             className="absolute -bottom-1 -right-1 h-2.5 w-2.5 rounded-full border-2 border-ground"
-            style={{ background: stackAccent(allocation.slot) }}
+            style={{ background: stackAccent(allocation.slot, allocation.kind) }}
           />
         ) : null}
       </span>
 
       <span className="min-w-0 flex-1">
         {/* The ticker never truncates — "GOO…" names nothing, and it is the shorter of
-            the two strings anyway. The company name is what gives way. */}
+            the two strings anyway. The subtitle is what gives way. */}
         <span className="block text-[14px] font-extrabold tracking-tight text-ink">
-          {token.symbol}
+          {asset.symbol}
         </span>
-        <span className="block truncate text-[12px] text-muted">{token.name}</span>
+        <span className="block truncate text-[12px] text-muted">{sub}</span>
       </span>
 
-      <span className="num shrink-0 text-[12px] text-muted">
-        {token.priceUsd === null ? "—" : `$${fmt(token.priceUsd)}`}
+      <span className="num shrink-0 text-right text-[12px] text-muted">
+        {asset.priceUsd === null ? (
+          asset.kind === "token" ? (
+            <span className="text-[11px]">{shortAddress(asset.address ?? "")}</span>
+          ) : (
+            "—"
+          )
+        ) : (
+          `$${fmt(asset.priceUsd, asset.priceUsd < 1 ? 4 : 2)}`
+        )}
       </span>
 
       {chosen ? (
@@ -224,7 +291,7 @@ function AssetRow({
           onClick={onRemove}
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-accent/50 bg-accent/20 text-accent transition-colors hover:border-accent hover:bg-accent hover:text-accent-ink"
         >
-          <span className="sr-only">Take {token.symbol} out of your Stack</span>
+          <span className="sr-only">Take {asset.symbol} out of your Stack</span>
           <svg viewBox="0 0 14 14" width="12" height="12" fill="none" aria-hidden>
             <path
               d="M2.5 7.2 5.6 10.3 11.5 4"
@@ -250,7 +317,7 @@ function AssetRow({
           disabled={disabled}
           className="btn-quiet btn-sm shrink-0 px-3 py-1.5 text-[11px] disabled:pointer-events-none"
         >
-          <span className="sr-only">Add {token.name} to your Stack</span>
+          <span className="sr-only">Add {asset.name} to your Stack</span>
           <span aria-hidden>Add</span>
         </button>
       )}

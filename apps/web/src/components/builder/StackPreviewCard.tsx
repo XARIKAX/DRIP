@@ -1,6 +1,7 @@
 "use client";
 
 import { Mark } from "@/components/Wordmark";
+import type { BuilderAsset } from "@/lib/stack/asset";
 import { formatPct, type Allocation } from "@/lib/stack/allocation";
 import { stackAccent } from "@/lib/palette";
 import { AllocationRing } from "./AllocationRing";
@@ -22,6 +23,7 @@ export interface StackPreviewCardProps {
   name: string;
   ticker: string;
   allocations: readonly Allocation[];
+  assets?: ReadonlyMap<string, BuilderAsset>;
   className?: string;
 }
 
@@ -29,6 +31,7 @@ export function StackPreviewCard({
   name,
   ticker,
   allocations,
+  assets,
   className = "",
 }: StackPreviewCardProps) {
   return (
@@ -62,18 +65,20 @@ export function StackPreviewCard({
       <div className="relative mt-4 flex items-center gap-4">
         <ul className="min-w-0 flex-1 space-y-1.5">
           {allocations.length === 0 ? (
-            <li className="text-[12px] text-muted">No stocks yet.</li>
+            <li className="text-[12px] text-muted">Nothing in it yet.</li>
           ) : (
             allocations.map((a) => (
               <li key={a.assetId} className="flex items-center gap-2 text-[12px]">
                 <span
                   aria-hidden
                   className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ background: stackAccent(a.slot) }}
+                  style={{ background: stackAccent(a.slot, a.kind) }}
                 />
                 {/* The ticker never truncates — it is the thing being named, and
                     "GOO…" identifies nothing. The row gives way on the gap instead. */}
-                <span className="shrink-0 font-semibold text-ink">{a.assetId}</span>
+                <span className="shrink-0 font-semibold text-ink">
+                  {assets?.get(a.assetId)?.symbol ?? a.assetId}
+                </span>
                 <span className="num ml-auto shrink-0 text-muted">
                   {formatPct(a.weightBps)}%
                 </span>
