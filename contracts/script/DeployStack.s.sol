@@ -22,6 +22,12 @@ import {StackVault} from "../src/StackVault.sol";
 ///        ADMIN=0x... PRIVATE_KEY=0x... \
 ///          forge script script/DeployStack.s.sol --rpc-url robinhood_mainnet --broadcast
 ///
+///      PRIVATE_KEY is the DEPLOYER's: the key that signs and pays. ADMIN is only an
+///      address — its key is never needed and never wanted here, because the run ends
+///      by handing the roles to it. Passing the admin's own key is handled but is not
+///      the intent: the vault then keeps the admin as its sole role holder rather than
+///      separating the address that deployed from the address that governs.
+///
 ///      Every constituent is read for its symbol and decimals before anything is
 ///      created, and the run PRINTS WHAT IT READ next to what the recipe claims. A
 ///      recipe written against the wrong decimals produces a basket that mints and
@@ -67,7 +73,18 @@ contract DeployStack is Script {
             _openStack(vault, recipes, string.concat(".stacks[", vm.toString(i), "]"));
         }
 
-        if (existing == address(0)) {
+        // Hand over, unless the deployer IS the admin, in which case there is nobody
+        // to hand to and the sequence below would be a suicide note: both grants are
+        // no-ops against an address that already holds the roles, and both renounces
+        // then strip that same address of them. The vault would come out of the run
+        // with no admin and no creator, permanently — no new baskets, no freeze, no
+        // pause, and nothing able to grant any of it back.
+        //
+        // The require after the broadcast does catch this, since forge simulates the
+        // whole script before sending anything. But it catches it as "admin missing
+        // admin role" for a run that passed the admin, which is the least helpful
+        // sentence available. Better not to build the trap.
+        if (existing == address(0) && deployer != admin) {
             vault.grantRole(vault.DEFAULT_ADMIN_ROLE(), admin);
             vault.grantRole(vault.CREATOR_ROLE(), admin);
             vault.renounceRole(vault.CREATOR_ROLE(), deployer);
@@ -78,7 +95,15 @@ contract DeployStack is Script {
 
         if (existing == address(0)) {
             require(vault.hasRole(vault.DEFAULT_ADMIN_ROLE(), admin), "admin missing admin role");
-            require(!vault.hasRole(vault.DEFAULT_ADMIN_ROLE(), deployer), "deployer still admin");
+            require(vault.hasRole(vault.CREATOR_ROLE(), admin), "admin cannot open a basket");
+            if (deployer != admin) {
+                require(!vault.hasRole(vault.DEFAULT_ADMIN_ROLE(), deployer), "deployer still admin");
+                require(!vault.hasRole(vault.CREATOR_ROLE(), deployer), "deployer still creator");
+            } else {
+                console2.log("");
+                console2.log("Deployer is the admin, so nothing was handed over.");
+                console2.log("It holds both roles because it deployed the vault.");
+            }
             _recordVault(address(vault));
         }
     }

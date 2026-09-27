@@ -243,6 +243,12 @@ contract DeployStackTest is Test {
     address internal admin = makeAddr("multisig");
     uint256 internal pk = 0xB0B;
 
+    /// @dev Any value that turns an address into a usable private key. The admin-key
+    ///      test needs a key whose address it also passes as ADMIN, and a multisig
+    ///      address is not derived from a key anyone has, so one is invented here and
+    ///      its own address used for both.
+    uint256 internal constant ADMIN_KEY_OFFSET = 1;
+
     function setUp() public {
         vm.chainId(ROBINHOOD_MAINNET);
         recipes = vm.readFile("stacks/4663.json");
@@ -352,6 +358,40 @@ contract DeployStackTest is Test {
         DeployStack again = new DeployStack();
         vm.expectRevert("recipe decimals disagree with the chain");
         again.run();
+    }
+
+    /// @dev Passing the ADMIN's own key must not strip the vault of its roles.
+    ///
+    ///      The handover is grant-to-admin then renounce-from-deployer. When those are
+    ///      the same address the grants are no-ops and the renounces land on the only
+    ///      holder there is, so the vault ends the run with no admin and no creator and
+    ///      no way back. Nobody can open a basket, freeze one or pause the vault, ever.
+    ///
+    ///      Asked in exactly the terms that matter afterwards: can this address still
+    ///      do the things an admin exists to do. Checking hasRole alone would pass on a
+    ///      vault whose roles were granted and never used.
+    function test_theAdminsOwnKeyDoesNotStripTheVaultOfItsRoles() public {
+        vm.setEnv("PRIVATE_KEY", vm.toString(uint256(uint160(admin)) + ADMIN_KEY_OFFSET));
+        address signer = vm.addr(uint256(uint160(admin)) + ADMIN_KEY_OFFSET);
+        vm.setEnv("ADMIN", vm.toString(signer));
+
+        DeployStack asAdmin = new DeployStack();
+        asAdmin.run();
+        StackVault vault = StackVault(asAdmin.lastVault());
+
+        assertTrue(vault.hasRole(vault.DEFAULT_ADMIN_ROLE(), signer), "the vault has no admin at all");
+        assertTrue(vault.hasRole(vault.CREATOR_ROLE(), signer), "the vault has no creator at all");
+
+        address[] memory c = new address[](1);
+        c[0] = recipes.readAddress(".stacks[0].constituents[0].address");
+        uint256[] memory u = new uint256[](1);
+        u[0] = 1e18;
+
+        vm.startPrank(signer);
+        vault.createStack("Later", "LATER", c, u);
+        vault.pause();
+        vault.unpause();
+        vm.stopPrank();
     }
 
     /// @dev The book must come through a test run byte for byte.
