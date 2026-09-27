@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Script} from "forge-std/Script.sol";
+import {VmSafe} from "forge-std/Vm.sol";
 import {console2} from "forge-std/console2.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -20,6 +21,12 @@ import {StackVault} from "../src/StackVault.sol";
 ///
 ///        ADMIN=0x... PRIVATE_KEY=0x... \
 ///          forge script script/DeployStack.s.sol --rpc-url robinhood_mainnet --broadcast
+///
+///      PRIVATE_KEY is the DEPLOYER's: the key that signs and pays. ADMIN is only an
+///      address — its key is never needed and never wanted here, because the run ends
+///      by handing the roles to it. Passing the admin's own key is handled but is not
+///      the intent: the vault then keeps the admin as its sole role holder rather than
+///      separating the address that deployed from the address that governs.
 ///
 ///      Every constituent is read for its symbol and decimals before anything is
 ///      created, and the run PRINTS WHAT IT READ next to what the recipe claims. A
@@ -66,7 +73,18 @@ contract DeployStack is Script {
             _openStack(vault, recipes, string.concat(".stacks[", vm.toString(i), "]"));
         }
 
-        if (existing == address(0)) {
+        // Hand over, unless the deployer IS the admin, in which case there is nobody
+        // to hand to and the sequence below would be a suicide note: both grants are
+        // no-ops against an address that already holds the roles, and both renounces
+        // then strip that same address of them. The vault would come out of the run
+        // with no admin and no creator, permanently — no new baskets, no freeze, no
+        // pause, and nothing able to grant any of it back.
+        //
+        // The require after the broadcast does catch this, since forge simulates the
+        // whole script before sending anything. But it catches it as "admin missing
+        // admin role" for a run that passed the admin, which is the least helpful
+        // sentence available. Better not to build the trap.
+        if (existing == address(0) && deployer != admin) {
             vault.grantRole(vault.DEFAULT_ADMIN_ROLE(), admin);
             vault.grantRole(vault.CREATOR_ROLE(), admin);
             vault.renounceRole(vault.CREATOR_ROLE(), deployer);
@@ -77,11 +95,48 @@ contract DeployStack is Script {
 
         if (existing == address(0)) {
             require(vault.hasRole(vault.DEFAULT_ADMIN_ROLE(), admin), "admin missing admin role");
-            require(!vault.hasRole(vault.DEFAULT_ADMIN_ROLE(), deployer), "deployer still admin");
-            console2.log("");
-            console2.log("Paste into deployments/%s.json, then run `pnpm abis`:", vm.toString(block.chainid));
-            console2.log('  "stackVault": "%s",', vm.toString(address(vault)));
+            require(vault.hasRole(vault.CREATOR_ROLE(), admin), "admin cannot open a basket");
+            if (deployer != admin) {
+                require(!vault.hasRole(vault.DEFAULT_ADMIN_ROLE(), deployer), "deployer still admin");
+                require(!vault.hasRole(vault.CREATOR_ROLE(), deployer), "deployer still creator");
+            } else {
+                console2.log("");
+                console2.log("Deployer is the admin, so nothing was handed over.");
+                console2.log("It holds both roles because it deployed the vault.");
+            }
+            _recordVault(address(vault));
         }
+    }
+
+    /// @dev Merge the vault's address into this chain's book.
+    ///
+    ///      Only on a real broadcast. A dry run must not touch the book — the whole
+    ///      point of the simulation is to be readable and reversible — and a TEST must
+    ///      not touch it at all: StackRecipe.t.sol drives this same run() with fakes
+    ///      etched at the mainnet addresses, and a write there would leave a bogus
+    ///      mainnet address in the repo for sync-abis.mjs to pick up and someone to
+    ///      commit. That is the exact failure DeployProduction's harness exists to
+    ///      avoid, and isContext is how this one avoids it without a harness.
+    ///
+    ///      Written rather than printed for a person to paste because the paste is the
+    ///      step with nothing checking it. A mistyped address here is a frontend that
+    ///      reads a contract that is not there, and the error it produces says nothing
+    ///      about an address book.
+    function _recordVault(address vault) private {
+        string memory path = string.concat("deployments/", vm.toString(block.chainid), ".json");
+
+        if (!vm.isContext(VmSafe.ForgeContext.ScriptBroadcast)) {
+            console2.log("");
+            console2.log("Dry run, so %s is unchanged. Re-run with --broadcast to deploy", path);
+            console2.log("and record:");
+            console2.log('  "stackVault": "%s"', vm.toString(vault));
+            return;
+        }
+
+        vm.writeJson(vm.toString(vault), path, ".stackVault");
+        console2.log("");
+        console2.log("Wrote stackVault to %s", path);
+        console2.log("Now run `pnpm abis` and redeploy the web app.");
     }
 
     /// @dev Reads one recipe, prints what the chain says about each constituent beside
