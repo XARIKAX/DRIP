@@ -14,7 +14,7 @@ export const listings: Record<number, ListingUniverse> = {
       "quoterV2": "0x33e885ed0ec9bf04ecfb19341582aadcb4c8a9e7",
       "ethUsdFeed": "0x78F3556b67E17Df817D51Ef5a990cDaF09E8d3A9",
       "defaultFeeTier": 3000,
-      "defaultHeartbeat": 86400
+      "defaultHeartbeat": 345600
     },
     "rules": [
       "No feed, no listing. Tokens without a Chainlink feed are never listed.",
@@ -23,7 +23,7 @@ export const listings: Record<number, ListingUniverse> = {
       "Path encoding is abi.encodePacked(WETH, uint24(3000), USDG, uint24(3000), token); minOut bounds the FINAL token against the Chainlink price, never the mid leg.",
       "All feeds are 8-decimal USD via latestRoundData(); guard staleness with that feed's heartbeat below and refuse to settle on a stale read. Fail closed to refund.",
       "Stock tokens are Robinhood-issued debt trackers: run a live small receive/hold/transfer test from a contract before real bankroll.",
-      "Staleness is per feed. A full read of the eleven live feeds gave ages of 25, 30, 34, 35, 42, 47, 54, 97, 247, 259 and 375 minutes, so a six hour bound refused a token while three others sat within a hundred minutes of the same fate: normal behaviour for deviation-triggered feeds in a quiet market, not a fault. The 24 hour figure here is four times the worst age observed and matches the usual Chainlink equity heartbeat, but it is still fitted to observation. Replace it with Chainlink's published heartbeat per feed before carrying real size, and remember which way the error hurts: too tight makes a token unpriceable and locks its holder out of borrowing, too loose prices collateral on older data than the LTV assumed."
+      "Staleness is per feed, and the bound has to survive the market being shut. A full read of the eleven live feeds on a trading day gave ages of 25 to 375 minutes, and a 24 hour bound fitted to that looked generous — until the first Sunday, when every feed was 48 hours old, the oracle refused all eleven, and the whole app read zero. Equity feeds do not tick when the exchange is closed; that is correct behaviour, not a fault. 96 hours covers the longest ordinary gap US equities produce: Friday's 4pm ET close to a Tuesday 9:30am open after a Monday holiday, about 89 and a half hours. Which way the error hurts is unchanged: too tight makes a token unpriceable and locks its holder out of borrowing, too loose prices collateral on older data than the LTV assumed. Over a weekend the looser side is the honest one, because Friday's close IS the price — nobody can trade the underlying either. Replace this with Chainlink's published heartbeat per feed before carrying real size."
     ],
     "tokens": [
       {
@@ -39,7 +39,7 @@ export const listings: Record<number, ListingUniverse> = {
         ],
         "liquidity": "live",
         "enabled": true,
-        "heartbeat": 86400,
+        "heartbeat": 345600,
         "rewardRatePct": 0.03
       },
       {
@@ -55,7 +55,7 @@ export const listings: Record<number, ListingUniverse> = {
         ],
         "liquidity": "live",
         "enabled": true,
-        "heartbeat": 86400,
+        "heartbeat": 345600,
         "rewardRatePct": 0.32
       },
       {
@@ -71,7 +71,7 @@ export const listings: Record<number, ListingUniverse> = {
         ],
         "liquidity": "live",
         "enabled": true,
-        "heartbeat": 86400,
+        "heartbeat": 345600,
         "rewardRatePct": 0.62
       },
       {
@@ -87,7 +87,7 @@ export const listings: Record<number, ListingUniverse> = {
         ],
         "liquidity": "live",
         "enabled": true,
-        "heartbeat": 86400,
+        "heartbeat": 345600,
         "rewardRatePct": 0.75
       },
       {
@@ -103,7 +103,7 @@ export const listings: Record<number, ListingUniverse> = {
         ],
         "liquidity": "live",
         "enabled": true,
-        "heartbeat": 86400,
+        "heartbeat": 345600,
         "rewardRatePct": 1.07
       },
       {
@@ -119,7 +119,7 @@ export const listings: Record<number, ListingUniverse> = {
         ],
         "liquidity": "live",
         "enabled": true,
-        "heartbeat": 86400,
+        "heartbeat": 345600,
         "rewardRatePct": 0.32
       },
       {
@@ -135,7 +135,7 @@ export const listings: Record<number, ListingUniverse> = {
         ],
         "liquidity": "live",
         "enabled": true,
-        "heartbeat": 86400,
+        "heartbeat": 345600,
         "rewardRatePct": 0.45
       },
       {
@@ -152,7 +152,7 @@ export const listings: Record<number, ListingUniverse> = {
         "liquidity": "none",
         "enabled": false,
         "note": "USDG pool holds 23 units. Verified empty on mainnet, not a market.",
-        "heartbeat": 86400
+        "heartbeat": 345600
       },
       {
         "symbol": "ORCL",
@@ -168,7 +168,7 @@ export const listings: Record<number, ListingUniverse> = {
         "liquidity": "none",
         "enabled": false,
         "note": "No USDG pool deployed at the routed address.",
-        "heartbeat": 86400
+        "heartbeat": 345600
       },
       {
         "symbol": "PLTR",
@@ -183,7 +183,7 @@ export const listings: Record<number, ListingUniverse> = {
         ],
         "liquidity": "quote_first",
         "enabled": true,
-        "heartbeat": 86400,
+        "heartbeat": 345600,
         "rewardRatePct": 0.32
       },
       {
@@ -200,7 +200,7 @@ export const listings: Record<number, ListingUniverse> = {
         "liquidity": "none",
         "enabled": false,
         "note": "No USDG pool deployed at the routed address.",
-        "heartbeat": 86400
+        "heartbeat": 345600
       },
       {
         "symbol": "AMD",
@@ -215,7 +215,7 @@ export const listings: Record<number, ListingUniverse> = {
         ],
         "liquidity": "quote_first",
         "enabled": true,
-        "heartbeat": 86400,
+        "heartbeat": 345600,
         "rewardRatePct": 0.32
       },
       {
@@ -231,7 +231,7 @@ export const listings: Record<number, ListingUniverse> = {
         ],
         "liquidity": "live",
         "enabled": true,
-        "heartbeat": 86400,
+        "heartbeat": 345600,
         "rewardRatePct": 0.32
       },
       {
@@ -247,7 +247,7 @@ export const listings: Record<number, ListingUniverse> = {
         ],
         "liquidity": "live",
         "enabled": true,
-        "heartbeat": 86400,
+        "heartbeat": 345600,
         "rewardRatePct": 0.62
       },
       {
@@ -264,7 +264,7 @@ export const listings: Record<number, ListingUniverse> = {
         "liquidity": "none",
         "enabled": false,
         "note": "USDG pool holds 6 units. Verified empty on mainnet, not a market.",
-        "heartbeat": 86400
+        "heartbeat": 345600
       },
       {
         "symbol": "SPCX",
@@ -280,7 +280,7 @@ export const listings: Record<number, ListingUniverse> = {
         "liquidity": "none",
         "enabled": false,
         "note": "Never traded. Private-company feed. Review before listing.",
-        "heartbeat": 86400
+        "heartbeat": 345600
       }
     ]
   }
