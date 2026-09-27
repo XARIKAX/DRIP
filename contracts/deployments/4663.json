@@ -26,6 +26,7 @@
   "rewardVaultBlock": 58499599,
   "splitVault": "0xd2AC4CE65AdBEF94c258d6d6908D9fcb44cfeca9",
   "splitVaultBlock": 59527498,
+  "stackVault": "0x96E0E73280fB79b05f0FA5048A802E33B9d17C4C",
   "streamEngine": "0x69b63aE8e0fB20C8744897c05700b5D610186C2E",
   "swapAdapter": "0x549B5bAD4B010630fE033c4e2538718504081E88",
   "tokens": {
