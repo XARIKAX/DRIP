@@ -218,8 +218,8 @@ contract Harness is DeployStack {
         _openStack(vault, recipes, base);
     }
 
-    function alreadyOpen(StackVault vault, string memory symbol_) external view returns (bool) {
-        return _alreadyOpen(vault, symbol_);
+    function symbolIsOpen(StackVault vault, string memory symbol_) external view returns (bool) {
+        return _symbolIsOpen(vault, symbol_);
     }
 }
 
@@ -409,8 +409,63 @@ contract DeployStackReuseTest is DeployStackBase {
     ///      the recipe file does not carry and whose order is not a promise.
     function test_theSkipMatchesOnTheShareTokensOwnSymbol() public {
         Harness h = new Harness();
-        assertTrue(h.alreadyOpen(vault, recipes.readString(".stacks[0].symbol")), "skip did not recognise it");
-        assertFalse(h.alreadyOpen(vault, "NOTHING"), "skip matched a symbol that is not there");
+        assertTrue(h.symbolIsOpen(vault, recipes.readString(".stacks[0].symbol")), "skip did not recognise it");
+        assertFalse(h.symbolIsOpen(vault, "NOTHING"), "skip matched a symbol that is not there");
+    }
+
+    /// @dev Correcting a recipe and re-running must not quietly do nothing.
+    ///
+    ///      This was the original behaviour and it is the worst failure the script can
+    ///      have: an operator fixes weights, re-runs, reads "skipping", and ships
+    ///      believing the fix is live. It is not, and unitsPerShare can never be edited
+    ///      once a basket exists, so the belief survives until someone prices a share.
+    function test_aChangedRecipeUnderTheSameSymbolIsRefused() public {
+        Harness h = new Harness();
+        bytes32 creator = vault.CREATOR_ROLE();
+        vm.prank(admin);
+        vault.grantRole(creator, address(h));
+
+        uint256 before = vault.stackCount();
+        vm.expectRevert(bytes(
+            "a basket with this symbol is already open on a different recipe: add \"supersedes\" to the file to open another, and freeze the old one"
+        ));
+        h.openStack(vault, _altRecipe(false), ".stacks[0]");
+        assertEq(vault.stackCount(), before, "a basket was opened by a run that should have refused");
+    }
+
+    /// @dev `supersedes` in the file is the one thing that gets a second basket opened
+    ///      under a symbol already in use. A reviewed line in git, not a runtime flag.
+    function test_supersedesInTheFileOpensASecondBasket() public {
+        Harness h = new Harness();
+        bytes32 creator = vault.CREATOR_ROLE();
+        vm.prank(admin);
+        vault.grantRole(creator, address(h));
+
+        uint256 before = vault.stackCount();
+        h.openStack(vault, _altRecipe(true), ".stacks[0]");
+        assertEq(vault.stackCount(), before + 1, "supersedes did not open the new basket");
+
+        // Both exist. The old one keeps its address and its numbers — that is exactly
+        // why the file has to say it meant this, and why a freeze is the other half.
+        (address oldToken,, , uint256[] memory oldUnits,) = vault.stackOf(1);
+        (address newToken,, , uint256[] memory newUnits,) = vault.stackOf(before + 1);
+        assertTrue(oldToken != newToken, "the same share token was reused");
+        assertTrue(oldUnits[0] != newUnits[0], "the superseding basket carries the old numbers");
+    }
+
+    /// @dev A one leg recipe under the symbol already open, with and without the key.
+    function _altRecipe(bool withSupersedes) private view returns (string memory) {
+        return string.concat(
+            '{"stacks":[{"name":"Corrected","symbol":"',
+            recipes.readString(".stacks[0].symbol"),
+            '"',
+            withSupersedes
+                ? string.concat(',"supersedes":"', recipes.readString(".stacks[0].symbol"), '"')
+                : "",
+            ',"constituents":[{"symbol":"NVDA","address":"',
+            vm.toString(recipes.readAddress(".stacks[0].constituents[0].address")),
+            '","decimals":18,"unitsPerShare":"999000000000000000","human":"0.999 NVDA"}]}]}'
+        );
     }
 
     /// @dev A reuse must leave the roles exactly as it found them. Re-running the

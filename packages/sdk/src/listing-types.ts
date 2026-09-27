@@ -71,3 +71,27 @@ export interface ListingUniverse {
   rules: string[];
   tokens: ListedToken[];
 }
+
+/**
+ * A hand-set price for a token no feed will price.
+ *
+ * Deliberately NOT a ListedToken. A listing has a Chainlink feed and a heartbeat, so
+ * a price that stops being maintained stops being served — the oracle reverts and the
+ * app shows nothing rather than something wrong. A mark has neither. It is a number a
+ * person typed on a date, and every consumer has to carry that date with it and say
+ * so, because nothing else will.
+ *
+ * Maintained by hand in contracts/marks/<chainId>.json. Read by the Stacks page and
+ * nothing else — never by the credit side, where collateral is valued through
+ * ChainlinkPriceOracle and must stay that way.
+ */
+export interface PriceMark {
+  symbol: string;
+  address: Address;
+  /** USD for one whole token, as a decimal. Not scaled — this is not oracle data. */
+  usd: number;
+  /** ISO date the figure was set. Shown beside it wherever it appears. */
+  asOf: string;
+  /** Where the number came from, in a few words. */
+  source: string;
+}
