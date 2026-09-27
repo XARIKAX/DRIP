@@ -239,12 +239,14 @@ contract DeployStackTest is Test {
 
     DeployStack internal script;
     string internal recipes;
+    string internal bookBefore;
     address internal admin = makeAddr("multisig");
     uint256 internal pk = 0xB0B;
 
     function setUp() public {
         vm.chainId(ROBINHOOD_MAINNET);
         recipes = vm.readFile("stacks/4663.json");
+        bookBefore = vm.readFile("deployments/4663.json");
 
         uint256 s;
         while (vm.keyExistsJson(recipes, string.concat(".stacks[", vm.toString(s), "].symbol"))) {
@@ -350,6 +352,22 @@ contract DeployStackTest is Test {
         DeployStack again = new DeployStack();
         vm.expectRevert("recipe decimals disagree with the chain");
         again.run();
+    }
+
+    /// @dev The book must come through a test run byte for byte.
+    ///
+    ///      This file drives the real script with fakes etched at the real mainnet
+    ///      addresses. If the script's book write were not gated on a broadcast, every
+    ///      `forge test` would stamp a throwaway address into deployments/4663.json,
+    ///      where sync-abis.mjs would pick it up and someone would commit it. The
+    ///      frontend would then read a StackVault that does not exist, and the error
+    ///      would say nothing about an address book.
+    function test_aTestRunNeverWritesTheAddressBook() public view {
+        assertEq(
+            keccak256(bytes(vm.readFile("deployments/4663.json"))),
+            keccak256(bytes(bookBefore)),
+            "the script wrote the address book from a test"
+        );
     }
 
     function _vault() private view returns (StackVault) {

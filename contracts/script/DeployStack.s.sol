@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Script} from "forge-std/Script.sol";
+import {VmSafe} from "forge-std/Vm.sol";
 import {console2} from "forge-std/console2.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -78,10 +79,39 @@ contract DeployStack is Script {
         if (existing == address(0)) {
             require(vault.hasRole(vault.DEFAULT_ADMIN_ROLE(), admin), "admin missing admin role");
             require(!vault.hasRole(vault.DEFAULT_ADMIN_ROLE(), deployer), "deployer still admin");
-            console2.log("");
-            console2.log("Paste into deployments/%s.json, then run `pnpm abis`:", vm.toString(block.chainid));
-            console2.log('  "stackVault": "%s",', vm.toString(address(vault)));
+            _recordVault(address(vault));
         }
+    }
+
+    /// @dev Merge the vault's address into this chain's book.
+    ///
+    ///      Only on a real broadcast. A dry run must not touch the book — the whole
+    ///      point of the simulation is to be readable and reversible — and a TEST must
+    ///      not touch it at all: StackRecipe.t.sol drives this same run() with fakes
+    ///      etched at the mainnet addresses, and a write there would leave a bogus
+    ///      mainnet address in the repo for sync-abis.mjs to pick up and someone to
+    ///      commit. That is the exact failure DeployProduction's harness exists to
+    ///      avoid, and isContext is how this one avoids it without a harness.
+    ///
+    ///      Written rather than printed for a person to paste because the paste is the
+    ///      step with nothing checking it. A mistyped address here is a frontend that
+    ///      reads a contract that is not there, and the error it produces says nothing
+    ///      about an address book.
+    function _recordVault(address vault) private {
+        string memory path = string.concat("deployments/", vm.toString(block.chainid), ".json");
+
+        if (!vm.isContext(VmSafe.ForgeContext.ScriptBroadcast)) {
+            console2.log("");
+            console2.log("Dry run, so %s is unchanged. Re-run with --broadcast to deploy", path);
+            console2.log("and record:");
+            console2.log('  "stackVault": "%s"', vm.toString(vault));
+            return;
+        }
+
+        vm.writeJson(vm.toString(vault), path, ".stackVault");
+        console2.log("");
+        console2.log("Wrote stackVault to %s", path);
+        console2.log("Now run `pnpm abis` and redeploy the web app.");
     }
 
     /// @dev Reads one recipe, prints what the chain says about each constituent beside
