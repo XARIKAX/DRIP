@@ -47,8 +47,7 @@ export const deployments: Record<number, Deployment> = {
       "TSLA": "0x322F0929c4625eD5bAd873c95208D54E1c003b2d"
     },
     "usdg": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
-    "yieldMarket": "0xfF1da106560453e61495095cE693917b6E1f7fF3",
-    "stackVault": "0x96E0E73280fB79b05f0FA5048A802E33B9d17C4C"
+    "yieldMarket": "0xfF1da106560453e61495095cE693917b6E1f7fF3"
   },
   "31337": {
     "advanceVault": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
