@@ -1,0 +1,39 @@
+{
+  "notes": [
+    "Units are RAW token amounts per one whole (1e18) share, never percentages.",
+    "At 18 decimals, 0.01 of a token is 10000000000000000 and 10000 of one is 10000000000000000000000.",
+    "The decimals field is documentation and is checked against the chain at deploy time; a mismatch stops the run.",
+    "PONS and CASHCAT both have a 1,000,000,000 supply, so their legs are set to the SAME fraction of supply — one hundred-thousandth each. That is a choice a price cannot second-guess: with no oracle for either token there is no dollar figure to balance against, and equal supply fractions at least mean the two memes carry equal weight in the thing they are weighted against, their own float.",
+    "The NVDA leg is the only one with a reference price, around $225, so 0.01 is roughly $2.25. Whether that is the right share of a ROBOT is a question about what PONS and CASHCAT are worth, which nothing on this chain answers. Give the deployer real prices for the two and the legs can be rebalanced to a dollar target instead."
+  ],
+  "stacks": [
+    {
+      "name": "The Robot Economy",
+      "symbol": "ROBOT",
+      "note": "One chipmaker and two natives of the chain it trades on.",
+      "constituents": [
+        {
+          "symbol": "NVDA",
+          "address": "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC",
+          "decimals": 18,
+          "unitsPerShare": "10000000000000000",
+          "human": "0.01 NVDA, about $2.25"
+        },
+        {
+          "symbol": "PONS",
+          "address": "0x39dBED3a2bd333467115dE45665cC57F813C4571",
+          "decimals": 18,
+          "unitsPerShare": "10000000000000000000000",
+          "human": "10,000 PONS, one hundred-thousandth of supply"
+        },
+        {
+          "symbol": "CASHCAT",
+          "address": "0x020bfC650A365f8BB26819deAAbF3E21291018b4",
+          "decimals": 18,
+          "unitsPerShare": "10000000000000000000000",
+          "human": "10,000 CASHCAT, one hundred-thousandth of supply"
+        }
+      ]
+    }
+  ]
+}
