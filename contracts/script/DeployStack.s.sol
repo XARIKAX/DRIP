@@ -11,8 +11,12 @@ import {StackVault} from "../src/StackVault.sol";
 /// @title DeployStack
 /// @notice Deploy the Stack vault, and open the baskets named in stacks/<chainid>.json.
 /// @dev Two jobs in one run because the vault is useless without a basket and a basket
-///      cannot exist without the vault. Re-running with the vault already in the
-///      address book skips the deploy and only opens what is new.
+///      cannot exist without the vault. Re-running is safe: a vault already in the
+///      address book is reused rather than redeployed, and a basket whose symbol the
+///      vault already carries is skipped rather than opened a second time. Without
+///      that second half, adding one recipe to the file and re-running would mint a
+///      duplicate of every basket already live, each with its own id and its own
+///      share token, and nothing on chain would say which was the real one.
 ///
 ///        ADMIN=0x... PRIVATE_KEY=0x... \
 ///          forge script script/DeployStack.s.sol --rpc-url robinhood_mainnet --broadcast
@@ -25,6 +29,10 @@ import {StackVault} from "../src/StackVault.sol";
 ///      simulation is the review step, and it is not optional.
 contract DeployStack is Script {
     using stdJson for string;
+
+    /// @notice The vault this run deployed or reused. For tests and for a caller that
+    ///         wants the address without scraping it out of the log.
+    StackVault public lastVault;
 
     function run() external {
         string memory book = vm.readFile(string.concat("deployments/", vm.toString(block.chainid), ".json"));
@@ -48,6 +56,7 @@ contract DeployStack is Script {
         // The deployer holds CREATOR_ROLE for the length of this run so it can open
         // the baskets, then hands over. Same pattern as every other module here.
         StackVault vault = existing == address(0) ? new StackVault(deployer) : StackVault(existing);
+        lastVault = vault;
         console2.log(existing == address(0) ? "StackVault deployed:" : "StackVault reused:", address(vault));
 
         uint256 n = _count(recipes);
@@ -77,9 +86,15 @@ contract DeployStack is Script {
 
     /// @dev Reads one recipe, prints what the chain says about each constituent beside
     ///      what the file claims, and opens the basket.
-    function _openStack(StackVault vault, string memory recipes, string memory base) private {
+    function _openStack(StackVault vault, string memory recipes, string memory base) internal {
         string memory name_ = recipes.readString(string.concat(base, ".name"));
         string memory symbol_ = recipes.readString(string.concat(base, ".symbol"));
+
+        if (_alreadyOpen(vault, symbol_)) {
+            console2.log("");
+            console2.log(string.concat("STACK  ", symbol_, "  -  already open, skipping"));
+            return;
+        }
 
         uint256 c = _countConstituents(recipes, base);
         address[] memory tokens = new address[](c);
@@ -105,7 +120,7 @@ contract DeployStack is Script {
     ///      claims, and refuses the run if the decimals disagree. Split out to keep
     ///      the caller's stack shallow — and because this is the review step, so it
     ///      deserves to be a named thing rather than six lines inside a loop.
-    function _report(string memory recipes, string memory k, address token, uint256 units) private view {
+    function _report(string memory recipes, string memory k, address token, uint256 units) internal view {
         uint256 claimed = recipes.readUint(string.concat(k, ".decimals"));
         uint8 actual = IERC20Metadata(token).decimals();
 
@@ -127,11 +142,27 @@ contract DeployStack is Script {
         require(claimed == actual, "recipe decimals disagree with the chain");
     }
 
-    function _count(string memory recipes) private view returns (uint256 n) {
+    /// @dev Whether the vault already carries a basket with this symbol.
+    ///
+    ///      Symbol rather than id, because the recipe file has no ids and the order of
+    ///      its entries is not a promise. It is the share token's own symbol, read from
+    ///      the chain, so it says what was actually created rather than what a file
+    ///      believes was.
+    function _alreadyOpen(StackVault vault, string memory symbol_) internal view returns (bool) {
+        bytes32 want = keccak256(bytes(symbol_));
+        uint256 count = vault.stackCount();
+        for (uint256 id = 1; id <= count; ++id) {
+            (address token,,,,) = vault.stackOf(id);
+            if (keccak256(bytes(IERC20Metadata(token).symbol())) == want) return true;
+        }
+        return false;
+    }
+
+    function _count(string memory recipes) internal view returns (uint256 n) {
         while (vm.keyExistsJson(recipes, string.concat(".stacks[", vm.toString(n), "].symbol"))) ++n;
     }
 
-    function _countConstituents(string memory recipes, string memory base) private view returns (uint256 n) {
+    function _countConstituents(string memory recipes, string memory base) internal view returns (uint256 n) {
         while (vm.keyExistsJson(recipes, string.concat(base, ".constituents[", vm.toString(n), "].address"))) ++n;
     }
 }
