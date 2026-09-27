@@ -49,9 +49,22 @@ contract DeployStack is Script {
         require(admin != address(0), "ADMIN is required");
 
         uint256 pk = vm.envOr("PRIVATE_KEY", uint256(0));
-        address deployer = pk != 0 ? vm.addr(pk) : msg.sender;
-
         address existing = vm.keyExistsJson(book, ".stackVault") ? book.readAddress(".stackVault") : address(0);
+
+        _deploy(existing, admin, pk, recipes);
+    }
+
+    /// @dev The run itself, with the address book already read.
+    ///
+    ///      Split out because the two branches below — a first deploy and a reuse —
+    ///      behave very differently, and which one a run takes is decided by a file
+    ///      that CHANGES the moment the first deploy lands. A test that drove `run()`
+    ///      therefore tested the fresh path until ROBOT went live on mainnet and the
+    ///      reuse path afterwards, silently, without a line of it changing. A suite
+    ///      whose meaning depends on production state is not a suite. This seam lets a
+    ///      test name the branch it is exercising; `run()` still owns reading the book.
+    function _deploy(address existing, address admin, uint256 pk, string memory recipes) internal {
+        address deployer = pk != 0 ? vm.addr(pk) : msg.sender;
 
         console2.log("chain:   ", block.chainid);
         console2.log("deployer:", deployer);

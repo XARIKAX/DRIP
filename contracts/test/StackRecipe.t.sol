@@ -207,9 +207,13 @@ contract FakeConstituent is MockStockToken {
     }
 }
 
-/// @notice Reaches the script's two internals so the skip can be tested without a
-///         second book on disk. Same pattern as DeployProduction's harness.
+/// @notice Reaches past the script's address-book read so a test can name which branch
+///         it is exercising. Same pattern as DeployProduction's harness.
 contract Harness is DeployStack {
+    function deploy(address existing, address admin, uint256 pk, string memory recipes) external {
+        _deploy(existing, admin, pk, recipes);
+    }
+
     function openStack(StackVault vault, string memory recipes, string memory base) external {
         _openStack(vault, recipes, base);
     }
@@ -219,41 +223,26 @@ contract Harness is DeployStack {
     }
 }
 
-/// @title DeployStackTest
-/// @notice The deploy script itself, run against the real recipe file.
-///
-/// @dev Every constituent address in stacks/4663.json is etched with a stand in at the
-///      decimals the file claims, and the actual script is then run. This is the only
-///      thing that exercises the script's own code: the file reads, the decimals
-///      assertion, the role handover, and the skip that keeps a second run from
-///      opening a duplicate of every basket.
-///
-///      It cannot check that the real chain agrees with the file — only a live RPC can
-///      say whether 0xd060… really is an 18 decimal NVDA — which is why the script
-///      prints what it read and the simulation is a review step a person performs.
-///      What this catches is everything that is wrong before the RPC is ever dialled.
-contract DeployStackTest is Test {
+/// @notice Shared setup: every constituent etched at its real mainnet address.
+/// @dev The recipe's addresses are mainnet ones and there is no fork here, so each is
+///      given a stand in at the decimals the file claims. The UNITS and the addresses
+///      are the file's own, which is what makes these tests say anything.
+abstract contract DeployStackBase is Test {
     using stdJson for string;
 
     uint256 internal constant ROBINHOOD_MAINNET = 4663;
 
-    DeployStack internal script;
     string internal recipes;
-    string internal bookBefore;
     address internal admin = makeAddr("multisig");
     uint256 internal pk = 0xB0B;
 
-    /// @dev Any value that turns an address into a usable private key. The admin-key
-    ///      test needs a key whose address it also passes as ADMIN, and a multisig
-    ///      address is not derived from a key anyone has, so one is invented here and
-    ///      its own address used for both.
-    uint256 internal constant ADMIN_KEY_OFFSET = 1;
-
-    function setUp() public {
+    function setUp() public virtual {
         vm.chainId(ROBINHOOD_MAINNET);
         recipes = vm.readFile("stacks/4663.json");
-        bookBefore = vm.readFile("deployments/4663.json");
+        _etchConstituents();
+    }
 
+    function _etchConstituents() internal {
         uint256 s;
         while (vm.keyExistsJson(recipes, string.concat(".stacks[", vm.toString(s), "].symbol"))) {
             string memory base = string.concat(".stacks[", vm.toString(s), "]");
@@ -276,52 +265,43 @@ contract DeployStackTest is Test {
                 ++s;
             }
         }
+    }
 
-        // A book already carrying a stackVault sends the script down its reuse branch,
-        // which needs a real vault at that address for the run to mean anything. This
-        // keeps the test honest after the first mainnet deploy is recorded.
-        string memory book = vm.readFile("deployments/4663.json");
-        if (vm.keyExistsJson(book, ".stackVault")) {
-            deployCodeTo("StackVault.sol:StackVault", abi.encode(vm.addr(pk)), book.readAddress(".stackVault"));
-        }
+    function _recipeCount() internal view returns (uint256 n) {
+        while (vm.keyExistsJson(recipes, string.concat(".stacks[", vm.toString(n), "].symbol"))) ++n;
+    }
+}
 
-        vm.setEnv("ADMIN", vm.toString(admin));
-        vm.setEnv("PRIVATE_KEY", vm.toString(pk));
+/// @title DeployStackFreshTest
+/// @notice The first deploy: no vault in the book yet.
+///
+/// @dev Pinned to that branch rather than inferred from the address book, which is the
+///      whole reason the harness exists. Before ROBOT went live these tests passed by
+///      accident; the moment the book gained a stackVault they would have started
+///      exercising the reuse path and asserting things that are not true of it.
+contract DeployStackFreshTest is DeployStackBase {
+    using stdJson for string;
 
-        script = new DeployStack();
-        script.run();
+    Harness internal script;
+
+    /// @dev Any value that turns an address into a usable private key. The admin-key
+    ///      test needs a key whose address it also passes as ADMIN, and a multisig
+    ///      address is not derived from a key anyone has, so one is invented there.
+    uint256 internal constant ADMIN_KEY_OFFSET = 1;
+
+    function setUp() public override {
+        super.setUp();
+        script = new Harness();
+        script.deploy(address(0), admin, pk, recipes);
     }
 
     function test_everyRecipeInTheFileIsOpen() public view {
-        StackVault vault = _vault();
-        uint256 expected;
-        while (vm.keyExistsJson(recipes, string.concat(".stacks[", vm.toString(expected), "].symbol"))) ++expected;
-        assertEq(vault.stackCount(), expected, "one basket per recipe, no more and no fewer");
-    }
-
-    /// @dev The whole point of the skip. Opening the same recipe twice against a vault
-    ///      that already carries it must be a no-op, not a second basket with the same
-    ///      symbol and a different id.
-    function test_openingTheSameRecipeTwiceIsANoOp() public {
-        StackVault vault = _vault();
-        uint256 before = vault.stackCount();
-
-        Harness harness = new Harness();
-        vm.startPrank(admin);
-        vault.grantRole(vault.CREATOR_ROLE(), address(harness));
-        vm.stopPrank();
-
-        harness.openStack(vault, recipes, ".stacks[0]");
-        assertEq(vault.stackCount(), before, "a duplicate basket was opened");
-        assertTrue(harness.alreadyOpen(vault, recipes.readString(".stacks[0].symbol")), "skip did not recognise it");
-        assertFalse(harness.alreadyOpen(vault, "NOTHING"), "skip matched a symbol that is not there");
+        assertEq(script.lastVault().stackCount(), _recipeCount(), "one basket per recipe, no more and no fewer");
     }
 
     function test_eachLegHoldsTheUnitsTheFileNames() public view {
-        StackVault vault = _vault();
         string memory base = ".stacks[0]";
-
-        (,, address[] memory constituents, uint256[] memory units,) = vault.stackOf(1);
+        (,, address[] memory constituents, uint256[] memory units,) = script.lastVault().stackOf(1);
 
         uint256 i;
         while (vm.keyExistsJson(recipes, string.concat(base, ".constituents[", vm.toString(i), "].address"))) {
@@ -336,28 +316,13 @@ contract DeployStackTest is Test {
     }
 
     function test_theDeployerKeepsNothingAndTheAdminHoldsItAll() public view {
-        StackVault vault = _vault();
+        StackVault vault = script.lastVault();
         address deployer = vm.addr(pk);
 
         assertTrue(vault.hasRole(vault.DEFAULT_ADMIN_ROLE(), admin), "admin is not admin");
         assertTrue(vault.hasRole(vault.CREATOR_ROLE(), admin), "admin cannot create");
         assertFalse(vault.hasRole(vault.DEFAULT_ADMIN_ROLE(), deployer), "deployer kept admin");
         assertFalse(vault.hasRole(vault.CREATOR_ROLE(), deployer), "deployer kept creator");
-    }
-
-    /// @dev A file claiming the wrong decimals is the one failure no downstream
-    ///      assertion can catch, so the script refuses the run. This proves it does.
-    function test_aDecimalsMismatchStopsTheRun() public {
-        string memory k = ".stacks[0].constituents[0]";
-        deployCodeTo(
-            "StackRecipe.t.sol:FakeConstituent",
-            abi.encode(recipes.readString(string.concat(k, ".symbol")), uint8(6)),
-            recipes.readAddress(string.concat(k, ".address"))
-        );
-
-        DeployStack again = new DeployStack();
-        vm.expectRevert("recipe decimals disagree with the chain");
-        again.run();
     }
 
     /// @dev Passing the ADMIN's own key must not strip the vault of its roles.
@@ -367,17 +332,16 @@ contract DeployStackTest is Test {
     ///      holder there is, so the vault ends the run with no admin and no creator and
     ///      no way back. Nobody can open a basket, freeze one or pause the vault, ever.
     ///
-    ///      Asked in exactly the terms that matter afterwards: can this address still
-    ///      do the things an admin exists to do. Checking hasRole alone would pass on a
-    ///      vault whose roles were granted and never used.
+    ///      Asked in the terms that matter afterwards: can this address still do the
+    ///      things an admin exists to do. Checking hasRole alone would pass on a vault
+    ///      whose roles were granted and never usable.
     function test_theAdminsOwnKeyDoesNotStripTheVaultOfItsRoles() public {
-        vm.setEnv("PRIVATE_KEY", vm.toString(uint256(uint160(admin)) + ADMIN_KEY_OFFSET));
-        address signer = vm.addr(uint256(uint160(admin)) + ADMIN_KEY_OFFSET);
-        vm.setEnv("ADMIN", vm.toString(signer));
+        uint256 adminPk = uint256(uint160(admin)) + ADMIN_KEY_OFFSET;
+        address signer = vm.addr(adminPk);
 
-        DeployStack asAdmin = new DeployStack();
-        asAdmin.run();
-        StackVault vault = StackVault(asAdmin.lastVault());
+        Harness asAdmin = new Harness();
+        asAdmin.deploy(address(0), signer, adminPk, recipes);
+        StackVault vault = asAdmin.lastVault();
 
         assertTrue(vault.hasRole(vault.DEFAULT_ADMIN_ROLE(), signer), "the vault has no admin at all");
         assertTrue(vault.hasRole(vault.CREATOR_ROLE(), signer), "the vault has no creator at all");
@@ -394,6 +358,125 @@ contract DeployStackTest is Test {
         vm.stopPrank();
     }
 
+    /// @dev A file claiming the wrong decimals is the one failure no downstream
+    ///      assertion can catch, so the script refuses the run. This proves it does.
+    function test_aDecimalsMismatchStopsTheRun() public {
+        string memory k = ".stacks[0].constituents[0]";
+        deployCodeTo(
+            "StackRecipe.t.sol:FakeConstituent",
+            abi.encode(recipes.readString(string.concat(k, ".symbol")), uint8(6)),
+            recipes.readAddress(string.concat(k, ".address"))
+        );
+
+        Harness again = new Harness();
+        vm.expectRevert("recipe decimals disagree with the chain");
+        again.deploy(address(0), admin, pk, recipes);
+    }
+}
+
+/// @title DeployStackReuseTest
+/// @notice A re-run against a vault the book already names.
+///
+/// @dev This is every run after the first, so it is the path that matters from now on.
+///      Two things must hold: a basket already open is not opened a second time, and
+///      the roles are NOT handed over again. That second one looks like an omission
+///      and is the point — the handover already happened, and redoing it against a
+///      vault the deployer no longer administers would simply revert.
+contract DeployStackReuseTest is DeployStackBase {
+    using stdJson for string;
+
+    Harness internal first;
+    StackVault internal vault;
+
+    function setUp() public override {
+        super.setUp();
+        first = new Harness();
+        first.deploy(address(0), admin, pk, recipes);
+        vault = first.lastVault();
+    }
+
+    function test_aSecondRunAgainstTheSameVaultOpensNothing() public {
+        uint256 before = vault.stackCount();
+
+        Harness again = new Harness();
+        again.deploy(address(vault), admin, pk, recipes);
+
+        assertEq(address(again.lastVault()), address(vault), "a second vault was deployed");
+        assertEq(vault.stackCount(), before, "a duplicate basket was opened");
+    }
+
+    /// @dev The skip is by the share token's symbol read from the chain, not by an id
+    ///      the recipe file does not carry and whose order is not a promise.
+    function test_theSkipMatchesOnTheShareTokensOwnSymbol() public {
+        Harness h = new Harness();
+        assertTrue(h.alreadyOpen(vault, recipes.readString(".stacks[0].symbol")), "skip did not recognise it");
+        assertFalse(h.alreadyOpen(vault, "NOTHING"), "skip matched a symbol that is not there");
+    }
+
+    /// @dev A reuse must leave the roles exactly as it found them. Re-running the
+    ///      handover would mean the deployer granting on a vault it renounced, which
+    ///      reverts — and if it somehow did not, it would hand a live vault's keys out
+    ///      again on every deploy of an unrelated basket.
+    function test_aReuseDoesNotTouchTheRoles() public {
+        address deployer = vm.addr(pk);
+        assertTrue(vault.hasRole(vault.DEFAULT_ADMIN_ROLE(), admin), "setup is wrong");
+
+        Harness again = new Harness();
+        again.deploy(address(vault), admin, pk, recipes);
+
+        assertTrue(vault.hasRole(vault.DEFAULT_ADMIN_ROLE(), admin), "admin lost admin on a reuse");
+        assertTrue(vault.hasRole(vault.CREATOR_ROLE(), admin), "admin lost creator on a reuse");
+        assertFalse(vault.hasRole(vault.DEFAULT_ADMIN_ROLE(), deployer), "the deployer was handed admin back");
+        assertFalse(vault.hasRole(vault.CREATOR_ROLE(), deployer), "the deployer was handed creator back");
+    }
+}
+
+/// @title DeployStackLiveBookTest
+/// @notice The real `run()`, against whatever deployments/4663.json currently says.
+///
+/// @dev Asserts only what is true on BOTH branches, because which one this takes is
+///      decided by the address book and changes the day a deploy lands. The branch
+///      specific behaviour is pinned in the two suites above; what is checked here is
+///      that reading the real book and the real recipe produces a working run at all,
+///      and that running it never writes to the repo.
+contract DeployStackLiveBookTest is DeployStackBase {
+    using stdJson for string;
+
+    DeployStack internal script;
+    string internal bookBefore;
+
+    function setUp() public override {
+        super.setUp();
+        bookBefore = vm.readFile("deployments/4663.json");
+
+        // A book that already names a vault sends the script down its reuse branch,
+        // which needs a real vault at that address for the run to mean anything.
+        string memory book = bookBefore;
+        if (vm.keyExistsJson(book, ".stackVault")) {
+            deployCodeTo("StackVault.sol:StackVault", abi.encode(vm.addr(pk)), book.readAddress(".stackVault"));
+        }
+
+        vm.setEnv("ADMIN", vm.toString(admin));
+        vm.setEnv("PRIVATE_KEY", vm.toString(pk));
+
+        script = new DeployStack();
+        script.run();
+    }
+
+    function test_theRunOpensEveryRecipeInTheFile() public view {
+        assertEq(script.lastVault().stackCount(), _recipeCount(), "one basket per recipe");
+    }
+
+    function test_theLiveBooksAddressIsTheVaultTheRunUsed() public view {
+        string memory book = vm.readFile("deployments/4663.json");
+        if (!vm.keyExistsJson(book, ".stackVault")) return;
+        assertEq(
+            address(script.lastVault()),
+            book.readAddress(".stackVault"),
+            "the run did not use the vault the book names"
+        );
+    }
+
     /// @dev The book must come through a test run byte for byte.
     ///
     ///      This file drives the real script with fakes etched at the real mainnet
@@ -408,11 +491,5 @@ contract DeployStackTest is Test {
             keccak256(bytes(bookBefore)),
             "the script wrote the address book from a test"
         );
-    }
-
-    function _vault() private view returns (StackVault) {
-        // The script's own vault, found by walking what it created rather than by
-        // re-deriving a CREATE address the test would have to keep in step.
-        return StackVault(script.lastVault());
     }
 }
