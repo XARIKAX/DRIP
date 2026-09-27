@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/app/deposit", label: "Deposit" },
   { href: "/app/borrow", label: "Borrow" },
   { href: "/app/split", label: "Split" },
+  { href: "/app/stacks", label: "Stacks" },
   { href: "/app/vault", label: "Pool" },
   { href: "/app/calendar", label: "Calendar" },
   { href: "/app/tracker", label: "Tracker" },
@@ -18,8 +19,8 @@ const LINKS = [
 ];
 
 /* The docs sit beside the connect button rather than in the row of app destinations:
-   the eight app links already fill the row to the wire at 1024px, and a reference is
-   a different kind of place from a screen you operate. Below lg it joins the rail. */
+   the app links already fill the row to the wire at 1024px, and a reference is a
+   different kind of place from a screen you operate. Below lg it joins the rail. */
 const DOCS = { href: "/docs", label: "Guide" };
 
 /**
@@ -41,14 +42,15 @@ export function SiteNav() {
         scrolled ? "border-b border-line bg-ground/90 backdrop-blur-xl" : "border-b border-line-soft bg-ground"
       }`}
     >
-      {/* Nine destinations plus a connect button fill 1024px to the wire, so the row
-          breathes less at lg and opens back up at xl. */}
+      {/* Ten destinations plus a connect button overrun 1024px, so the row breathes
+          less at lg, opens back up at xl, and scrolls rather than pushing the connect
+          button off the edge if it still does not fit. */}
       <div className="shell flex h-[68px] items-center justify-between gap-4 xl:gap-8">
         <Link href="/" aria-label="Osinko home" className="shrink-0 transition-opacity hover:opacity-70">
           <Wordmark />
         </Link>
 
-        <nav className="hidden items-center gap-0.5 lg:flex xl:gap-1">
+        <nav className="no-scrollbar hidden min-w-0 items-center gap-0.5 overflow-x-auto lg:flex xl:gap-1">
           {LINKS.map((link) => {
             const active = pathname === link.href;
             return (

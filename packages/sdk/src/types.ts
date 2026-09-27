@@ -59,6 +59,11 @@ export interface Deployment {
   /** Block the split vault was deployed in, for reading a series' opening multiplier. */
   splitVaultBlock?: number;
   /**
+   * The vault that mints basket tokens. Optional: a book written before Stacks
+   * existed is still valid, and the app hides the page rather than throwing.
+   */
+  stackVault?: Address;
+  /**
    * The market that buys Yield Tokens for USDG. Optional: a book written before it
    * existed is still valid, and the Split page renders without the sell button rather
    * than throwing.
@@ -328,6 +333,75 @@ export interface SplitPositionView {
   principalRaw: bigint;
   /** Raw stock this YT has already earned and can claim now. */
   claimableRaw: bigint;
+}
+
+/** One constituent of a Stack, priced where a price exists. */
+export interface StackLegView {
+  token: Address;
+  symbol: string;
+  name: string;
+  decimals: number;
+  /** Raw token units held per one whole (1e18) share. The recipe, as deployed. */
+  unitsPerShare: bigint;
+  /** What the vault is actually holding for this Stack, in the token's own decimals. */
+  held: bigint;
+  /**
+   * USDG per whole token, 6 decimals, or null when nothing on this chain prices it.
+   *
+   * Null is the normal case for a memecoin, not a fault: there is no Chainlink feed
+   * for PONS or CASHCAT and there is not going to be one. A leg that cannot be priced
+   * still mints, still redeems and is still really there — only the dollar figure is
+   * missing, and the UI says so rather than quietly treating it as worth zero.
+   */
+  priceUsdg: bigint | null;
+}
+
+/** A basket the vault has opened. */
+export interface StackView {
+  stackId: bigint;
+  /** The ERC-20 a share of this basket is. */
+  token: Address;
+  symbol: string;
+  name: string;
+  creator: Address;
+  /** Shares outstanding, 18 decimals. */
+  totalSupply: bigint;
+  legs: StackLegView[];
+  /**
+   * USDG one whole share is worth, 6 decimals, counting only legs that priced.
+   *
+   * A floor, never a valuation, whenever `unpriced` is non-empty — which for this
+   * chain's first basket it always is. Read it beside that list or not at all.
+   */
+  shareValueUsdg: bigint;
+  /** Symbols whose leg had no price, so `shareValueUsdg` is missing their value. */
+  unpriced: string[];
+  /** Closed to new mints. Redemption is never closed. */
+  frozen: boolean;
+}
+
+/** What one wallet holds of one Stack, and what it could do with it. */
+export interface StackPositionView {
+  stackId: bigint;
+  /** Shares held, 18 decimals. */
+  balance: bigint;
+  /** Per leg: what the wallet has, and what one share costs. Same order as `legs`. */
+  legs: {
+    token: Address;
+    symbol: string;
+    decimals: number;
+    /** Wallet balance of this constituent. */
+    walletBalance: bigint;
+    /** Already approved to the vault. */
+    allowance: bigint;
+    /** Raw units this leg costs for one whole share. */
+    unitsPerShare: bigint;
+  }[];
+  /**
+   * Most whole shares (1e18 each) this wallet could mint right now, bounded by the
+   * leg it holds least of. Scaled by 1e18, so 1.5 shares is 1500000000000000000.
+   */
+  maxMintable: bigint;
 }
 
 /** A dividend on a series' underlying, from the series' point of view. */

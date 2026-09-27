@@ -1,0 +1,41 @@
+{
+  "notes": [
+    "Units are RAW token amounts per one whole (1e18) share, never percentages.",
+    "At 18 decimals, 0.01 of a token is 10000000000000000 and 10000 of one is 10000000000000000000000.",
+    "The decimals field is documentation and is checked against the chain at deploy time; a mismatch stops the run.",
+    "The 1,000,000,000 supply is PONS's and CASHCAT's, and theirs alone. Because the two share it, their legs are set to the same fraction of it \u2014 one hundred-thousandth each \u2014 and the pair carries equal weight in the only thing that can weigh them. With no oracle for either there is no dollar figure to balance against, so fraction of supply is the one anchor that does not require a price to exist.",
+    "That anchor does NOT reach across to NVDA, and the two fractions must not be read against each other. NVDA's supply on this chain is 90,447.444 tokens \u2014 a wrapper's float, not NVIDIA's share count \u2014 so 0.01 of it is about one nine-millionth of supply, four orders of magnitude off the memecoin legs. The comparison is meaningless because the denominators are different kinds of thing: a memecoin's supply is the asset, a tokenized equity's supply is however much of it someone has bridged so far. NVDA is sized by price and nothing else.",
+    "NVDA is the only leg with a reference price, $225.08, so 0.01 is about $2.25. That sets the share small enough to be bought rather than admired. Whether it is the right share of a ROBOT is a question about what PONS and CASHCAT are worth, which nothing on this chain answers. Give the deployer real prices for the two and the legs can be rebalanced to a dollar target instead.",
+    "That 90,447 token float is also the ceiling on how large this Stack can get, and it is low. Every 90,447 shares minted locks up 1% of all the NVDA on Robinhood Chain (904.5 tokens, about $203,000). Ten thousand shares is already a ninth of a percent. Nothing breaks when the float runs short \u2014 minting simply stops being affordable and the last mints bid NVDA up \u2014 but it is the constraint to watch, and it is the equity leg that binds, never the memecoins."
+  ],
+  "stacks": [
+    {
+      "name": "The Robot Economy",
+      "symbol": "ROBOT",
+      "note": "One chipmaker and two natives of the chain it trades on.",
+      "constituents": [
+        {
+          "symbol": "NVDA",
+          "address": "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC",
+          "decimals": 18,
+          "unitsPerShare": "10000000000000000",
+          "human": "0.01 NVDA, about $2.25"
+        },
+        {
+          "symbol": "PONS",
+          "address": "0x39dBED3a2bd333467115dE45665cC57F813C4571",
+          "decimals": 18,
+          "unitsPerShare": "10000000000000000000000",
+          "human": "10,000 PONS, one hundred-thousandth of supply"
+        },
+        {
+          "symbol": "CASHCAT",
+          "address": "0x020bfC650A365f8BB26819deAAbF3E21291018b4",
+          "decimals": 18,
+          "unitsPerShare": "10000000000000000000000",
+          "human": "10,000 CASHCAT, one hundred-thousandth of supply"
+        }
+      ]
+    }
+  ]
+}
