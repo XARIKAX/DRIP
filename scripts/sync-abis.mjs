@@ -28,6 +28,8 @@ const CONTRACTS = [
   "MockSwapAdapter",
   "LendingPool",
   "SplitVault",
+  "StackVault",
+  "StackToken",
   "YieldMarket",
   "RewardVault",
   "DividendRouter",
