@@ -260,6 +260,69 @@ export interface SplitPosition {
   claimableStock: number;
 }
 
+/** One constituent of a Stack, in display units. */
+export interface StackLeg {
+  address: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  /** Whole tokens of this constituent per one whole share. The recipe, as deployed. */
+  perShare: number;
+  /** Whole tokens the vault is holding for this Stack. */
+  held: number;
+  /**
+   * USDG per whole token, or null when nothing on this chain prices it.
+   *
+   * Null is the normal case for a memecoin. It means the dollar column is blank for
+   * this row, not that the row is worth nothing — the two are different claims and
+   * the UI must not collapse them.
+   */
+  priceUsd: number | null;
+  /** `perShare * priceUsd`, or null when the leg has no price. */
+  valuePerShareUsd: number | null;
+}
+
+/** A basket, as the app sees it. */
+export interface StackRow {
+  stackId: number;
+  /** The ERC-20 a share is. */
+  address: string;
+  symbol: string;
+  name: string;
+  /** Shares outstanding. */
+  totalSupply: number;
+  legs: StackLeg[];
+  /** USDG one share is worth, counting only legs that priced. A floor when `unpriced` is non-empty. */
+  shareValueUsd: number;
+  /** Symbols with no price, so `shareValueUsd` is missing their value. */
+  unpriced: string[];
+  /** `shareValueUsd * totalSupply`. Carries the same floor caveat. */
+  tvlUsd: number;
+  /** Closed to new mints. Redemption is never closed. */
+  frozen: boolean;
+}
+
+/** What one wallet holds of one basket. */
+export interface StackPosition {
+  stackId: number;
+  /** Shares held. */
+  balance: number;
+  /** Per leg, same order as `StackRow.legs`. */
+  legs: {
+    address: string;
+    symbol: string;
+    decimals: number;
+    /** Whole tokens in the wallet. */
+    walletBalance: number;
+    /** Whole tokens already approved to the vault. */
+    allowance: number;
+    /** Whole tokens one share costs. */
+    perShare: number;
+  }[];
+  /** Most shares this wallet could mint right now, bounded by its scarcest leg. */
+  maxMintable: number;
+}
+
 /** A dividend on a split token's underlying, from the series' point of view. */
 export interface SplitDividendRow {
   seriesId: number;

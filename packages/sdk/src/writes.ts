@@ -3,6 +3,7 @@ import {
   dripCoreAbi,
   lendingPoolAbi,
   splitVaultAbi,
+  stackVaultAbi,
   yieldMarketAbi,
   streamEngineAbi,
   advanceVaultAbi,
@@ -283,5 +284,40 @@ export function buildSellYield(
       args: [seriesId, ytAmount, minUsdgOut],
     }),
     `Sell ${formatStock(ytAmount)} ${symbol || "stock"} dividend tokens for cash now`
+  );
+}
+
+// ---------------------------------------------------------------------
+// Stacks
+// ---------------------------------------------------------------------
+
+function stackVault(d: Deployment): Address {
+  if (!d.stackVault) {
+    throw new Error("This deployment has no Stack vault");
+  }
+  return d.stackVault;
+}
+
+/**
+ * Mint basket shares by handing over every constituent at once.
+ *
+ * Needs an approval per leg first, and each one must cover the CEILING of that leg's
+ * cost — `previewMint` returns exactly those figures, which is why the UI approves
+ * against it rather than against its own arithmetic.
+ */
+export function buildStackMint(d: Deployment, stackId: bigint, shares: bigint, symbol = ""): UnsignedTx {
+  return tx(
+    stackVault(d),
+    encodeFunctionData({ abi: stackVaultAbi, functionName: "mint", args: [stackId, shares] }),
+    `Mint ${formatStock(shares)} ${symbol || "basket"} shares`
+  );
+}
+
+/** Burn basket shares, take every constituent back. Never needs an approval. */
+export function buildStackRedeem(d: Deployment, stackId: bigint, shares: bigint, symbol = ""): UnsignedTx {
+  return tx(
+    stackVault(d),
+    encodeFunctionData({ abi: stackVaultAbi, functionName: "redeem", args: [stackId, shares] }),
+    `Redeem ${formatStock(shares)} ${symbol || "basket"} shares for the tokens behind them`
   );
 }

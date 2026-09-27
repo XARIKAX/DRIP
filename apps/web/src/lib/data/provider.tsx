@@ -32,6 +32,8 @@ import {
   buildSellYield,
   buildFreezeSeries,
   buildClaimYield,
+  buildStackMint,
+  buildStackRedeem,
   listings,
 } from "@drip-markets/sdk";
 import { chainId, hasFaucets, isDeployed } from "@/lib/chain.config";
@@ -53,6 +55,8 @@ import {
   useAutoRepayPrincipal as useChainAutoRepay,
   useSplitSeriesList as useChainSplitSeries,
   useSplitPositionFor as useChainSplitPosition,
+  useStacksList as useChainStacks,
+  useStackPositionFor as useChainStackPosition,
   useWalletBalances as useChainWalletBalances,
   useDeployment,
 } from "@/lib/hooks";
@@ -69,6 +73,8 @@ import type {
   RewardView,
   SplitPosition,
   SplitSeries,
+  StackPosition,
+  StackRow,
   StreamRow,
   TokenInfo,
   TrackerView,
@@ -179,6 +185,11 @@ function resolveAmount(requested: bigint, available: bigint | undefined): bigint
   if (requested > available) return available;
   if (available - requested < 10n ** 12n) return available;
   return requested;
+}
+
+/** Ceiling division on bigints. Mirrors StackVault._ceilDiv exactly. */
+function ceilDiv(a: bigint, b: bigint): bigint {
+  return a === 0n ? 0n : (a - 1n) / b + 1n;
 }
 
 const MODE_FROM_CHAIN: Record<number, ModeName> = { 0: "CASH_EARLY", 1: "STREAM", 2: "REINVEST" };
@@ -680,6 +691,84 @@ export function useSplitWalletBalance(symbol: string): number {
   }, [source, version, symbol, wallet.data, tokens.data]);
 }
 
+/**
+ * Every basket on this chain.
+ *
+ * Deliberately NOT routed through the demo store, and deliberately not gated on a
+ * connected wallet. A Stack's composition is public: it is a list of tokens and a
+ * number of each, sitting in a contract, and it reads the same for a visitor with no
+ * wallet as for a holder. The rest of the app falls back to the seeded portfolio when
+ * disconnected because a *portfolio* is meaningless without an account; a basket is
+ * not, and showing a made-up one beside a real address would be worse than showing
+ * nothing. So this reads the chain whenever the chain has a vault, and returns an
+ * empty list when it does not.
+ */
+export function useStackRows(): { rows: StackRow[]; loading: boolean } {
+  const chain = useChainStacks();
+
+  const rows = useMemo(() => {
+    return (chain.data ?? []).map((st) => {
+      const legs = st.legs.map((leg) => {
+        const unit = 10 ** leg.decimals;
+        const perShare = Number(leg.unitsPerShare) / unit;
+        const priceUsd = leg.priceUsdg === null ? null : Number(leg.priceUsdg) / USDG;
+        return {
+          address: leg.token,
+          symbol: leg.symbol,
+          name: leg.name,
+          decimals: leg.decimals,
+          perShare,
+          held: Number(leg.held) / unit,
+          priceUsd,
+          valuePerShareUsd: priceUsd === null ? null : perShare * priceUsd,
+        };
+      });
+      const shareValueUsd = Number(st.shareValueUsdg) / USDG;
+      const totalSupply = Number(st.totalSupply) / STOCK;
+      return {
+        stackId: Number(st.stackId),
+        address: st.token,
+        symbol: st.symbol,
+        name: st.name,
+        totalSupply,
+        legs,
+        shareValueUsd,
+        unpriced: st.unpriced,
+        tvlUsd: shareValueUsd * totalSupply,
+        frozen: st.frozen,
+      } satisfies StackRow;
+    });
+  }, [chain.data]);
+
+  return { rows, loading: chain.isLoading };
+}
+
+/** One wallet's holding of one basket. Null without a wallet — there is nothing to say. */
+export function useStackPosition(stackId: number): StackPosition | null {
+  const chain = useChainStackPosition(stackId);
+
+  return useMemo(() => {
+    const p = chain.data;
+    if (!p) return null;
+    return {
+      stackId: Number(p.stackId),
+      balance: Number(p.balance) / STOCK,
+      legs: p.legs.map((leg) => {
+        const unit = 10 ** leg.decimals;
+        return {
+          address: leg.token,
+          symbol: leg.symbol,
+          decimals: leg.decimals,
+          walletBalance: Number(leg.walletBalance) / unit,
+          allowance: Number(leg.allowance) / unit,
+          perShare: Number(leg.unitsPerShare) / unit,
+        };
+      }),
+      maxMintable: Number(p.maxMintable) / STOCK,
+    } satisfies StackPosition;
+  }, [chain.data]);
+}
+
 export function usePortfolioSummary(): PortfolioSummary {
   const source = useDataSource();
   const { store, version } = useMockData();
@@ -759,6 +848,10 @@ export interface DataActions {
   sellYield: (seriesId: number, amount: number, minUsdOut: number) => Promise<void>;
   /** Stop a matured series' yield clock. Permissionless. */
   freezeSeries: (seriesId: number) => Promise<void>;
+  /** Hand over every constituent at once and get basket shares back. */
+  stackMint: (stackId: number, shares: number) => Promise<void>;
+  /** Burn basket shares and take every constituent back. No approval needed. */
+  stackRedeem: (stackId: number, shares: number) => Promise<void>;
 }
 
 export function useDataActions(): DataActions {
@@ -775,6 +868,8 @@ export function useDataActions(): DataActions {
     (symbol: string) => (tokens.data ?? []).find((t) => t.symbol === symbol)?.address,
     [tokens.data]
   );
+
+  const stacks = useChainStacks();
 
   const seriesList = useChainSplitSeries();
   const seriesSymbol = useCallback(
@@ -818,6 +913,10 @@ export function useDataActions(): DataActions {
         claimYield: (seriesId) => demo(() => mockStore.claimSplitYield(seriesId)),
         sellYield: async () => {},
         freezeSeries: async () => {},
+        // No seeded basket: a Stack is read from the chain on every surface, so
+        // there is no mock one to move. The page hides its panel without a wallet.
+        stackMint: async () => {},
+        stackRedeem: async () => {},
       };
     }
 
@@ -955,6 +1054,34 @@ export function useDataActions(): DataActions {
         const d = need(deployment, "deployment");
         await run([buildFreezeSeries(d, BigInt(seriesId))]);
       },
+      stackMint: async (stackId, shares) => {
+        const d = need(deployment, "deployment");
+        const vault = need(d.stackVault, "stack vault");
+        const stack = need(
+          (stacks.data ?? []).find((x) => Number(x.stackId) === stackId),
+          "stack"
+        );
+        const base = toStockBase(shares);
+        if (base === 0n) throw new Error("Enter a number of shares");
+
+        // Each approval is the CEILING of that leg's cost, computed the way the vault
+        // computes it. An approval one wei short is an approval that reverts on the
+        // last transfer of a batch the wallet has already half signed, so this is
+        // arithmetic worth doing exactly rather than in floating point.
+        const txs = stack.legs.map((leg) => {
+          const cost = ceilDiv(leg.unitsPerShare * base, 10n ** 18n);
+          return buildApprove(leg.token, vault, cost, leg.symbol);
+        });
+        txs.push(buildStackMint(d, BigInt(stackId), base, stack.symbol));
+        await run(txs);
+      },
+      stackRedeem: async (stackId, shares) => {
+        const d = need(deployment, "deployment");
+        const stack = (stacks.data ?? []).find((x) => Number(x.stackId) === stackId);
+        // Burning needs no approval: the shares are burnt from the caller by the
+        // vault that minted them.
+        await run([buildStackRedeem(d, BigInt(stackId), toStockBase(shares), stack?.symbol ?? "")]);
+      },
     };
   }, [
     source,
@@ -967,7 +1094,12 @@ export function useDataActions(): DataActions {
     positions.data,
     walletBalances.data,
     seriesSymbol,
+    // sellYield reads seriesList.data for the YT address and was not listing it, so
+    // the first render's series list was captured and a series opened afterwards
+    // approved the wrong token. Same shape of bug stackMint would have had, so both
+    // are listed rather than only the new one.
+    seriesList.data,
+    stacks.data,
     run,
-    walletBalances.data,
   ]);
 }

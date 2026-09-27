@@ -10,6 +10,7 @@ import {
   reinvestorAbi,
   rewardVaultAbi,
   splitVaultAbi,
+  stackVaultAbi,
   yieldTokenAbi,
   yieldMarketAbi,
   streamEngineAbi,
@@ -26,6 +27,8 @@ import {
   type SplitDividendView,
   type SplitPositionView,
   type SplitSeriesView,
+  type StackView,
+  type StackPositionView,
   type StreamView,
   type VaultPosition,
   type VaultStats,
@@ -926,6 +929,175 @@ export class DripReader {
     } catch {
       return live;
     }
+  }
+
+  // -------------------------------------------------------------------
+  // Stacks
+  // -------------------------------------------------------------------
+
+  /** True when this chain's deployment has a StackVault. */
+  hasStacks(): boolean {
+    return Boolean(this.deployment.stackVault);
+  }
+
+  /**
+   * Every basket the vault has opened, oldest first.
+   *
+   * Ids start at 1 and are never reused, so walking the counter is exact. A
+   * deployment with no baskets returns an empty list rather than throwing, which is
+   * what the page renders "nothing here yet" from.
+   */
+  async getStacks(): Promise<StackView[]> {
+    const vault = this.deployment.stackVault;
+    if (!vault) return [];
+
+    const count = (await this.client.readContract({
+      address: vault,
+      abi: stackVaultAbi,
+      functionName: "stackCount",
+    })) as bigint;
+    if (count === 0n) return [];
+
+    const ids = Array.from({ length: Number(count) }, (_, i) => BigInt(i + 1));
+    const rows = await Promise.all(ids.map((stackId) => this.stackAt(vault, stackId)));
+    return rows.filter((r): r is StackView => r !== null);
+  }
+
+  /** One basket, or null when the id does not exist. */
+  async getStack(stackId: bigint): Promise<StackView | null> {
+    const vault = this.deployment.stackVault;
+    if (!vault) return null;
+    return this.stackAt(vault, stackId);
+  }
+
+  private async stackAt(vault: Address, stackId: bigint): Promise<StackView | null> {
+    let s: readonly [Address, Address, readonly Address[], readonly bigint[], boolean];
+    try {
+      s = (await this.client.readContract({
+        address: vault,
+        abi: stackVaultAbi,
+        functionName: "stackOf",
+        args: [stackId],
+      })) as typeof s;
+    } catch {
+      // StackNotFound. A gap in the counter is not possible today, but a read that
+      // throws must not take the whole list down with it.
+      return null;
+    }
+
+    const [token, creator, constituents, unitsPerShare, frozen] = s;
+
+    const [symbol, name, totalSupply] = await Promise.all([
+      this.client.readContract({ address: token, abi: erc20Abi, functionName: "symbol" }),
+      this.client.readContract({ address: token, abi: erc20Abi, functionName: "name" }),
+      this.client.readContract({ address: token, abi: erc20Abi, functionName: "totalSupply" }),
+    ]);
+
+    const legs = await Promise.all(
+      constituents.map(async (t, i) => {
+        const [legSymbol, legName, decimals, held, priceUsdg] = await Promise.all([
+          this.client.readContract({ address: t, abi: erc20Abi, functionName: "symbol" }),
+          this.client.readContract({ address: t, abi: erc20Abi, functionName: "name" }),
+          this.client.readContract({ address: t, abi: erc20Abi, functionName: "decimals" }),
+          this.client.readContract({ address: vault, abi: stackVaultAbi, functionName: "heldOf", args: [stackId, t] }),
+          // Null for anything without a feed, which is most of what a Stack holds.
+          this.priceOrNull(t),
+        ]);
+        return {
+          token: t,
+          symbol: legSymbol as string,
+          name: legName as string,
+          decimals: Number(decimals),
+          unitsPerShare: unitsPerShare[i]!,
+          held: held as bigint,
+          priceUsdg: priceUsdg as bigint | null,
+        };
+      })
+    );
+
+    // Only priced legs contribute. Treating an unpriced leg as zero would be a lie
+    // told in the same units as the truth, so the symbols come back alongside and the
+    // figure is labelled a floor wherever it is shown.
+    let shareValueUsdg = 0n;
+    const unpriced: string[] = [];
+    for (const leg of legs) {
+      if (leg.priceUsdg === null) {
+        unpriced.push(leg.symbol);
+        continue;
+      }
+      shareValueUsdg += (leg.unitsPerShare * leg.priceUsdg) / 10n ** BigInt(leg.decimals);
+    }
+
+    return {
+      stackId,
+      token,
+      symbol: symbol as string,
+      name: name as string,
+      creator,
+      totalSupply: totalSupply as bigint,
+      legs,
+      shareValueUsdg,
+      unpriced,
+      frozen,
+    };
+  }
+
+  /**
+   * What one wallet holds of one basket, and the most it could mint.
+   *
+   * `maxMintable` is bounded by the scarcest leg and computed with the FLOOR of the
+   * division, deliberately: the vault rounds each leg's cost UP, so a share count
+   * derived from a rounded-up balance asks for one unit more than the wallet has and
+   * the mint reverts on the last transfer. Rounding down here can only ever leave a
+   * dust share unminted, which is the harmless direction to be wrong in.
+   */
+  async getStackPosition(stackId: bigint, user: Address): Promise<StackPositionView | null> {
+    const vault = this.deployment.stackVault;
+    if (!vault) return null;
+
+    const stack = await this.stackAt(vault, stackId);
+    if (!stack) return null;
+
+    const balance = (await this.client.readContract({
+      address: stack.token,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [user],
+    })) as bigint;
+
+    const legs = await Promise.all(
+      stack.legs.map(async (leg) => {
+        const [walletBalance, allowance] = await Promise.all([
+          this.client.readContract({ address: leg.token, abi: erc20Abi, functionName: "balanceOf", args: [user] }),
+          this.client.readContract({
+            address: leg.token,
+            abi: erc20Abi,
+            functionName: "allowance",
+            args: [user, vault],
+          }),
+        ]);
+        return {
+          token: leg.token,
+          symbol: leg.symbol,
+          decimals: leg.decimals,
+          walletBalance: walletBalance as bigint,
+          allowance: allowance as bigint,
+          unitsPerShare: leg.unitsPerShare,
+        };
+      })
+    );
+
+    // Null rather than zero as the seed, so "no legs" and "a leg you hold none of"
+    // stay distinguishable through the loop instead of both starting at the answer.
+    let maxMintable: bigint | null = null;
+    for (const leg of legs) {
+      // unitsPerShare is never zero — the vault rejects a recipe with a zero leg — so
+      // this division is safe without a guard the reader would have to trust.
+      const affordable = (leg.walletBalance * 10n ** 18n) / leg.unitsPerShare;
+      if (maxMintable === null || affordable < maxMintable) maxMintable = affordable;
+    }
+
+    return { stackId, balance, legs, maxMintable: maxMintable ?? 0n };
   }
 
   // -------------------------------------------------------------------

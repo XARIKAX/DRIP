@@ -166,6 +166,24 @@ export function useSplitPositionFor(seriesId: number) {
   );
 }
 
+export function useStacksList() {
+  const reader = useReader();
+  return useQuery(readerQuery(["stacks", chainId], reader, (r) => r.getStacks(), { refetchInterval: 30_000 }));
+}
+
+export function useStackPositionFor(stackId: number) {
+  const reader = useReader();
+  const { address } = useAccount();
+  return useQuery(
+    readerQuery(
+      ["stackPosition", chainId, stackId, address],
+      reader,
+      (r) => r.getStackPosition(BigInt(stackId), address!),
+      { enabled: Boolean(address) && stackId > 0 }
+    )
+  );
+}
+
 export function useVaultPosition() {
   const reader = useReader();
   const { address } = useAccount();
