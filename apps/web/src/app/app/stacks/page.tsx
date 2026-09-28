@@ -108,6 +108,7 @@ function StackDetail({ stack }: { stack: StackRow }) {
  */
 function Headline({ stack }: { stack: StackRow }) {
   const partial = stack.unpriced.length > 0;
+  const marked = stack.markedLegs.length > 0;
 
   return (
     <section className="panel" aria-label={`${stack.symbol} at a glance`}>
@@ -128,8 +129,10 @@ function Headline({ stack }: { stack: StackRow }) {
           </div>
           <div className="mt-1 text-[12px] text-muted">
             {partial
-              ? `${stack.unpriced.join(" and ")} ${stack.unpriced.length === 1 ? "has" : "have"} no price feed, so ${stack.unpriced.length === 1 ? "it is" : "they are"} not in this`
-              : "Every leg priced by the oracle"}
+              ? `${stack.unpriced.join(" and ")} ${stack.unpriced.length === 1 ? "has" : "have"} no price at all, so ${stack.unpriced.length === 1 ? "it is" : "they are"} not in this`
+              : marked
+                ? `Part of this is a set price, not a feed — ${stack.markedLegs.join(" and ")}`
+                : "Every leg priced by a live feed"}
           </div>
         </div>
         <div className="bg-ground p-6">
@@ -176,8 +179,35 @@ function Recipe({ stack }: { stack: StackRow }) {
           <Leg key={leg.address} leg={leg} />
         ))}
       </div>
+
+      {stack.markedLegs.length > 0 ? (
+        <p className="border-t border-line px-5 py-3 text-[12px] leading-snug text-faint">
+          <span className="text-accent">set</span> means a price we entered by hand, last on{" "}
+          {stack.oldestMarkAsOf ? longDate(stack.oldestMarkAsOf) : "an unknown date"}
+          {staleDays(stack.oldestMarkAsOf) !== null ? ` — ${staleDays(stack.oldestMarkAsOf)} days ago` : ""}. There is
+          no oracle for {stack.markedLegs.join(" or ")} on this chain and there is not going to be one, so nothing
+          refreshes that figure and nothing will stop showing it once it is wrong. The token amounts above are exact and
+          come off the chain; these dollars are our estimate of what they are worth.
+        </p>
+      ) : null}
     </section>
   );
+}
+
+/** "27 September 2026" — written out, because a set price's date is the point of it. */
+function longDate(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  return Number.isNaN(d.getTime())
+    ? iso
+    : d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+}
+
+/** Whole days since a mark was set, or null if the date will not parse. */
+function staleDays(iso: string | null): number | null {
+  if (!iso) return null;
+  const then = new Date(`${iso}T00:00:00Z`).getTime();
+  if (Number.isNaN(then)) return null;
+  return Math.max(0, Math.floor((Date.now() - then) / 86_400_000));
 }
 
 function Leg({ leg }: { leg: StackLeg }) {
@@ -196,12 +226,22 @@ function Leg({ leg }: { leg: StackLeg }) {
         {leg.valuePerShareUsd === null ? (
           <>
             <div className="text-[15px] text-faint">—</div>
-            <div className="text-[12px] text-faint">no price feed</div>
+            <div className="text-[12px] text-faint">no price</div>
           </>
         ) : (
           <>
             <div className="num text-[15px] text-ink">${fmt(leg.valuePerShareUsd, 2)}</div>
-            <div className="text-[12px] text-faint">at ${fmt(leg.priceUsd ?? 0, leg.priceUsd && leg.priceUsd < 1 ? 6 : 2)}</div>
+            <div className="text-[12px] text-faint">
+              at ${fmt(leg.priceUsd ?? 0, leg.priceUsd && leg.priceUsd < 1 ? 4 : 2)}
+              {leg.priceSource === "mark" ? (
+                <>
+                  {" "}
+                  <span title={`Set by hand on ${leg.priceAsOf}. Nothing refreshes it.`} className="text-accent">
+                    set
+                  </span>
+                </>
+              ) : null}
+            </div>
           </>
         )}
       </div>
@@ -454,8 +494,8 @@ function HowItWorks() {
           p: "Burn a share and the vault hands back exactly what that share put in. It can only ever pay out of its own ledger for that Stack, so one basket can never be drained to settle another. A Stack can be closed to new mints; it can never be closed to redemption.",
         },
         {
-          h: "Some of what is inside has no price",
-          p: "Equities on this chain have an oracle behind them. Memecoins do not, and are not going to. So wherever a Stack mixes the two, the dollar figure here counts only the legs that priced and says so — it is a floor, not a valuation. The token amounts are the exact truth; the dollars are the estimate.",
+          h: "The dollars are an estimate; the tokens are not",
+          p: "Equities on this chain have an oracle behind them. Memecoins do not, and are not going to, so their prices here are figures we set by hand and mark with the date we set them — nothing refreshes them, and nothing will stop showing one once it is wrong. Every token amount on this page is read off the chain and exact. Every dollar beside one is our best guess.",
         },
       ]}
     />

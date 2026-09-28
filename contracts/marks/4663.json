@@ -1,0 +1,29 @@
+{
+  "notes": [
+    "Hand-set prices for tokens no oracle on this chain will ever price.",
+    "",
+    "These are MARKS, not feeds, and the distinction is the whole reason this file is separate from the listings. A listed token has a Chainlink feed with a heartbeat: if nobody updates it inside that window the oracle REFUSES to answer, and the app shows no price rather than a wrong one. A mark has none of that. It is a number a person typed on a date, and it is exactly as right as it was that day.",
+    "",
+    "So nothing here may ever reach the credit side. Collateral is valued through ChainlinkPriceOracle and must stay that way — a borrow sized against a figure someone typed is a figure someone can type again. These are read by the Stacks page and nowhere else, they are labelled as marks wherever they are shown, and their age is shown beside them.",
+    "",
+    "Kept out of stacks/<chainid>.json deliberately. That file holds unitsPerShare for baskets that are already live and immutable; a price changes weekly and a recipe never changes at all. Editing one to update the other is how a live basket's weights get fat-fingered.",
+    "",
+    "To update: change usd and asOf together, run `pnpm abis`, commit. An asOf left behind is worse than no mark, because the page will keep showing the old number as though someone still stood behind it."
+  ],
+  "marks": [
+    {
+      "symbol": "PONS",
+      "address": "0x39dBED3a2bd333467115dE45665cC57F813C4571",
+      "usd": 0.5877,
+      "asOf": "2026-09-27",
+      "source": "quoted by the operator"
+    },
+    {
+      "symbol": "CASHCAT",
+      "address": "0x020bfC650A365f8BB26819deAAbF3E21291018b4",
+      "usd": 0.172,
+      "asOf": "2026-09-27",
+      "source": "quoted by the operator"
+    }
+  ]
+}

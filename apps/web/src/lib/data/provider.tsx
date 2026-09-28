@@ -707,7 +707,16 @@ export function useStackRows(): { rows: StackRow[]; loading: boolean } {
   const chain = useChainStacks();
 
   const rows = useMemo(() => {
-    return (chain.data ?? []).map((st) => {
+    return (chain.data ?? [])
+      // A basket that is closed to minting, has never issued a share and holds nothing
+      // is a deployment artifact, not a product. It gets hidden — which is the honest
+      // call rather than the convenient one, because the case this exists for is a
+      // recipe that was superseded: the replacement carries the SAME symbol, and two
+      // tabs both reading ROBOT where one can never be used is how somebody mints into
+      // the wrong thing. Nothing is hidden that anyone can act on or that holds a
+      // token: frozen with a supply, or empty but still mintable, both still show.
+      .filter((st) => !(st.frozen && st.totalSupply === 0n && st.legs.every((l) => l.held === 0n)))
+      .map((st) => {
       const legs = st.legs.map((leg) => {
         const unit = 10 ** leg.decimals;
         const perShare = Number(leg.unitsPerShare) / unit;
@@ -720,6 +729,8 @@ export function useStackRows(): { rows: StackRow[]; loading: boolean } {
           perShare,
           held: Number(leg.held) / unit,
           priceUsd,
+          priceSource: leg.priceSource,
+          priceAsOf: leg.priceAsOf,
           valuePerShareUsd: priceUsd === null ? null : perShare * priceUsd,
         };
       });
@@ -734,6 +745,8 @@ export function useStackRows(): { rows: StackRow[]; loading: boolean } {
         legs,
         shareValueUsd,
         unpriced: st.unpriced,
+        markedLegs: st.markedLegs,
+        oldestMarkAsOf: st.oldestMarkAsOf,
         tvlUsd: shareValueUsd * totalSupply,
         frozen: st.frozen,
       } satisfies StackRow;

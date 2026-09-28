@@ -348,12 +348,27 @@ export interface StackLegView {
   /**
    * USDG per whole token, 6 decimals, or null when nothing on this chain prices it.
    *
-   * Null is the normal case for a memecoin, not a fault: there is no Chainlink feed
-   * for PONS or CASHCAT and there is not going to be one. A leg that cannot be priced
-   * still mints, still redeems and is still really there — only the dollar figure is
-   * missing, and the UI says so rather than quietly treating it as worth zero.
+   * A leg that cannot be priced still mints, still redeems and is still really there —
+   * only the dollar figure is missing, and the UI says so rather than quietly treating
+   * it as worth zero.
    */
   priceUsdg: bigint | null;
+  /**
+   * Where `priceUsdg` came from, which matters as much as the number.
+   *
+   * "oracle"  a Chainlink feed inside its heartbeat. Refuses to answer when stale, so
+   *           a figure that exists is a figure someone stands behind right now.
+   * "mark"    a person typed it on `priceAsOf`. Nothing refreshes it and nothing will
+   *           stop serving it when it goes stale, so the date travels with it and
+   *           every surface that shows the price shows the date.
+   * null      nothing priced this leg.
+   *
+   * Collapsing these two into one number is the failure this field exists to prevent:
+   * a mark rendered identically to a feed reads as live data and is not.
+   */
+  priceSource: "oracle" | "mark" | null;
+  /** ISO date a mark was set. Null for an oracle price, which is current by definition. */
+  priceAsOf: string | null;
 }
 
 /** A basket the vault has opened. */
@@ -370,12 +385,18 @@ export interface StackView {
   /**
    * USDG one whole share is worth, 6 decimals, counting only legs that priced.
    *
-   * A floor, never a valuation, whenever `unpriced` is non-empty — which for this
-   * chain's first basket it always is. Read it beside that list or not at all.
+   * A floor, never a valuation, whenever `unpriced` is non-empty. Even when it is
+   * empty the figure is only as good as its weakest leg: a basket priced partly by
+   * marks is partly a figure someone typed, which `markedLegs` and the per leg
+   * `priceSource` are there to keep visible.
    */
   shareValueUsdg: bigint;
   /** Symbols whose leg had no price, so `shareValueUsdg` is missing their value. */
   unpriced: string[];
+  /** Symbols priced by a hand-set mark rather than a feed. */
+  markedLegs: string[];
+  /** The oldest mark's date among the legs, so a surface can say how stale the total is. */
+  oldestMarkAsOf: string | null;
   /** Closed to new mints. Redemption is never closed. */
   frozen: boolean;
 }

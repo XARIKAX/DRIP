@@ -6,6 +6,7 @@ import {
   dripCoreAbi,
   lendingPoolAbi,
   listings,
+  marks,
   principalTokenAbi,
   reinvestorAbi,
   rewardVaultAbi,
@@ -58,6 +59,18 @@ export function getDeployment(chainId: number): Deployment {
  * to declare it as a public mapping. ISwapAdapter declares it now, so both adapters
  * answer it and neither implementation's ABI is the right thing to depend on.
  */
+/**
+ * A mark's decimal USD to the 6 decimal integer every price in this SDK is.
+ *
+ * Rounds rather than floors: a mark is an approximation already, and flooring
+ * $0.5877 to six places loses nothing while flooring a repeating decimal would bias
+ * every basket holding it downward. The float only has to survive one multiplication
+ * by 1e6, which is exact for any figure a person would type.
+ */
+function markToUsdg(usd: number): bigint {
+  return BigInt(Math.round(usd * 1e6));
+}
+
 /** ERC-8056's one function. Local because no generated artifact carries the stock token. */
 const scaledUiAbi = [
   {
@@ -155,6 +168,16 @@ export class DripReader {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * The hand-set mark for a token, if this chain has one.
+   *
+   * Only ever consulted after the oracle has declined, never instead of it.
+   */
+  private markFor(token: Address) {
+    const lower = token.toLowerCase();
+    return (marks[this.deployment.chainId] ?? []).find((m) => m.address.toLowerCase() === lower);
   }
 
   /** Every stock token the registry knows about, with metadata and price. */
@@ -995,7 +1018,7 @@ export class DripReader {
 
     const legs = await Promise.all(
       constituents.map(async (t, i) => {
-        const [legSymbol, legName, decimals, held, priceUsdg] = await Promise.all([
+        const [legSymbol, legName, decimals, held, oraclePrice] = await Promise.all([
           this.client.readContract({ address: t, abi: erc20Abi, functionName: "symbol" }),
           this.client.readContract({ address: t, abi: erc20Abi, functionName: "name" }),
           this.client.readContract({ address: t, abi: erc20Abi, functionName: "decimals" }),
@@ -1003,6 +1026,13 @@ export class DripReader {
           // Null for anything without a feed, which is most of what a Stack holds.
           this.priceOrNull(t),
         ]);
+
+        // The feed wins whenever it answers. A mark is what is left when nothing on
+        // this chain will price the token, and it is never allowed to override a live
+        // figure — that ordering is what keeps a stale typed number from shadowing an
+        // oracle that came back.
+        const mark = oraclePrice === null ? this.markFor(t) : undefined;
+
         return {
           token: t,
           symbol: legSymbol as string,
@@ -1010,7 +1040,9 @@ export class DripReader {
           decimals: Number(decimals),
           unitsPerShare: unitsPerShare[i]!,
           held: held as bigint,
-          priceUsdg: priceUsdg as bigint | null,
+          priceUsdg: (oraclePrice as bigint | null) ?? (mark ? markToUsdg(mark.usd) : null),
+          priceSource: oraclePrice !== null ? ("oracle" as const) : mark ? ("mark" as const) : null,
+          priceAsOf: mark?.asOf ?? null,
         };
       })
     );
@@ -1020,10 +1052,19 @@ export class DripReader {
     // figure is labelled a floor wherever it is shown.
     let shareValueUsdg = 0n;
     const unpriced: string[] = [];
+    const markedLegs: string[] = [];
+    let oldestMarkAsOf: string | null = null;
     for (const leg of legs) {
       if (leg.priceUsdg === null) {
         unpriced.push(leg.symbol);
         continue;
+      }
+      if (leg.priceSource === "mark") {
+        markedLegs.push(leg.symbol);
+        // ISO dates sort lexically, so the smallest string is the oldest date.
+        if (leg.priceAsOf && (oldestMarkAsOf === null || leg.priceAsOf < oldestMarkAsOf)) {
+          oldestMarkAsOf = leg.priceAsOf;
+        }
       }
       shareValueUsdg += (leg.unitsPerShare * leg.priceUsdg) / 10n ** BigInt(leg.decimals);
     }
@@ -1038,6 +1079,8 @@ export class DripReader {
       legs,
       shareValueUsdg,
       unpriced,
+      markedLegs,
+      oldestMarkAsOf,
       frozen,
     };
   }

@@ -49,9 +49,22 @@ contract DeployStack is Script {
         require(admin != address(0), "ADMIN is required");
 
         uint256 pk = vm.envOr("PRIVATE_KEY", uint256(0));
-        address deployer = pk != 0 ? vm.addr(pk) : msg.sender;
-
         address existing = vm.keyExistsJson(book, ".stackVault") ? book.readAddress(".stackVault") : address(0);
+
+        _deploy(existing, admin, pk, recipes);
+    }
+
+    /// @dev The run itself, with the address book already read.
+    ///
+    ///      Split out because the two branches below — a first deploy and a reuse —
+    ///      behave very differently, and which one a run takes is decided by a file
+    ///      that CHANGES the moment the first deploy lands. A test that drove `run()`
+    ///      therefore tested the fresh path until ROBOT went live on mainnet and the
+    ///      reuse path afterwards, silently, without a line of it changing. A suite
+    ///      whose meaning depends on production state is not a suite. This seam lets a
+    ///      test name the branch it is exercising; `run()` still owns reading the book.
+    function _deploy(address existing, address admin, uint256 pk, string memory recipes) internal {
+        address deployer = pk != 0 ? vm.addr(pk) : msg.sender;
 
         console2.log("chain:   ", block.chainid);
         console2.log("deployer:", deployer);
@@ -145,24 +158,50 @@ contract DeployStack is Script {
         string memory name_ = recipes.readString(string.concat(base, ".name"));
         string memory symbol_ = recipes.readString(string.concat(base, ".symbol"));
 
-        if (_alreadyOpen(vault, symbol_)) {
-            console2.log("");
-            console2.log(string.concat("STACK  ", symbol_, "  -  already open, skipping"));
-            return;
-        }
-
         uint256 c = _countConstituents(recipes, base);
         address[] memory tokens = new address[](c);
         uint256[] memory units = new uint256[](c);
+        for (uint256 i = 0; i < c; ++i) {
+            string memory k = string.concat(base, ".constituents[", vm.toString(i), "]");
+            tokens[i] = recipes.readAddress(string.concat(k, ".address"));
+            units[i] = recipes.readUint(string.concat(k, ".unitsPerShare"));
+        }
+
+        // Already open with exactly this recipe: a re-run, nothing to do.
+        if (_identicalIsOpen(vault, symbol_, tokens, units)) {
+            console2.log("");
+            console2.log(string.concat("STACK  ", symbol_, "  -  already open with this exact recipe, skipping"));
+            return;
+        }
+
+        // Open under this symbol but with DIFFERENT numbers. Skipping here was the
+        // original behaviour and it is the worst of the three: an operator corrects a
+        // recipe, re-runs, reads "skipping", and believes the correction is live. It
+        // is not, and a basket's unitsPerShare can never be edited once created.
+        //
+        // Creating silently is no better — two ERC-20s with one symbol, and nothing on
+        // chain saying which is the real one. So the file has to say it meant it. A
+        // `supersedes` naming this symbol is a reviewed line in git, not a flag someone
+        // passed at 2am, and it is the only thing that gets a second one opened.
+        if (_symbolIsOpen(vault, symbol_)) {
+            string memory supersedes =
+                vm.keyExistsJson(recipes, string.concat(base, ".supersedes"))
+                    ? recipes.readString(string.concat(base, ".supersedes"))
+                    : "";
+            require(
+                keccak256(bytes(supersedes)) == keccak256(bytes(symbol_)),
+                "a basket with this symbol is already open on a different recipe: add \"supersedes\" to the file to open another, and freeze the old one"
+            );
+            console2.log("");
+            console2.log(string.concat("STACK  ", symbol_, "  -  SUPERSEDING the basket already open under this symbol."));
+            console2.log("  The old one keeps its address and its holdings. Freeze it, or both stay mintable.");
+        }
 
         console2.log("");
         console2.log(string.concat("STACK  ", symbol_, "  -  ", name_));
 
         for (uint256 i = 0; i < c; ++i) {
-            string memory k = string.concat(base, ".constituents[", vm.toString(i), "]");
-            tokens[i] = recipes.readAddress(string.concat(k, ".address"));
-            units[i] = recipes.readUint(string.concat(k, ".unitsPerShare"));
-            _report(recipes, k, tokens[i], units[i]);
+            _report(recipes, string.concat(base, ".constituents[", vm.toString(i), "]"), tokens[i], units[i]);
         }
 
         uint256 id = vault.createStack(name_, symbol_, tokens, units);
@@ -197,18 +236,39 @@ contract DeployStack is Script {
         require(claimed == actual, "recipe decimals disagree with the chain");
     }
 
-    /// @dev Whether the vault already carries a basket with this symbol.
+    /// @dev Whether the vault carries a basket with this symbol, whatever it holds.
     ///
     ///      Symbol rather than id, because the recipe file has no ids and the order of
     ///      its entries is not a promise. It is the share token's own symbol, read from
     ///      the chain, so it says what was actually created rather than what a file
     ///      believes was.
-    function _alreadyOpen(StackVault vault, string memory symbol_) internal view returns (bool) {
+    function _symbolIsOpen(StackVault vault, string memory symbol_) internal view returns (bool) {
         bytes32 want = keccak256(bytes(symbol_));
         uint256 count = vault.stackCount();
         for (uint256 id = 1; id <= count; ++id) {
             (address token,,,,) = vault.stackOf(id);
             if (keccak256(bytes(IERC20Metadata(token).symbol())) == want) return true;
+        }
+        return false;
+    }
+
+    /// @dev Whether a basket with this symbol AND these exact numbers is already open.
+    ///
+    ///      This is what makes a re-run a no-op, and it has to compare the recipe and
+    ///      not just the name: a symbol match alone cannot tell an idempotent re-run
+    ///      from an edit nobody applied, and those need opposite handling.
+    function _identicalIsOpen(
+        StackVault vault,
+        string memory symbol_,
+        address[] memory tokens,
+        uint256[] memory units
+    ) internal view returns (bool) {
+        bytes32 want = keccak256(bytes(symbol_));
+        uint256 count = vault.stackCount();
+        for (uint256 id = 1; id <= count; ++id) {
+            (address token,, address[] memory c, uint256[] memory u,) = vault.stackOf(id);
+            if (keccak256(bytes(IERC20Metadata(token).symbol())) != want) continue;
+            if (keccak256(abi.encode(c, u)) == keccak256(abi.encode(tokens, units))) return true;
         }
         return false;
     }

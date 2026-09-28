@@ -19,4 +19,5 @@ export { yieldTokenAbi } from "./yieldTokenAbi";
 export { chainlinkPriceOracleAbi } from "./chainlinkPriceOracleAbi";
 export { uniswapV3SwapAdapterAbi } from "./uniswapV3SwapAdapterAbi";
 export { listings } from "./listings";
+export { marks } from "./marks";
 export { deployments } from "./deployments";

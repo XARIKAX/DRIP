@@ -271,13 +271,20 @@ export interface StackLeg {
   /** Whole tokens the vault is holding for this Stack. */
   held: number;
   /**
-   * USDG per whole token, or null when nothing on this chain prices it.
+   * USD per whole token, or null when nothing on this chain prices it.
    *
-   * Null is the normal case for a memecoin. It means the dollar column is blank for
-   * this row, not that the row is worth nothing — the two are different claims and
-   * the UI must not collapse them.
+   * Null means the dollar column is blank for this row, not that the row is worth
+   * nothing — the two are different claims and the UI must not collapse them.
    */
   priceUsd: number | null;
+  /**
+   * Where that price came from. "oracle" is a live Chainlink feed that refuses to
+   * answer when stale; "mark" is a figure a person typed on `priceAsOf` and that
+   * nothing refreshes. Rendering the two identically is the mistake this prevents.
+   */
+  priceSource: "oracle" | "mark" | null;
+  /** ISO date a mark was set. Null for an oracle price. */
+  priceAsOf: string | null;
   /** `perShare * priceUsd`, or null when the leg has no price. */
   valuePerShareUsd: number | null;
 }
@@ -296,6 +303,10 @@ export interface StackRow {
   shareValueUsd: number;
   /** Symbols with no price, so `shareValueUsd` is missing their value. */
   unpriced: string[];
+  /** Symbols priced by a hand-set mark rather than a live feed. */
+  markedLegs: string[];
+  /** The oldest mark among the legs, so the page can say how old the total is. */
+  oldestMarkAsOf: string | null;
   /** `shareValueUsd * totalSupply`. Carries the same floor caveat. */
   tvlUsd: number;
   /** Closed to new mints. Redemption is never closed. */
