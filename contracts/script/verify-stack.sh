@@ -1,77 +1,89 @@
 #!/usr/bin/env bash
 # Prepare Blockscout verification input for the Stack contracts.
 #
-# Same situation as verify-mainnet.sh and for the same reason: the explorer sits
-# behind a Cloudflare challenge that a browser passes and a CLI cannot, so this writes
-# the standard JSON input and prints what to paste rather than calling the verifier.
-# See verify-mainnet.sh for the full account of why.
+# This does NOT call the verifier, because on this chain it cannot: the explorer sits
+# behind a Cloudflare challenge that a browser passes and a CLI has no way to. See
+# verify-mainnet.sh for the full account. So it writes the standard JSON input and
+# prints exactly what to paste.
 #
 #   VAULT=0x... SHARE=0x... DEPLOYER=0x... ./script/verify-stack.sh
 #
-# VAULT is the StackVault the deploy printed. SHARE is the share token of the basket
-# it created, printed on the "share token:" line. DEPLOYER is the address that ran the
-# deploy — StackVault's constructor takes it, not the admin, because the deployer holds
-# CREATOR_ROLE for the length of the run and hands over at the end. Verifying against
-# the admin produces a bytecode mismatch that reads like a compiler problem.
+# VAULT is the StackVault. SHARE is the share token of the basket you are verifying,
+# printed on the "share token:" line of the deploy. DEPLOYER is StackVault's
+# constructor arg, which is the address that FIRST deployed the vault — not the admin,
+# and not whoever signed the run that created this basket. Verifying against either of
+# those produces a bytecode mismatch that reads like a compiler problem.
+#
+# Nothing here needs a network. The standard JSON is built from the local build output
+# rather than through `forge verify-contract --show-standard-json-input`, which reaches
+# binaries.soliditylang.org for the compiler list before it does anything and so fails
+# behind a network policy. Set RPC_URL to have the share token's name and symbol read
+# off the chain; without it they come from stacks/<chainid>.json, which is what created
+# the basket. The script says which one it used.
 set -euo pipefail
 
-: "${VAULT:?VAULT is required: the StackVault address the deploy printed}"
+: "${VAULT:?VAULT is required: the StackVault address}"
 : "${SHARE:?SHARE is required: the share token address, from the deploy log}"
-: "${DEPLOYER:?DEPLOYER is required: the StackVault constructor arg, not the admin}"
+: "${DEPLOYER:?DEPLOYER is required: the address that first deployed the vault, not the admin}"
 
-# forge resolves the whole [etherscan] table before doing anything, including an entry
-# this command never touches. The variable only has to exist.
-export ARBISCAN_API_KEY="${ARBISCAN_API_KEY:-unused}"
+CHAIN_ID="${CHAIN_ID:-4663}"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
 
-OUT="${OUT:-./verify}"
-mkdir -p "$OUT"
-
-forge verify-contract "$VAULT" src/StackVault.sol:StackVault \
-  --show-standard-json-input > "$OUT/StackVault.json"
-forge verify-contract "$SHARE" src/StackToken.sol:StackToken \
-  --show-standard-json-input > "$OUT/StackToken.json"
-
-# The share token's name and symbol come off the chain rather than out of the recipe
-# file: the recipe says what was asked for, the chain says what was built, and the
-# verifier needs the second. RPC_URL is only used for this, and the constructor line
-# is left for you to fill in if it is not set.
-NAME=""
-SYMBOL=""
-if [ -n "${RPC_URL:-}" ]; then
-  NAME="$(cast call "$SHARE" 'name()(string)' --rpc-url "$RPC_URL")"
-  SYMBOL="$(cast call "$SHARE" 'symbol()(string)' --rpc-url "$RPC_URL")"
+# Quiet unless it fails: forge's lint notes go to stderr and bury the one thing this
+# script is here to print.
+if ! BUILD_LOG="$(forge build --build-info 2>&1)"; then
+  echo "$BUILD_LOG" >&2
+  exit 1
 fi
+
+node ../scripts/standard-json.mjs StackVault StackToken
+
+# The share token's name and symbol. The chain is authoritative — it says what was
+# built, where the recipe only says what was asked for — so it wins when reachable.
+NAME=""; SYMBOL=""; SOURCE=""
+if [ -n "${RPC_URL:-}" ]; then
+  NAME="$(cast call "$SHARE" 'name()(string)' --rpc-url "$RPC_URL" | tr -d '"')"
+  SYMBOL="$(cast call "$SHARE" 'symbol()(string)' --rpc-url "$RPC_URL" | tr -d '"')"
+  SOURCE="read from the chain"
+else
+  RECIPE="stacks/${CHAIN_ID}.json"
+  [ -f "$RECIPE" ] || { echo "No $RECIPE and no RPC_URL; cannot determine the share token's name." >&2; exit 1; }
+  # The basket whose symbol this share token carries. With a superseded symbol there
+  # may be several entries; the recipe file holds only the current one, which is the
+  # one a fresh deploy created.
+  NAME="$(node -e "const r=require('./$RECIPE');const s=r.stacks[0];process.stdout.write(s.name)")"
+  SYMBOL="$(node -e "const r=require('./$RECIPE');const s=r.stacks[0];process.stdout.write(s.symbol)")"
+  SOURCE="from $RECIPE (set RPC_URL to read the chain instead)"
+fi
+
+[ -n "$NAME" ] && [ -n "$SYMBOL" ] || { echo "Could not determine the share token's name and symbol." >&2; exit 1; }
 
 VAULT_ARGS="$(cast abi-encode 'constructor(address)' "$DEPLOYER")"
-if [ -n "$NAME" ]; then
-  # cast prints strings quoted; strip the quotes before re-encoding them.
-  SHARE_ARGS="$(cast abi-encode 'constructor(string,string)' "${NAME//\"/}" "${SYMBOL//\"/}")"
-else
-  SHARE_ARGS="(set RPC_URL to have this computed, or encode constructor(string,string) yourself)"
-fi
+SHARE_ARGS="$(cast abi-encode 'constructor(string,string)' "$NAME" "$SYMBOL")"
 
 cat <<EOF
 
-Wrote $OUT/StackVault.json and $OUT/StackToken.json
+Share token is "$NAME" ($SYMBOL), $SOURCE.
 
 On https://robinhoodchain.blockscout.com, open each contract, then
 Verify & Publish -> Solidity (Standard JSON Input):
 
   StackVault  $VAULT
-    file         $OUT/StackVault.json
+    file         contracts/verify/StackVault.json
     compiler     v0.8.28
     constructor  $VAULT_ARGS
 
   StackToken  $SHARE
-    file         $OUT/StackToken.json
+    file         contracts/verify/StackToken.json
     compiler     v0.8.28
     constructor  $SHARE_ARGS
 
-StackVault's constructor arg is the DEPLOYER. The vault was built with the deployer
-holding CREATOR_ROLE so it could open the baskets, then handed to the admin and
-renounced. Verifying against the admin will not match.
+Both files carry the optimizer, evm version and bytecodeHash of the build that produced
+the deployed bytecode, copied rather than retyped. Leave every field on the Blockscout
+form at its default; the JSON already says what the compiler needs to know.
 
 StackToken takes no vault argument — it reads msg.sender at construction — so its only
-constructor args are the name and symbol, and every basket's share token verifies with
-the same standard JSON and a different pair of strings.
+constructor args are those two strings, and every basket's share token verifies with
+the same standard JSON and a different pair.
 EOF
