@@ -215,6 +215,9 @@ contract Harness is DeployStack {
     }
 
     function openStack(StackVault vault, string memory recipes, string memory base) external {
+        // Called directly rather than through _deploy, so nothing has set who is
+        // signing. Outside a broadcast this contract is the sender of createStack.
+        _broadcaster = address(this);
         _openStack(vault, recipes, base);
     }
 
@@ -451,6 +454,38 @@ contract DeployStackReuseTest is DeployStackBase {
         (address newToken,, , uint256[] memory newUnits,) = vault.stackOf(before + 1);
         assertTrue(oldToken != newToken, "the same share token was reused");
         assertTrue(oldUnits[0] != newUnits[0], "the superseding basket carries the old numbers");
+    }
+
+    /// @dev The failure this run actually hit on mainnet.
+    ///
+    ///      After a first deploy the deployer holds nothing, so a re-run signed with
+    ///      its key cannot create. AccessControl says so with a role hash and a sender
+    ///      and nothing a person can act on, and it says it only after the whole review
+    ///      block has printed, so it reads like the script broke. The check names the
+    ///      key and the key to use instead.
+    function test_aKeyWithoutCreatorRoleIsToldWhichKeyToUse() public {
+        Harness h = new Harness();
+        // A changed recipe under the same symbol, so the run reaches the create rather
+        // than skipping. No grant: the deployer's exact position after a handover.
+        vm.expectRevert(bytes("broadcasting key lacks CREATOR_ROLE on this vault: use the admin's key for a re-run"));
+        h.deploy(address(vault), admin, pk, _altRecipe(true));
+    }
+
+    /// @dev And the admin's key, which is the one that works, does work.
+    function test_theAdminsKeyCanSupersedeOnAReuse() public {
+        uint256 adminPk = 0xADA;
+        address signer = vm.addr(adminPk);
+        bytes32 creator = vault.CREATOR_ROLE();
+        vm.prank(admin);
+        vault.grantRole(creator, signer);
+
+        uint256 before = vault.stackCount();
+        Harness h = new Harness();
+        h.deploy(address(vault), signer, adminPk, recipes);
+
+        // Identical recipe, so this is a skip and not a duplicate — the point is that
+        // it got as far as deciding that rather than reverting on a role.
+        assertEq(vault.stackCount(), before, "a duplicate was opened");
     }
 
     /// @dev A one leg recipe under the symbol already open, with and without the key.

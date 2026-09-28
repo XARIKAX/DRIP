@@ -22,11 +22,15 @@ import {StackVault} from "../src/StackVault.sol";
 ///        ADMIN=0x... PRIVATE_KEY=0x... \
 ///          forge script script/DeployStack.s.sol --rpc-url robinhood_mainnet --broadcast
 ///
-///      PRIVATE_KEY is the DEPLOYER's: the key that signs and pays. ADMIN is only an
-///      address — its key is never needed and never wanted here, because the run ends
-///      by handing the roles to it. Passing the admin's own key is handled but is not
-///      the intent: the vault then keeps the admin as its sole role holder rather than
-///      separating the address that deployed from the address that governs.
+///      WHICH KEY. On a FIRST deploy, PRIVATE_KEY is the deployer's: it creates the
+///      vault, opens the baskets under a role it holds for the length of the run, and
+///      hands everything to ADMIN on the way out. ADMIN's own key is not wanted there.
+///
+///      On every run AFTER that, it is the ADMIN's key, and only the admin's. The
+///      vault already exists, so opening a basket in it needs CREATOR_ROLE, and the
+///      deployer renounced that when it handed over. Nothing on a reuse touches roles,
+///      so signing as the admin is safe as well as necessary — the handover below is
+///      reached only when a vault is being created.
 ///
 ///      Every constituent is read for its symbol and decimals before anything is
 ///      created, and the run PRINTS WHAT IT READ next to what the recipe claims. A
@@ -40,6 +44,10 @@ contract DeployStack is Script {
     /// @notice The vault this run deployed or reused. For tests and for a caller that
     ///         wants the address without scraping it out of the log.
     StackVault public lastVault;
+
+    /// @dev Who this run is signing as. Set once by _deploy, read where a call is
+    ///      about to need a role, so the failure names the key rather than a hash.
+    address internal _broadcaster;
 
     function run() external {
         string memory book = vm.readFile(string.concat("deployments/", vm.toString(block.chainid), ".json"));
@@ -65,6 +73,7 @@ contract DeployStack is Script {
     ///      test name the branch it is exercising; `run()` still owns reading the book.
     function _deploy(address existing, address admin, uint256 pk, string memory recipes) internal {
         address deployer = pk != 0 ? vm.addr(pk) : msg.sender;
+        _broadcaster = deployer;
 
         console2.log("chain:   ", block.chainid);
         console2.log("deployer:", deployer);
@@ -202,6 +211,21 @@ contract DeployStack is Script {
 
         for (uint256 i = 0; i < c; ++i) {
             _report(recipes, string.concat(base, ".constituents[", vm.toString(i), "]"), tokens[i], units[i]);
+        }
+
+        // Checked here rather than left to AccessControl, which reverts with a role
+        // hash and a sender and no way to tell what either means. This run is about to
+        // create something, and on a REUSE the creator is whoever the first deploy
+        // handed the role to — the admin — because the deployer renounced it on its
+        // way out. That is the design working, not a fault, but the raw revert lands
+        // after the whole review block has printed and reads like a bug in the script.
+        if (!vault.hasRole(vault.CREATOR_ROLE(), _broadcaster)) {
+            console2.log("");
+            console2.log("  This key cannot open a basket on this vault:", _broadcaster);
+            console2.log("  A vault that already exists creates as whoever holds CREATOR_ROLE, which");
+            console2.log("  after the first deploy is the ADMIN, not the deployer, which renounced it on");
+            console2.log("  the way out. Re-run with the admin key. Nothing touches roles on a reuse.");
+            revert("broadcasting key lacks CREATOR_ROLE on this vault: use the admin's key for a re-run");
         }
 
         uint256 id = vault.createStack(name_, symbol_, tokens, units);
