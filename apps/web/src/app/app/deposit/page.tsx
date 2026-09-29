@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { AnimatedNumber, fmt, relativeTime, shortDate } from "@/components/live";
 import { TokenMark } from "@/components/TokenMark";
-import { useDataActions, useHoldings, useTokensView, useWalletView } from "@/lib/data/provider";
+import { useCreditView, useDataActions, useHoldings, useTokensView, useWalletView } from "@/lib/data/provider";
 import { MODE_LABEL, MODE_SENTENCE, type ModeName } from "@/lib/data/types";
+import { freeCollateralUsd, maxWithdrawableShares } from "@/lib/credit";
 
 const MODES: ModeName[] = ["CASH_EARLY", "STREAM", "REINVEST"];
 
@@ -224,10 +225,14 @@ export default function DepositPage() {
 
 function WithdrawPanel() {
   const holdings = useHoldings();
+  const credit = useCreditView();
   const actions = useDataActions();
   const [amounts, setAmounts] = useState<Record<string, string>>({});
 
   if (holdings.rows.length === 0) return null;
+
+  const freeUsd = freeCollateralUsd(credit.collateralValueUsd, credit.borrowedUsd, credit.maxLtvPct);
+  const borrowing = credit.borrowedUsd > 0;
 
   return (
     <section className="panel" aria-label="Withdraw">
@@ -238,7 +243,18 @@ function WithdrawPanel() {
         {holdings.rows.map((h) => {
           const value = amounts[h.symbol] ?? "";
           const shares = Number.parseFloat(value) || 0;
-          const valid = shares > 0 && shares <= h.amount;
+
+          // A position the oracle will not price cannot be checked here — and cannot
+          // be withdrawn at all while a loan is open, because the contract reads that
+          // same price to judge it. Saying so beats offering a button that reverts.
+          const price = h.valueUsd !== null && h.amount > 0 ? h.valueUsd / h.amount : null;
+          const blocked = borrowing && price === null;
+          const max = maxWithdrawableShares(h.amount, price, freeUsd, borrowing);
+          const capped = max < h.amount - 1e-9;
+
+          const valid = shares > 0 && shares <= max && !blocked;
+          const overCap = shares > max && shares <= h.amount;
+
           return (
             <div key={h.symbol} className="hairline-b py-3 last:border-b-0">
               <div className="flex items-baseline justify-between">
@@ -254,6 +270,17 @@ function WithdrawPanel() {
                   value={value}
                   onChange={(e) => setAmounts((a) => ({ ...a, [h.symbol]: e.target.value }))}
                 />
+                {capped && max > 0 ? (
+                  <button
+                    type="button"
+                    className="border border-line px-2.5 text-micro font-bold uppercase text-muted hover:text-ink"
+                    onClick={() =>
+                      setAmounts((a) => ({ ...a, [h.symbol]: String(Math.floor(max * 1e4) / 1e4) }))
+                    }
+                  >
+                    Max
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="btn-ghost btn-sm"
@@ -266,6 +293,35 @@ function WithdrawPanel() {
                   Withdraw
                 </button>
               </div>
+
+              {blocked ? (
+                <p className="mt-2 text-[12px] leading-snug text-accent">
+                  {h.symbol} has no live price right now, and your loan is valued against it. Nothing
+                  in {h.symbol} can leave until the feed comes back or the loan is repaid.
+                </p>
+              ) : capped ? (
+                <p className="mt-2 text-[12px] leading-snug text-muted">
+                  {max > 0 ? (
+                    <>
+                      Up to <span className="num text-ink">{fmt(max, 4)}</span> while you owe{" "}
+                      <span className="num text-ink">${fmt(credit.borrowedUsd, 2)}</span>. The rest is
+                      holding the loan up.
+                    </>
+                  ) : (
+                    <>
+                      Nothing can leave while you owe{" "}
+                      <span className="num text-ink">${fmt(credit.borrowedUsd, 2)}</span>. Repay on the
+                      Borrow page and it unlocks.
+                    </>
+                  )}
+                </p>
+              ) : null}
+
+              {overCap ? (
+                <p className="mt-1 text-[12px] leading-snug text-accent">
+                  That much would leave the loan under-collateralised, so it would be refused.
+                </p>
+              ) : null}
             </div>
           );
         })}
