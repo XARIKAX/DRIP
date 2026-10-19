@@ -36,7 +36,7 @@ export function Footer() {
             reinvested the moment it lands.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <span className="tag">Testnet</span>
+            <span className="tag">Robinhood Chain</span>
             <span className="tag">Self custody</span>
             <span className="tag-accent">Onchain</span>
           </div>
@@ -60,7 +60,7 @@ export function Footer() {
 
       <div className="rule-t">
         <div className="shell flex flex-wrap items-center justify-between gap-3 py-5 text-micro font-bold uppercase text-muted">
-          <span>Testnet build. Tokens have no value.</span>
+          <span>Get paid before Wall Street does.</span>
           <span>Dividends the way they should work</span>
         </div>
       </div>

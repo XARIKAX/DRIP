@@ -1,6 +1,6 @@
 /**
  * The view models every page renders from, and the provider interface that feeds
- * them. Two implementations exist: the seeded MockProvider (demo mode, default)
+ * them. Two implementations exist: the seeded MockProvider (reference portfolio, default)
  * and the chain adapter (wallet connected against a deployed chain). Components
  * never know which one they are on. That single seam is what makes the app fully
  * browsable with no wallet, ever.

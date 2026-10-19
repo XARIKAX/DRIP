@@ -11,7 +11,7 @@ const MODES: ModeName[] = ["CASH_EARLY", "STREAM", "REINVEST"];
 
 /**
  * Three steps, one screen, no wizard chrome. Pick the token, type the amount,
- * pick the mode, confirm against the receipt. In demo mode the deposit lands
+ * pick the mode, confirm against the receipt. Without a wallet the deposit lands
  * instantly and shows up on the dashboard.
  */
 export default function DepositPage() {

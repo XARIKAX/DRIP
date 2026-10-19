@@ -13,7 +13,7 @@ import {
 } from "./types";
 
 /**
- * The demo portfolio. Seeded, deterministic, and alive.
+ * The reference portfolio. Seeded, deterministic, and alive.
  *
  * This store is the app's default data source. A visitor with no wallet lands on a
  * complete working product: five positions, two streams accruing by the wall clock,
@@ -21,7 +21,7 @@ import {
  * Every action mutates this store and every page reads from it, so the numbers
  * agree everywhere. State lives for the browser session and nothing more.
  *
- * The demo IS the marketing. Most visitors never connect. They still leave having
+ * The reference portfolio IS the marketing. Most visitors never connect. They still leave having
  * watched a dividend accrue per second and become stock.
  */
 
@@ -362,7 +362,7 @@ class MockStore {
   }
 
   // ------------------------------------------------------------------
-  // Actions. Every one succeeds instantly: this is the demo.
+  // Actions. Every one succeeds instantly: this is the reference store.
   // ------------------------------------------------------------------
 
   setMode(symbol: string, mode: ModeName): void {

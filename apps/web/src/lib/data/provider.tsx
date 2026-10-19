@@ -53,7 +53,7 @@ import type {
 /**
  * The one seam between the UI and its data.
  *
- * source === "demo": the seeded MockStore. Default for every visitor, wallet or not.
+ * source === "demo": the seeded reference store. Default for every visitor, wallet or not.
  * source === "chain": the wagmi/viem reads against a deployed protocol, entered only
  * when a wallet is connected AND this chain has an address book.
  *

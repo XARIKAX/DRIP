@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Drip Markets — Get paid before Wall Street does",
     description:
-      "Dividends advanced at the ex date, streamed per second, auto reinvested onchain. Testnet build.",
+      "Dividends advanced at the ex date, streamed per second, auto reinvested onchain.",
     url: "https://dripmarkets.net",
     siteName: "Drip Markets",
     type: "website",

@@ -96,7 +96,7 @@ export default function HomePage() {
               <div className="mt-10 flex flex-wrap gap-3">
                 <span className="tag">Self custody</span>
                 <span className="tag">No app lock in</span>
-                <span className="tag-accent">Testnet live</span>
+                <span className="tag-accent">Robinhood Chain</span>
               </div>
             </div>
 
@@ -161,8 +161,8 @@ export default function HomePage() {
               <Eyebrow className="text-cyan-dark">The product, running</Eyebrow>
               <h2 className="mt-4 text-display font-extrabold">This is live</h2>
               <p className="mt-5 text-[15px] leading-relaxed text-muted">
-                Not a screenshot. The panel on the right is the actual dashboard, running on the
-                demo portfolio, accruing per second while you read this. Open the app and pick up
+                Not a screenshot. The panel on the right is the actual dashboard, running on a
+                reference portfolio, accruing per second while you read this. Open the app and pick up
                 exactly where it leaves off.
               </p>
               <Link href="/app" className="btn-primary mt-7">
@@ -305,7 +305,7 @@ export default function HomePage() {
             Dividends the way they should work
           </h2>
           <Link href="/app" className="btn-primary">
-            Start on testnet
+            Open the app
           </Link>
         </div>
       </section>

@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { activeChain, TESTNET_NOTICE } from "@/lib/chain.config";
+import { activeChain, STATUS_NOTICE } from "@/lib/chain.config";
 
 /**
- * The black utility bar. Always on, always says the same two things: this is a
- * testnet, and here is the clock. Institutional products tell you where you are.
+ * The black utility bar. Always on, always says the same two things: what this is,
+ * and here is the clock. Institutional products tell you where you are.
  */
 export function UtilityBar() {
   const [now, setNow] = useState<string>("");
@@ -30,7 +30,7 @@ export function UtilityBar() {
       <div className="shell flex h-9 items-center justify-between text-micro font-bold uppercase">
         <div className="flex items-center gap-3">
           <span className="inline-block h-2 w-2 bg-cyan" aria-hidden />
-          <span>{TESTNET_NOTICE}</span>
+          <span>{STATUS_NOTICE}</span>
         </div>
         <div className="hidden items-center gap-6 sm:flex">
           <span>{activeChain.name}</span>
