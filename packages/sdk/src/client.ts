@@ -39,6 +39,17 @@ export function knownChainIds(): number[] {
 }
 
 /**
+ * Whether a chain's address book runs the testnet stand ins.
+ *
+ * Books written before the `mocks` field existed were all local or testnet deploys,
+ * so a missing field means mocks. Production books set it to false explicitly, and
+ * the app hides every faucet when they do.
+ */
+export function usesMocks(d: Deployment): boolean {
+  return d.mocks !== false;
+}
+
+/**
  * Read side of the protocol.
  *
  * Everything here comes from view calls and events. There is no backend, no indexer

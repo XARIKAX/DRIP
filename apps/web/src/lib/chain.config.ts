@@ -5,9 +5,10 @@ import { getDeployment, knownChainIds } from "@drip-markets/sdk";
 /**
  * The one file that knows about the network.
  *
- * Everything else in the app imports from here. When Robinhood Chain testnet access
- * lands, set the env vars in .env.local and nothing else moves: same chain id lookup,
- * same address book, same ABIs.
+ * Everything else in the app imports from here. A production build targets Robinhood
+ * Chain mainnet (4663) unless the env vars say otherwise; `pnpm dev` targets the local
+ * anvil chain. Either way nothing else moves: same chain id lookup, same address book,
+ * same ABIs.
  */
 
 /**
@@ -34,9 +35,11 @@ const CANONICAL_RPC: Record<number, string> = {
 function parseChainId(raw: string): number {
   const parsed = Number(raw);
   if (Number.isSafeInteger(parsed) && parsed > 0) return parsed;
-  // A set-but-broken value means a hosted deployment was intended. Robinhood
-  // Chain testnet is the product's home, so that is the sane recovery.
-  return raw ? 46630 : 31337;
+  // Unset in development means the local anvil chain. Unset in a production build,
+  // or set to something a dashboard mangled, means a hosted deployment was intended,
+  // and Robinhood Chain mainnet is the product's home.
+  if (!raw && process.env.NODE_ENV === "development") return 31337;
+  return 4663;
 }
 
 function parseRpcUrl(raw: string, chainId: number): string {
@@ -50,9 +53,14 @@ function parseRpcUrl(raw: string, chainId: number): string {
 
 const envChainId = parseChainId(clean(process.env.NEXT_PUBLIC_CHAIN_ID));
 const envRpc = parseRpcUrl(clean(process.env.NEXT_PUBLIC_RPC_URL), envChainId);
-const envName = clean(process.env.NEXT_PUBLIC_CHAIN_NAME) || (envChainId === 46630 ? "Robinhood Chain" : "Anvil");
-const explorerName = clean(process.env.NEXT_PUBLIC_EXPLORER_NAME) || "Explorer";
-const explorerUrl = clean(process.env.NEXT_PUBLIC_EXPLORER_URL);
+const DEFAULT_NAME: Record<number, string> = { 4663: "Robinhood Chain", 46630: "Robinhood Chain", 31337: "Anvil" };
+const DEFAULT_EXPLORER: Record<number, { name: string; url: string }> = {
+  4663: { name: "Blockscout", url: "https://robinhoodchain.blockscout.com" },
+  46630: { name: "Robinhood Chain Explorer", url: "https://explorer.testnet.chain.robinhood.com" },
+};
+const envName = clean(process.env.NEXT_PUBLIC_CHAIN_NAME) || DEFAULT_NAME[envChainId] || `Chain ${envChainId}`;
+const explorerName = clean(process.env.NEXT_PUBLIC_EXPLORER_NAME) || DEFAULT_EXPLORER[envChainId]?.name || "Explorer";
+const explorerUrl = clean(process.env.NEXT_PUBLIC_EXPLORER_URL) || DEFAULT_EXPLORER[envChainId]?.url || "";
 
 /** Known viem chains, so a standard testnet keeps its proper metadata. */
 const BUILT_IN: Record<number, Chain> = {
@@ -69,7 +77,7 @@ export const activeChain: Chain =
     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
     rpcUrls: { default: { http: [envRpc] } },
     blockExplorers: explorerUrl ? { default: { name: explorerName, url: explorerUrl } } : undefined,
-    testnet: true,
+    testnet: envChainId !== 4663,
   });
 
 export const chainId = activeChain.id;

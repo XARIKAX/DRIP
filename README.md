@@ -50,6 +50,19 @@ chain with an address book swaps the data source to chain reads; it never gates 
 UI. The seam is `apps/web/src/lib/data/` — one `DataProvider`, two implementations,
 and components never know which one they are on.
 
+## Robinhood Chain mainnet
+
+Chain id 4663. Real USDG, real stock tokens, real money.
+
+`contracts/deployments/4663.json` is the address book for the protocol contracts live
+on mainnet: the dividend registry, DripCore, the USDG advance vault, the stream engine,
+the reinvestor, the Uniswap v3 swap adapter and the Chainlink price oracle, plus the
+eleven listed stock tokens and USDG. `mocks` is `false`, so the app hides every faucet.
+Admin roles sit with `0xe7D4a12b460334F83C2fd8774b96EE45777018e8`.
+
+A production build (`next build`) targets 4663 by default. `pnpm dev` targets the local
+anvil chain. Set the five `NEXT_PUBLIC_*` variables only to override either.
+
 ## Robinhood Chain testnet
 
 The real target: chain id 46630, an Arbitrum Orbit L2, public since February 2026.
@@ -136,36 +149,28 @@ import with no backend:
 1. Go to [vercel.com/new](https://vercel.com/new) and import this repository.
 2. Set **Root Directory** to `apps/web`. Vercel detects Next.js and the pnpm
    workspace on its own; leave install and build commands at their defaults.
-3. Add the environment variables that point the build at Robinhood Chain testnet
-   (chain id 46630, public since February 2026):
+3. Add the environment variables that point the build at Robinhood Chain mainnet
+   (chain id 4663). A production build already defaults to these, so they are
+   optional; set them only to override:
 
    | Variable | Value |
    | --- | --- |
-   | `NEXT_PUBLIC_CHAIN_ID` | `46630` |
-   | `NEXT_PUBLIC_CHAIN_NAME` | `Robinhood Chain Testnet` |
-   | `NEXT_PUBLIC_RPC_URL` | `https://rpc.testnet.chain.robinhood.com/rpc` |
-   | `NEXT_PUBLIC_EXPLORER_NAME` | `Robinhood Chain Explorer` |
-   | `NEXT_PUBLIC_EXPLORER_URL` | `https://explorer.testnet.chain.robinhood.com` |
+   | `NEXT_PUBLIC_CHAIN_ID` | `4663` |
+   | `NEXT_PUBLIC_CHAIN_NAME` | `Robinhood Chain` |
+   | `NEXT_PUBLIC_RPC_URL` | `https://rpc.mainnet.chain.robinhood.com` |
+   | `NEXT_PUBLIC_EXPLORER_NAME` | `Blockscout` |
+   | `NEXT_PUBLIC_EXPLORER_URL` | `https://robinhoodchain.blockscout.com` |
 
-   The public RPC is rate limited; for a site with real traffic use an Alchemy
-   Robinhood testnet endpoint instead. Arbitrum Sepolia (chain 421614) remains a
-   drop in alternative with the same Orbit stack semantics.
+   If the project still carries testnet values from an earlier deploy
+   (`NEXT_PUBLIC_CHAIN_ID=46630`), delete them or change them to the table above; a
+   testnet chain id makes the app look for an address book that does not exist. The
+   public RPC is rate limited; for a site with real traffic use an Alchemy Robinhood
+   Chain endpoint instead.
 
 4. Deploy.
 
-Until the contracts are deployed to Robinhood Chain testnet, the landing page,
-design system and copy are fully live and the app pages show their no-deployment
-state. To go fully interactive: fund a deployer wallet at the faucet
-(https://faucet.testnet.chain.robinhood.com), then
-
-```bash
-cd contracts
-PRIVATE_KEY=0x... forge script script/Deploy.s.sol --rpc-url robinhood_testnet --broadcast
-PRIVATE_KEY=0x... forge script script/Seed.s.sol --rpc-url robinhood_testnet --broadcast
-node ../scripts/sync-abis.mjs
-```
-
-commit `contracts/deployments/46630.json` plus the regenerated
-`packages/sdk/src/generated/deployments.ts`, and the next Vercel deploy is fully
-interactive with no code changes.
+The mainnet address book is `contracts/deployments/4663.json`, carried into the SDK as
+`packages/sdk/src/generated/deployments.ts`. A visitor with no wallet sees the
+reference portfolio; a wallet connected on chain 4663 switches every page to chain
+reads and real transactions against those contracts.
 

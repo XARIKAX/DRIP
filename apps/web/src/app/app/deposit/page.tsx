@@ -6,8 +6,19 @@ import { AnimatedNumber, fmt, relativeTime, shortDate } from "@/components/live"
 import { TokenMark } from "@/components/TokenMark";
 import { useDataActions, useHoldings, useTokensView, useWalletView } from "@/lib/data/provider";
 import { MODE_LABEL, MODE_SENTENCE, type ModeName } from "@/lib/data/types";
+import { deploymentOrNull } from "@/lib/chain.config";
+import { usesMocks } from "@drip-markets/sdk";
 
 const MODES: ModeName[] = ["CASH_EARLY", "STREAM", "REINVEST"];
+
+/**
+ * Faucets exist only on the testnet stand ins. A chain with real stock tokens has
+ * nothing to mint, so the button is absent rather than present and reverting.
+ */
+const FAUCETS_AVAILABLE = (() => {
+  const d = deploymentOrNull();
+  return d !== null && usesMocks(d);
+})();
 
 /**
  * Three steps, one screen, no wizard chrome. Pick the token, type the amount,
@@ -132,7 +143,7 @@ export default function DepositPage() {
                   ≈ <AnimatedNumber value={shares * (token?.priceUsd ?? 0)} prefix="$" flash="light" /> USD
                 </span>
               )}
-              {walletShares === 0 && token ? (
+              {FAUCETS_AVAILABLE && walletShares === 0 && token ? (
                 <button type="button" className="text-micro font-bold uppercase underline decoration-cyan decoration-2 underline-offset-4" onClick={() => void actions.faucet(token.symbol)}>
                   Get test {token.symbol}
                 </button>

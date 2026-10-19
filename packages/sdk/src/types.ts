@@ -35,6 +35,17 @@ export interface Deployment {
   chainId: number;
   /** Deploy block timestamp. Used to annualise vault fees into an APY. */
   deployedAt: number;
+  /**
+   * True when this chain runs the testnet stand ins: MockUSDG, MockStockToken and
+   * MockSwapAdapter. Absent on books written before the field existed, which were all
+   * local or testnet, so read it through `usesMocks`, never as a bare truthiness check.
+   * The app hides its faucets when this is false; a real stock token has none.
+   */
+  mocks?: boolean;
+  /** The address holding every admin role. Production books only. */
+  admin?: Address;
+  /** The Chainlink price source behind the swap adapter. Production books only. */
+  priceOracle?: Address;
   usdg: Address;
   dividendRegistry: Address;
   advanceVault: Address;

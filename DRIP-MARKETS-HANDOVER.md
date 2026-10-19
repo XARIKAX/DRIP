@@ -22,6 +22,48 @@ in `README.md`. This file is the map that ties them together and says what is re
 
 ---
 
+## 0. Update, October 2026: wired to Robinhood Chain mainnet
+
+Two things changed on this branch after the handover below was written.
+
+**Demo mode is gone from the website.** The banner, the testnet notice and every
+user-visible "demo" and "testnet" word were removed. The seeded reference portfolio
+still backs every page for a visitor with no wallet; it is just no longer called a demo.
+
+**The app is wired to live contracts on chain 4663.** `contracts/deployments/4663.json`
+is the address book, copied into `packages/sdk/src/generated/deployments.ts`. The five
+protocol contracts, the Uniswap v3 swap adapter and the Chainlink oracle at those
+addresses were deployed from this same codebase after the handover, under the Osinko
+name, and serve osinko.app as well. The deployed versions only **add** functions and
+events to DripCore and AdvanceVault (a lending side and an idle-yield seam); every
+interface in `contracts/src/interfaces/` is unchanged, so every read and write this
+branch makes is valid against them. The swap adapter exposes `priceUsdg(address)`,
+which is the one call the SDK makes outside the frozen interfaces.
+
+What that means in practice:
+
+- A production build targets 4663 by default. `pnpm dev` still targets local anvil.
+- `mocks` is `false` in the book, and the deposit page hides its faucet when it is.
+- Admin roles for those contracts sit with `0xe7D4a12b460334F83C2fd8774b96EE45777018e8`,
+  which the owner controls. This branch cannot change fees, listings or roles.
+- The listed universe on chain is eleven tokens, not sixteen: `VerifyUniverse` ran
+  against mainnet and five of the original sixteen did not pass. The book carries the
+  eleven that did.
+- Live reads were **not** exercised from the environment that made this change, because
+  its network policy blocks the Robinhood Chain RPC. Compatibility was established by
+  diffing the deployed sources against this branch. The first thing to do is open the
+  site with a wallet on chain 4663 and confirm the dashboard lists positions, the
+  calendar lists dividends and the vault shows real numbers.
+
+Two findings about the chain itself that this codebase predates. Robinhood stock
+tokens never pay cash: a dividend arrives as a rise in the token's `uiMultiplier`
+(ERC-8056). The settlement leg in `DripCore.settleDividend` assumes an issuer pays USDG
+on pay day, which nobody does on chain; the vault has to be repaid by selling the
+multiplier gain through the swap adapter. And in September 2026 Robinhood moved that
+multiplier rise to the ex date, which removes the wait the Early module was built to
+bridge. Both are design questions for whoever takes this branch forward, not front-end
+bugs.
+
 ## 1. What Drip Markets is
 
 Drip Markets is a **dividend layer for tokenized stocks on Robinhood Chain**. Ticker
@@ -168,10 +210,10 @@ TypeScript source; the web app transpiles it (`transpilePackages`).
 
 ## 6. The web app
 
-- **Demo mode is the default.** `apps/web/src/lib/data/mock.ts` is a seeded,
-  deterministic in memory portfolio: five positions, two streams accruing by the wall
-  clock, a pending advance, three weeks of history, a funded vault, a working agent
-  console. Every page works with no wallet. A `DemoBanner` says so.
+- **The reference portfolio is the default.** `apps/web/src/lib/data/mock.ts` is a
+  seeded, deterministic in memory portfolio: five positions, two streams accruing by
+  the wall clock, a pending advance, three weeks of history, a funded vault, a working
+  agent console. Every page works with no wallet. Nothing on the site calls it a demo.
 - **One data seam.** `provider.tsx` exposes hooks; each reads from the mock store or
   from chain via the SDK depending on whether a wallet is connected **and** an address
   book exists for that chain. Pages never know which. Deploy contracts, commit the
@@ -179,7 +221,8 @@ TypeScript source; the web app transpiles it (`transpilePackages`).
 - **Chain config** is `chain.config.ts`. Five env vars: `NEXT_PUBLIC_CHAIN_ID`,
   `NEXT_PUBLIC_CHAIN_NAME`, `NEXT_PUBLIC_RPC_URL`, `NEXT_PUBLIC_EXPLORER_NAME`,
   `NEXT_PUBLIC_EXPLORER_URL`. Values are sanitised; a set but broken chain id falls
-  back to 46630, unset falls back to 31337.
+  back to 4663. Unset falls back to 31337 under `pnpm dev` and to 4663 in a production
+  build, so a hosted build targets mainnet with no env vars at all.
 - **Wallet stack** (wagmi + RainbowKit) loads client side only. `next.config.mjs`
   ignores a handful of optional peers the connectors reach for.
 - **Design system** (documented at the top of `tailwind.config.ts`): white paper, near
@@ -216,14 +259,15 @@ leg only; the quote comes from the oracle, never from the pool being traded.
 | Production adapters (`ChainlinkPriceOracle`, `UniswapV3SwapAdapter`) | Written against mainnet 4663 addresses. Unit tested. **Not deployed, not run against a live chain.** |
 | `VerifyUniverse.s.sol` | Written. Never run against mainnet from this environment. |
 | Robinhood Chain testnet (46630) deployment | **None.** README describes how; no `46630.json` exists. |
-| Robinhood Chain mainnet (4663) deployment | **None.** |
-| Website | Deployable to Vercel as documented. Everything runs on the demo store until an address book exists. |
+| Robinhood Chain mainnet (4663) | **Wired.** `contracts/deployments/4663.json` points the app, SDK and MCP server at the protocol contracts live on chain 4663. See §0. |
+| Website | Live at dripmarkets.net. Opens on the reference portfolio; a wallet on chain 4663 switches every page to chain reads and real transactions. |
 | Dividend oracle, settlement keeper, claim keeper | **Not built.** Roles exist; nobody operates them. |
 | Audit | **None.** |
 | Upgradeability | v1 is immutable, no proxies, by recommendation. Open decision flagged in `HANDOFF.md §8b`. |
 
-The most important fact: **nothing is on Robinhood Chain.** The first real milestone is
-a testnet deployment.
+The most important fact: **the app now reads and writes live contracts on Robinhood
+Chain mainnet.** Every change to the write path is a change to real money. Nothing
+has been audited.
 
 ## 9. Run it
 
